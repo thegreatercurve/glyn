@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.1"
+license = "MIT"
+edition = "2021"
+
+[workspace.dependencies]
+glyn_unicode = { path = "crates/glyn_unicode" }
