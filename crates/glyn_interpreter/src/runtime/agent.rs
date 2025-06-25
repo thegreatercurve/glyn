@@ -1,4 +1,4 @@
-use crate::{runtime::Environment, Realm};
+use crate::runtime::{Environment, Realm};
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;

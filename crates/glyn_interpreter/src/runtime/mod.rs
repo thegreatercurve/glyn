@@ -1,6 +1,7 @@
 mod agent;
+mod completion;
 mod environment;
 mod realm;
 
 pub(crate) use environment::Environment;
-pub use realm::Realm;
+pub(crate) use realm::Realm;
