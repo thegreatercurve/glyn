@@ -16,9 +16,7 @@ impl JSAgent {
             environment_records: vec![],
         }
     }
-}
 
-impl JSAgent {
     fn running_execution_context(&self) -> &ExecutionContext {
         debug_assert!(!self.execution_contexts.is_empty());
 
@@ -26,5 +24,17 @@ impl JSAgent {
         self.execution_contexts.last().unwrap_or_else(|| {
             unreachable!("Expected at least one execution context to be running.")
         })
+    }
+
+    fn type_error(&self, message: &str) -> ! {
+        panic!("TypeError: {message:?}");
+    }
+
+    fn reference_error(&self, message: &str) -> ! {
+        panic!("ReferenceError: {message:?}");
+    }
+
+    fn syntax_error(&self, message: &str) -> ! {
+        panic!("SyntaxError: {message:?}");
     }
 }
