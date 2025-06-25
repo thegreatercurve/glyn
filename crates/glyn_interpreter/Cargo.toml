@@ -1,0 +1,8 @@
+[package]
+name = "glyn_interpreter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+glyn_unicode = { workspace = true }
