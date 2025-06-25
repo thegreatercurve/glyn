@@ -1,10 +1,12 @@
-use crate::value::{big_int::JSBigInt, number::JSNumber, object::JSObject, string::JSString};
+use crate::value::{big_int::JSBigInt, number::JSNumber, string::JSString};
 
 mod big_int;
 mod number;
 mod object;
 mod string;
 mod symbol;
+
+pub(crate) use object::JSObject;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum JSValue {
