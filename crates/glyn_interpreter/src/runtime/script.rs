@@ -43,7 +43,7 @@ impl ScriptRecord {
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
     pub(crate) fn script_evaluation(&self, agent: &mut JSAgent) -> CompletionRecord {
         // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-        let global_env = &self.realm.global_env;
+        let _global_env = &self.realm.global_env;
 
         // 2. Let scriptContext be a new ECMAScript code execution context.
         let script_context = ExecutionContext {};
@@ -71,6 +71,6 @@ impl ScriptRecord {
         // 16. Resume the context that is now on the top of the execution context stack as the running execution context.
 
         // 17. Return ? result.
-        Ok(result)
+        result
     }
 }

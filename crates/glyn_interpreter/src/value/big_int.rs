@@ -1,6 +1,6 @@
 /// 6.1.8 The BigInt Type
 /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-bigint-type
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct JSBigInt;
 
 impl JSBigInt {

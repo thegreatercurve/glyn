@@ -1,4 +1,4 @@
-use crate::runtime::{Environment, Realm};
+use crate::runtime::Environment;
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;
@@ -10,9 +10,9 @@ pub struct JSAgent {
 }
 
 impl JSAgent {
-    pub fn new(realm: Realm) -> Self {
+    pub fn new() -> Self {
         Self {
-            execution_contexts: vec![ExecutionContext::default()],
+            execution_contexts: vec![ExecutionContext],
             environment_records: vec![],
         }
     }

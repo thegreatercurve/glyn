@@ -1,0 +1,484 @@
+use crate::{
+    runtime::{normal_completion, CompletionRecord},
+    value::{
+        object::{
+            property::{JSObjectPropDescriptor, JSObjectPropKey},
+            JSObjectInternalMethods,
+        },
+        string::JSString,
+        JSObject,
+    },
+    JSAgent, JSValue,
+};
+
+/// 10.1 Ordinary Object Internal Methods and Internal Slots
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots
+pub(crate) static ORDINARY_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
+    JSObjectInternalMethods {
+        get_prototype_of,
+        set_prototype_of,
+        is_extensible,
+        prevent_extensions,
+        get_own_property,
+        define_own_property,
+        has_property,
+        get,
+        set,
+        delete,
+        own_property_keys,
+    };
+
+/// 10.1.1 [[GetPrototypeOf]] ( )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-getprototypeof
+fn get_prototype_of(_agent: &JSAgent, object: &JSObject) -> Option<*mut JSObject> {
+    // 1. Return OrdinaryGetPrototypeOf(O).
+    ordinary_get_prototype_of(object)
+}
+
+/// 10.1.1.1 OrdinaryGetPrototypeOf ( O )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarygetprototypeof
+fn ordinary_get_prototype_of(object: &JSObject) -> Option<*mut JSObject> {
+    // 1. Return O.[[Prototype]].
+    object.ordinary_prototype()
+}
+
+/// 10.1.2 [[SetPrototypeOf]] ( V )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
+fn set_prototype_of(object: &mut JSObject, prototype: Option<*mut JSObject>) -> bool {
+    // 1. Return OrdinarySetPrototypeOf(O, V).
+    ordinary_set_prototype_of(object, prototype)
+}
+
+/// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
+fn ordinary_set_prototype_of(object: &mut JSObject, prototype: Option<*mut JSObject>) -> bool {
+    // 1. Let current be O.[[Prototype]].
+    let current = object.ordinary_prototype();
+
+    // 2. If SameValue(V, current) is true, return true.
+    // TODO: Implement SameValue
+    if let Some(p) = prototype {
+        if let Some(c) = current {
+            if p == c {
+                return true;
+            }
+        }
+    }
+
+    // 3. Let extensible be O.[[Extensible]].
+    let extensible = object.ordinary_extensible();
+
+    // 4. If extensible is false, return false.
+    if !extensible {
+        return false;
+    }
+
+    // 5. Let p be V.
+    let mut opt_p = prototype;
+
+    // 6. Let done be false.
+    // 7. Repeat, while done is false,
+    while let Some(p) = opt_p {
+        // a. If p is null, then
+        // i. Set done to true.
+        // b. Else if SameValue(p, O) is true, then
+        if p == object {
+            // i. Return false.
+            return false;
+        }
+        // c. Else,
+        else {
+            // i. If p.[[GetPrototypeOf]] is not the ordinary object internal method defined in 10.1.1, set done to true.
+            if (unsafe { &*p }).methods.get_prototype_of as usize
+                != ordinary_get_prototype_of as usize
+            {
+                // i. Set done to true.
+                break;
+            }
+
+            // ii. Else, set p to p.[[Prototype]].
+            opt_p = (unsafe { &*p }).ordinary_prototype();
+        }
+    }
+
+    // 8. Set O.[[Prototype]] to V.
+    object.set_prototype(opt_p);
+
+    // 9. Return true.
+    true
+}
+
+/// 10.1.3 [[IsExtensible]] ( )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-isextensible
+fn is_extensible(object: &JSObject) -> bool {
+    // 1. Return O.[[IsExtensible]]().
+    ordinary_is_extensible(object)
+}
+
+/// 10.1.3.1 OrdinaryIsExtensible ( O )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryisextensible
+fn ordinary_is_extensible(object: &JSObject) -> bool {
+    // 1. Return O.[[Extensible]].
+    object.ordinary_extensible()
+}
+
+/// 10.1.4 [[PreventExtensions]] ( )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-preventextensions
+fn prevent_extensions(object: &mut JSObject) -> bool {
+    // 1. Return OrdinaryPreventExtensions(O).
+    ordinary_prevent_extensions(object)
+}
+
+/// 10.1.4.1 OrdinaryPreventExtensions ( O )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarypreventextensions
+fn ordinary_prevent_extensions(object: &mut JSObject) -> bool {
+    // 1. Set O.[[Extensible]] to false.
+    object.set_extensible(false);
+
+    // 2. Return true.
+    true
+}
+
+/// 10.1.5 [[GetOwnProperty]] ( P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-getownproperty-p
+fn get_own_property(object: &JSObject, key: &JSObjectPropKey) -> Option<JSObjectPropDescriptor> {
+    // 1. Return OrdinaryGetOwnProperty(O, P).
+    ordinary_get_own_property(object, key)
+}
+
+/// 10.1.5.1 OrdinaryGetOwnProperty ( O, P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarygetownproperty
+fn ordinary_get_own_property(
+    object: &JSObject,
+    key: &JSObjectPropKey,
+) -> Option<JSObjectPropDescriptor> {
+    // 1. If O does not have an own property with key P, return undefined.
+    // 3. Let X be O's own property whose key is P.
+    let x = object
+        .get_property(object.find_property_index(key)?)?
+        .to_owned();
+
+    // 2. Let D be a newly created Property Descriptor with no fields.
+    let mut d = JSObjectPropDescriptor::default();
+
+    // 4. If X is a data property, then
+
+    if x.is_data_descriptor() {
+        // a. Set D.[[Value]] to the value of X's [[Value]] attribute.
+        d.value = x.value.clone();
+
+        // b. Set D.[[Writable]] to the value of X's [[Writable]] attribute.
+        d.writable = x.writable;
+    } else {
+        // a. Assert: X is an accessor property.
+        debug_assert!(x.is_accessor_descriptor());
+
+        // b. Set D.[[Get]] to the value of X's [[Get]] attribute.
+        d.get = x.get;
+
+        // c. Set D.[[Set]] to the value of X's [[Set]] attribute.
+        d.set = x.set;
+    }
+
+    // 6. Set D.[[Enumerable]] to the value of X's [[Enumerable]] attribute.
+    d.enumerable = x.enumerable;
+
+    // 7. Set D.[[Configurable]] to the value of X's [[Configurable]] attribute.
+    d.configurable = x.configurable;
+
+    // 8. Return D.
+    Some(d)
+}
+
+/// 10.1.6 [[DefineOwnProperty]] ( P, Desc )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
+fn define_own_property(
+    object: &mut JSObject,
+    key: &JSObjectPropKey,
+    descriptor: JSObjectPropDescriptor,
+) -> bool {
+    // 1. Return OrdinaryDefineOwnProperty(O, P, Desc).
+    ordinary_define_own_property(object, key, descriptor)
+}
+
+/// 10.1.6.1 OrdinaryDefineOwnProperty ( O, P, Desc )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
+fn ordinary_define_own_property(
+    object: &mut JSObject,
+    key: &JSObjectPropKey,
+    descriptor: JSObjectPropDescriptor,
+) -> bool {
+    // 1. 1. Let current be ? O.[[GetOwnProperty]](P).
+    let current = (object.methods.get_own_property)(object, key);
+
+    // 2. 2. Let extensible be ? IsExtensible(O).
+    let extensible = is_extensible(object);
+
+    // 3. 3. Return ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current).
+    validate_and_apply_property_descriptor(Some(object), key, extensible, descriptor, current)
+}
+
+/// 10.1.6.2 IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
+/// https://262.ecma-international.org/15.0/index.html#sec-iscompatiblepropertydescriptor
+fn is_compatible_property_descriptor(
+    extensible: bool,
+    descriptor: JSObjectPropDescriptor,
+    current: Option<JSObjectPropDescriptor>,
+) -> bool {
+    // 1. 1. Return ValidateAndApplyPropertyDescriptor(undefined, "", Extensible, Desc, Current).
+    validate_and_apply_property_descriptor(
+        None,
+        &JSObjectPropKey::String(JSString::from("")),
+        extensible,
+        descriptor,
+        current,
+    )
+}
+
+/// 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
+/// https://262.ecma-international.org/15.0/index.html#sec-validateandapplypropertydescriptor
+fn validate_and_apply_property_descriptor(
+    object: Option<&mut JSObject>,
+    key: &JSObjectPropKey,
+    extensible: bool,
+    descriptor: JSObjectPropDescriptor,
+    current: Option<JSObjectPropDescriptor>,
+) -> bool {
+    // 1. Assert: IsPropertyKey(P) is true.
+    // 2. If current is undefined, then
+    // a. If extensible is false, return false.
+    // b. If O is undefined, return true.
+    // c. If IsAccessorDescriptor(Desc) is true, then
+    // i. Create an own accessor property named P of object O whose [[Get]], [[Set]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+    // d. Else,
+    // i. Create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+    // e. Return true.
+    // 3. Assert: current is a fully populated Property Descriptor.
+    // 4. If Desc does not have any fields, return true.
+    // 5. If current.[[Configurable]] is false, then
+    // a. If Desc has a [[Configurable]] field and Desc.[[Configurable]] is true, return false.
+    // b. If Desc has an [[Enumerable]] field and Desc.[[Enumerable]] is not current.[[Enumerable]], return false.
+    // c. If IsGenericDescriptor(Desc) is false and IsAccessorDescriptor(Desc) is not IsAccessorDescriptor(current), return false.
+    // d. If IsAccessorDescriptor(current) is true, then
+    // i. If Desc has a [[Get]] field and SameValue(Desc.[[Get]], current.[[Get]]) is false, return false.
+    // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
+    // e. Else if current.[[Writable]] is false, then
+    // i. If Desc has a [[Writable]] field and Desc.[[Writable]] is true, return false.
+    // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
+    // 6. If O is not undefined, then
+    // a. If IsDataDescriptor(current) is true and IsAccessorDescriptor(Desc) is true, then
+    // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
+    // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
+    // iii. Replace the property named P of object O with an accessor property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Get]] and [[Set]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+    // b. Else if IsAccessorDescriptor(current) is true and IsDataDescriptor(Desc) is true, then
+    // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
+    // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
+    // iii. Replace the property named P of object O with a data property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Value]] and [[Writable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+    // c. Else,
+    // i. For each field of Desc, set the corresponding attribute of the property named P of object O to the value of the field.
+    // TODO Remove the below and implement the above.
+    if let Some(object) = object {
+        object.set_property(key.clone(), descriptor);
+    }
+
+    // 7. Return true.
+    true
+}
+
+/// 10.1.7 [[HasProperty]] ( P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-hasproperty-p
+fn has_property(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> bool {
+    // 1. Return OrdinaryHasProperty(O, P).
+    ordinary_has_property(agent, object, key)
+}
+
+/// 10.1.7.1 OrdinaryHasProperty ( O, P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryhasproperty
+fn ordinary_has_property(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> bool {
+    // 1. Let hasOwn be ? O.[[GetOwnProperty]](P).
+    let has_own = (object.methods.get_own_property)(object, key);
+
+    // 2. If hasOwn is not undefined, return true.
+    if has_own.is_some() {
+        return true;
+    }
+
+    // 3. Let parent be ? O.[[GetPrototypeOf]]().
+    let parent = (object.methods.get_prototype_of)(agent, object);
+
+    // 4. If parent is not null, then
+    if let Some(parent) = parent {
+        // a. Return ? parent.[[HasProperty]](P).
+        return ((unsafe { &*parent }).methods.has_property)(agent, unsafe { &*parent }, key);
+    }
+
+    // 5. Return false.
+    false
+}
+
+/// 10.1.8 [[Get]] ( P, Receiver )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-get-p-receiver
+fn get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+    // 1. Return OrdinaryGet(O, P, Receiver).
+    ordinary_get(agent, object, key)
+}
+
+/// 10.1.8.1 OrdinaryGet ( O, P, Receiver )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryget
+fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+    // 1. Let desc be ? O.[[GetOwnProperty]](P).
+    let desc = (object.methods.get_own_property)(object, key);
+
+    // 2. If desc is undefined, then
+    let Some(desc) = desc else {
+        // a. Let parent be ? O.[[GetPrototypeOf]]().
+        let parent = (object.methods.get_prototype_of)(agent, object);
+
+        // b. If parent is null, return undefined.
+        if parent.is_none() {
+            return normal_completion(JSValue::Undefined);
+        }
+
+        // c. Return ? parent.[[Get]](P, Receiver).
+        return ((unsafe { &*parent.unwrap() }).methods.get)(
+            agent,
+            unsafe { &*parent.unwrap() },
+            key,
+        );
+    };
+
+    // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
+    if desc.is_data_descriptor() {
+        return normal_completion(desc.value.unwrap());
+    }
+
+    // 4. Assert: IsAccessorDescriptor(desc) is true.
+    debug_assert!(desc.is_accessor_descriptor());
+
+    // 5. Let getter be desc.[[Get]].
+    let getter = desc.get;
+
+    // 6. If getter is undefined, return undefined.
+    if getter.is_none() {
+        return normal_completion(JSValue::Undefined);
+    }
+
+    // 7. Return ? Call(getter, Receiver).
+    todo!()
+}
+
+/// 10.1.9 [[Set]] ( P, V, Receiver )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
+fn set(
+    agent: &JSAgent,
+    object: &mut JSObject,
+    key: JSObjectPropKey,
+    value: JSValue,
+) -> CompletionRecord {
+    // 1. Return OrdinarySet(O, P, V, Receiver).
+    ordinary_set(agent, object, key, value)
+}
+
+/// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryset
+fn ordinary_set(
+    _agent: &JSAgent,
+    object: &mut JSObject,
+    key: JSObjectPropKey,
+    value: JSValue,
+) -> CompletionRecord {
+    // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
+    let own_desc = (object.methods.get_own_property)(object, &key);
+
+    // 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
+    ordinary_set_with_own_descriptor(object, key, value, own_desc)
+}
+
+/// 10.1.9.2 OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarysetwithowndescriptor
+fn ordinary_set_with_own_descriptor(
+    _object: &mut JSObject,
+    _key: JSObjectPropKey,
+    _value: JSValue,
+    _own_desc: Option<JSObjectPropDescriptor>,
+) -> CompletionRecord {
+    // 1. If ownDesc is undefined, then
+    // a. Let parent be ? O.[[GetPrototypeOf]]().
+    // b. If parent is not null, then
+    // i. Return ? parent.[[Set]](P, V, Receiver).
+    // c. Else,
+    // i. Set ownDesc to the PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
+    // 2. If IsDataDescriptor(ownDesc) is true, then
+    // a. If ownDesc.[[Writable]] is false, return false.
+    // b. If Receiver is not an Object, return false.
+    // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
+    // d. If existingDescriptor is not undefined, then
+    // i. If IsAccessorDescriptor(existingDescriptor) is true, return false.
+    // ii. If existingDescriptor.[[Writable]] is false, return false.
+    // iii. Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
+    // iv. Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
+    // e. Else,
+    // i. Assert: Receiver does not currently have a property P.
+    // ii. Return ? CreateDataProperty(Receiver, P, V).
+    // 3. Assert: IsAccessorDescriptor(ownDesc) is true.
+    // 4. Let setter be ownDesc.[[Set]].
+    // 5. If setter is undefined, return false.
+    // 6. Perform ? Call(setter, Receiver, « V »).
+    // 7. Return true.
+    todo!()
+}
+
+/// 10.1.10 [[Delete]] ( P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-delete-p
+fn delete(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+    // 1. Return OrdinaryDelete(O, P).
+    ordinary_delete(agent, object, key)
+}
+
+/// 10.1.10.1 OrdinaryDelete ( O, P )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydelete
+fn ordinary_delete(
+    _agent: &JSAgent,
+    object: &mut JSObject,
+    key: &JSObjectPropKey,
+) -> CompletionRecord {
+    // 1. Let desc be ? O.[[GetOwnProperty]](P).
+    let desc = (object.methods.get_own_property)(object, key);
+
+    // 2. If desc is undefined, return true.
+    let Some(desc) = desc else {
+        return normal_completion(JSValue::Boolean(true));
+    };
+
+    // 3. If desc.[[Configurable]] is true, then
+    if desc.configurable.unwrap_or(false) {
+        // a. Remove the own property with name P from O.
+        object.delete_property(object.find_property_index(key).unwrap());
+
+        // b. Return true.
+        return normal_completion(JSValue::Boolean(true));
+    }
+
+    // 4. Return false.
+    normal_completion(JSValue::Boolean(false))
+}
+
+/// 10.1.11 [[OwnPropertyKeys]] ( )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
+fn own_property_keys(agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey> {
+    // 1. Return OrdinaryOwnPropertyKeys(O).
+    ordinary_own_property_keys(agent, object)
+}
+
+/// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryownpropertykeys
+fn ordinary_own_property_keys(_agent: &JSAgent, _object: &JSObject) -> Vec<JSObjectPropKey> {
+    // 1. Let keys be a new empty List.
+    // 2. For each own property key P of O such that P is an array index, in ascending numeric index order, do
+    // 3. For each own property key P of O such that P is a String and P is not an array index, in ascending chronological order of property creation, do
+    // a. Append P to keys.
+    // 4. For each own property key P of O such that P is a Symbol, in ascending chronological order of property creation, do
+    // a. Append P to keys.
+    // 5. Return keys.
+    todo!()
+}

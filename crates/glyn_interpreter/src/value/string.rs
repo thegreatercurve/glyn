@@ -1,4 +1,16 @@
 /// 6.1.4 The String Type
 /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-string-type
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct JSString(String);
+
+impl From<String> for JSString {
+    fn from(value: String) -> Self {
+        JSString(value)
+    }
+}
+
+impl From<&str> for JSString {
+    fn from(value: &str) -> Self {
+        JSString(value.to_string())
+    }
+}
