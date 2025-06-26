@@ -25,12 +25,12 @@ pub struct Realm {
 impl Realm {
     /// 9.3.1 CreateRealm ( )
     /// https://262.ecma-international.org/15.0/#sec-createrealm
-    pub fn create_realm(&mut self) -> Self {
+    pub fn create_realm() -> Self {
         // 1. Let realmRec be a new Realm Record.
-        let realm_rec = Realm::default();
+        let mut realm_rec = Realm::default();
 
         // 2. Perform CreateIntrinsics(realmRec).
-        self.create_intrinsics();
+        Self::create_intrinsics(&mut realm_rec);
 
         // 3. Set realmRec.[[AgentSignifier]] to AgentSignifier().
         // 4. Set realmRec.[[GlobalObject]] to undefined.

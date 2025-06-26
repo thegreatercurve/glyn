@@ -6,7 +6,7 @@ pub(crate) type CompletionRecord<T = NormalCompletion> = Result<T, ThrowCompleti
 
 #[derive(Debug)]
 pub(crate) struct NormalCompletion {
-    value: JSValue,
+    pub(crate) value: JSValue,
     target: Option<JSValue>,
 }
 

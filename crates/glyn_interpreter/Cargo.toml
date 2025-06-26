@@ -6,3 +6,7 @@ license.workspace = true
 
 [dependencies]
 glyn_unicode = { workspace = true }
+
+[[bin]]
+name = "eval_script"
+path = "src/bin/eval_script.rs"

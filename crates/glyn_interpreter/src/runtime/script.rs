@@ -9,7 +9,7 @@ use crate::{
 
 /// 16.1.4 Script Records
 /// https://262.ecma-international.org/15.0/#script-record
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct ScriptRecord {
     /// [[Realm]]
     pub realm: Box<Realm>,
@@ -22,6 +22,7 @@ impl ScriptRecord {
     /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
     /// https://262.ecma-international.org/15.0/#sec-parse-script
     pub(crate) fn parse_script(
+        &self,
         _agent: &mut JSAgent,
         _source_text: &str,
         realm: Box<Realm>,
@@ -40,12 +41,9 @@ impl ScriptRecord {
 
     /// 16.1.6 ScriptEvaluation ( scriptRecord )
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
-    pub(crate) fn script_evaluation(
-        agent: &mut JSAgent,
-        script_record: &mut ScriptRecord,
-    ) -> CompletionRecord {
+    pub(crate) fn script_evaluation(&self, agent: &mut JSAgent) -> CompletionRecord {
         // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-        let global_env = &script_record.realm.global_env;
+        let global_env = &self.realm.global_env;
 
         // 2. Let scriptContext be a new ECMAScript code execution context.
         let script_context = ExecutionContext {};
