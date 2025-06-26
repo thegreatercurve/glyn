@@ -16,7 +16,7 @@ pub struct Realm {
     global_object: Option<Box<JSObject>>,
 
     /// [[GlobalEnv]]
-    global_env: Option<Box<Environment>>,
+    pub global_env: Option<Box<Environment>>,
 
     /// [[HostDefined]]
     host_defined: Option<Box<dyn Any>>,

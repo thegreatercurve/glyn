@@ -26,6 +26,16 @@ impl JSAgent {
         })
     }
 
+    pub(crate) fn push_execution_context(&mut self, context: ExecutionContext) {
+        self.execution_contexts.push(context);
+    }
+
+    fn pop_execution_context(&mut self) -> ExecutionContext {
+        self.execution_contexts.pop().unwrap_or_else(|| {
+            unreachable!("Expected at least one execution context to be running.")
+        })
+    }
+
     fn type_error(&self, message: &str) -> ! {
         panic!("TypeError: {message:?}");
     }
