@@ -21,7 +21,7 @@ impl JSAgent {
         }
     }
 
-    fn running_execution_context(&self) -> &ExecutionContext {
+    pub(crate) fn running_execution_context(&self) -> &ExecutionContext {
         debug_assert!(!self.execution_contexts.is_empty());
 
         // An execution context is a specification device that is used to track the runtime evaluation of code by an ECMAScript implementation. At any point in time, there is at most one execution context per agent that is actually executing code. This is known as the agent's running execution context.
@@ -34,21 +34,21 @@ impl JSAgent {
         self.execution_contexts.push(context);
     }
 
-    fn pop_execution_context(&mut self) -> ExecutionContext {
+    pub(crate) fn pop_execution_context(&mut self) -> ExecutionContext {
         self.execution_contexts.pop().unwrap_or_else(|| {
             unreachable!("Expected at least one execution context to be running.")
         })
     }
 
-    fn type_error(&self, message: &str) -> ! {
+    pub(crate) fn type_error(&self, message: &str) -> ! {
         panic!("TypeError: {message:?}");
     }
 
-    fn reference_error(&self, message: &str) -> ! {
+    pub(crate) fn reference_error(&self, message: &str) -> ! {
         panic!("ReferenceError: {message:?}");
     }
 
-    fn syntax_error(&self, message: &str) -> ! {
+    pub(crate) fn syntax_error(&self, message: &str) -> ! {
         panic!("SyntaxError: {message:?}");
     }
 

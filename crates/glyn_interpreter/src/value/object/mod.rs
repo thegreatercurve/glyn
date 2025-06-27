@@ -41,7 +41,7 @@ pub struct JSObjectInternalMethods {
     pub set: fn(
         agent: &JSAgent,
         object: &mut JSObject,
-        key: JSObjectPropKey,
+        key: &JSObjectPropKey,
         value: JSValue,
     ) -> CompletionRecord,
     /// [[Delete]]

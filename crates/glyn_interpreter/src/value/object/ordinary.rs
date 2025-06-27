@@ -383,7 +383,7 @@ fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> Co
 fn set(
     agent: &JSAgent,
     object: &mut JSObject,
-    key: JSObjectPropKey,
+    key: &JSObjectPropKey,
     value: JSValue,
 ) -> CompletionRecord {
     // 1. Return OrdinarySet(O, P, V, Receiver).
@@ -395,7 +395,7 @@ fn set(
 fn ordinary_set(
     _agent: &JSAgent,
     object: &mut JSObject,
-    key: JSObjectPropKey,
+    key: &JSObjectPropKey,
     value: JSValue,
 ) -> CompletionRecord {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
@@ -409,7 +409,7 @@ fn ordinary_set(
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarysetwithowndescriptor
 fn ordinary_set_with_own_descriptor(
     _object: &mut JSObject,
-    _key: JSObjectPropKey,
+    _key: &JSObjectPropKey,
     _value: JSValue,
     _own_desc: Option<JSObjectPropDescriptor>,
 ) -> CompletionRecord {
