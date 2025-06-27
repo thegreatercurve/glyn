@@ -9,15 +9,17 @@ use crate::{
 
 pub use operations::make_basic_object;
 pub use property::{JSObjectPropDescriptor, JSObjectPropKey};
+use safe_gc::{Collector, Gc, Trace};
 
 /// Essential Internal Methods
 /// https://262.ecma-international.org/15.0/index.html#table-essential-internal-methods
 #[derive(Debug, PartialEq)]
 pub struct JSObjectInternalMethods {
     /// [[GetPrototypeOf]]
-    pub get_prototype_of: fn(agent: &JSAgent, object: &JSObject) -> Option<*mut JSObject>,
+    pub get_prototype_of: fn(agent: &JSAgent, object: &JSObject) -> Option<Gc<JSObject>>,
     /// [[SetPrototypeOf]]
-    pub set_prototype_of: fn(object: &mut JSObject, prototype: Option<*mut JSObject>) -> bool,
+    pub set_prototype_of:
+        fn(agent: &JSAgent, object: &mut JSObject, prototype: Option<Gc<JSObject>>) -> bool,
     /// [[IsExtensible]]
     pub is_extensible: fn(object: &JSObject) -> bool,
     /// [[PreventExtensions]]
@@ -61,14 +63,22 @@ pub struct JSObject {
     pub values: Vec<JSObjectPropDescriptor>,
 }
 
+impl Trace for JSObject {
+    fn trace(&self, collector: &mut Collector) {
+        if let Some(prototype) = self.slots.prototype {
+            collector.edge(prototype);
+        }
+    }
+}
+
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
-    pub(crate) fn ordinary_prototype(&self) -> Option<*mut JSObject> {
+    pub(crate) fn ordinary_prototype(&self) -> Option<Gc<JSObject>> {
         // TODO: Add proper GC to support the below.
         self.slots.prototype
     }
 
-    pub(crate) fn set_prototype(&mut self, prototype: Option<*mut JSObject>) {
+    pub(crate) fn set_prototype(&mut self, prototype: Option<Gc<JSObject>>) {
         // TODO: Add proper GC to support the below.
         self.slots.prototype = prototype;
     }

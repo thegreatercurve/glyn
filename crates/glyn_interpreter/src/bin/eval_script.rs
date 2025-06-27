@@ -19,15 +19,16 @@ fn main() {
 
     let mut obj2 = make_basic_object(&[]);
 
-    (obj2.methods.set_prototype_of)(&mut obj2, Some(&mut obj1));
+    let obj_1_handle = agent.allocate_object(obj1);
+
+    (obj2.methods.set_prototype_of)(&mut agent, &mut obj2, Some(obj_1_handle));
 
     let value = (obj2.methods.get)(
         &agent,
         &obj2,
         &JSObjectPropKey::String(JSString::from("hello")),
     );
-
-    println!("value: {value:?}");
+    println!("value: {:?}", value);
 
     let script_str = r#"
         let x = 10;

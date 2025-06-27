@@ -1,12 +1,15 @@
-use crate::runtime::Environment;
+use safe_gc::{Gc, Heap};
+
+use crate::{runtime::Environment, JSObject};
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct JSAgent {
-    execution_contexts: Vec<ExecutionContext>,
-    environment_records: Vec<Environment>,
+    pub(crate) execution_contexts: Vec<ExecutionContext>,
+    pub(crate) environment_records: Vec<Environment>,
+    pub object_heap: Heap,
 }
 
 impl JSAgent {
@@ -14,6 +17,7 @@ impl JSAgent {
         Self {
             execution_contexts: vec![ExecutionContext],
             environment_records: vec![],
+            object_heap: Heap::new(),
         }
     }
 
@@ -46,5 +50,13 @@ impl JSAgent {
 
     fn syntax_error(&self, message: &str) -> ! {
         panic!("SyntaxError: {message:?}");
+    }
+
+    pub fn get_object(&self, object: Gc<JSObject>) -> &JSObject {
+        self.object_heap.get(object)
+    }
+
+    pub fn allocate_object(&mut self, object: JSObject) -> Gc<JSObject> {
+        self.object_heap.alloc(object).into()
     }
 }

@@ -1,3 +1,5 @@
+use safe_gc::Gc;
+
 use crate::{
     runtime::{normal_completion, CompletionRecord},
     value::{
@@ -30,28 +32,36 @@ pub(crate) static ORDINARY_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
 
 /// 10.1.1 [[GetPrototypeOf]] ( )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-getprototypeof
-fn get_prototype_of(_agent: &JSAgent, object: &JSObject) -> Option<*mut JSObject> {
+fn get_prototype_of(_agent: &JSAgent, object: &JSObject) -> Option<Gc<JSObject>> {
     // 1. Return OrdinaryGetPrototypeOf(O).
     ordinary_get_prototype_of(object)
 }
 
 /// 10.1.1.1 OrdinaryGetPrototypeOf ( O )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarygetprototypeof
-fn ordinary_get_prototype_of(object: &JSObject) -> Option<*mut JSObject> {
+fn ordinary_get_prototype_of(object: &JSObject) -> Option<Gc<JSObject>> {
     // 1. Return O.[[Prototype]].
     object.ordinary_prototype()
 }
 
 /// 10.1.2 [[SetPrototypeOf]] ( V )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
-fn set_prototype_of(object: &mut JSObject, prototype: Option<*mut JSObject>) -> bool {
+fn set_prototype_of(
+    agent: &JSAgent,
+    object: &mut JSObject,
+    prototype: Option<Gc<JSObject>>,
+) -> bool {
     // 1. Return OrdinarySetPrototypeOf(O, V).
-    ordinary_set_prototype_of(object, prototype)
+    ordinary_set_prototype_of(agent, object, prototype)
 }
 
 /// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
-fn ordinary_set_prototype_of(object: &mut JSObject, prototype: Option<*mut JSObject>) -> bool {
+fn ordinary_set_prototype_of(
+    agent: &JSAgent,
+    object: &mut JSObject,
+    prototype: Option<Gc<JSObject>>,
+) -> bool {
     // 1. Let current be O.[[Prototype]].
     let current = object.ordinary_prototype();
 
@@ -82,22 +92,23 @@ fn ordinary_set_prototype_of(object: &mut JSObject, prototype: Option<*mut JSObj
         // a. If p is null, then
         // i. Set done to true.
         // b. Else if SameValue(p, O) is true, then
-        if p == object {
+        let parent_object = agent.get_object(p);
+
+        if parent_object == object {
             // i. Return false.
             return false;
         }
         // c. Else,
         else {
             // i. If p.[[GetPrototypeOf]] is not the ordinary object internal method defined in 10.1.1, set done to true.
-            if (unsafe { &*p }).methods.get_prototype_of as usize
-                != ordinary_get_prototype_of as usize
+            if parent_object.methods.get_prototype_of as usize != ordinary_get_prototype_of as usize
             {
                 // i. Set done to true.
                 break;
             }
 
             // ii. Else, set p to p.[[Prototype]].
-            opt_p = (unsafe { &*p }).ordinary_prototype();
+            opt_p = parent_object.ordinary_prototype();
         }
     }
 
@@ -309,7 +320,9 @@ fn ordinary_has_property(agent: &JSAgent, object: &JSObject, key: &JSObjectPropK
     // 4. If parent is not null, then
     if let Some(parent) = parent {
         // a. Return ? parent.[[HasProperty]](P).
-        return ((unsafe { &*parent }).methods.has_property)(agent, unsafe { &*parent }, key);
+        let parent_object = agent.get_object(parent);
+
+        return (parent_object.methods.has_property)(agent, parent_object, key);
     }
 
     // 5. Return false.
@@ -335,16 +348,14 @@ fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> Co
         let parent = (object.methods.get_prototype_of)(agent, object);
 
         // b. If parent is null, return undefined.
-        if parent.is_none() {
+        let Some(parent) = parent else {
             return normal_completion(JSValue::Undefined);
-        }
+        };
 
         // c. Return ? parent.[[Get]](P, Receiver).
-        return ((unsafe { &*parent.unwrap() }).methods.get)(
-            agent,
-            unsafe { &*parent.unwrap() },
-            key,
-        );
+        let parent_object = agent.get_object(parent);
+
+        return (parent_object.methods.get)(agent, parent_object, key);
     };
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].

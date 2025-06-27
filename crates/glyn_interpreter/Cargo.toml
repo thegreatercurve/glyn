@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 glyn_unicode = { workspace = true }
+safe-gc = "1.1.1"
 
 [[bin]]
 name = "eval_script"
