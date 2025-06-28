@@ -29,6 +29,7 @@ pub struct JSObjectInternalMethods {
         fn(object: &JSObject, key: &JSObjectPropKey) -> Option<JSObjectPropDescriptor>,
     /// [[DefineOwnProperty]]
     pub define_own_property: fn(
+        agent: &mut JSAgent,
         object: &mut JSObject,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
@@ -109,10 +110,10 @@ impl JSObject {
 
     fn set_property(
         &mut self,
-        key: JSObjectPropKey,
+        key: &JSObjectPropKey,
         value: JSObjectPropDescriptor,
     ) -> PropertyIndex {
-        self.keys.push(key);
+        self.keys.push(key.clone());
         self.values.push(value);
 
         PropertyIndex(self.keys.len() - 1)

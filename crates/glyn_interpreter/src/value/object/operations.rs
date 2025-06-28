@@ -76,6 +76,7 @@ pub(crate) fn set(
 /// 7.3.5 CreateDataProperty ( O, P, V )
 /// https://262.ecma-international.org/15.0/index.html#sec-createdataproperty
 pub(crate) fn create_data_property(
+    agent: &mut JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
@@ -90,7 +91,7 @@ pub(crate) fn create_data_property(
     };
 
     // 2. Return ? O.[[DefineOwnProperty]](P, newDesc).
-    (object.methods.define_own_property)(object, key, new_desc)
+    (object.methods.define_own_property)(agent, object, key, new_desc)
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
@@ -102,7 +103,7 @@ pub(crate) fn create_data_property_or_throw(
     value: JSValue,
 ) {
     // 1. 1. Let success be ? CreateDataProperty(O, P, V).
-    let success = create_data_property(object, key, value);
+    let success = create_data_property(agent, object, key, value);
 
     // 2. If success is false, throw a TypeError exception.
     if !success {

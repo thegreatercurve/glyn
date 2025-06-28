@@ -9,6 +9,7 @@ fn main() {
     let mut obj1 = make_basic_object(&[]);
 
     (obj1.methods.define_own_property)(
+        &mut agent,
         &mut obj1,
         &JSObjectPropKey::String(JSString::from("hello")),
         JSObjectPropDescriptor {

@@ -3,6 +3,7 @@ use safe_gc::Gc;
 use crate::{
     runtime::{normal_completion, CompletionRecord},
     value::{
+        comparison::same_value,
         object::{
             operations::create_data_property,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
@@ -59,7 +60,7 @@ fn set_prototype_of(
 /// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
 fn ordinary_set_prototype_of(
-    agent: &JSAgent,
+    agent: &mut JSAgent,
     object: &mut JSObject,
     prototype: Option<Gc<JSObject>>,
 ) -> bool {
@@ -67,13 +68,8 @@ fn ordinary_set_prototype_of(
     let current = object.ordinary_prototype();
 
     // 2. If SameValue(V, current) is true, return true.
-    // TODO: Implement SameValue
-    if let Some(p) = prototype {
-        if let Some(c) = current {
-            if p == c {
-                return true;
-            }
-        }
+    if prototype == current {
+        return true;
     }
 
     // 3. Let extensible be O.[[Extensible]].
@@ -204,17 +200,19 @@ fn ordinary_get_own_property(
 /// 10.1.6 [[DefineOwnProperty]] ( P, Desc )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
 fn define_own_property(
+    agent: &mut JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     descriptor: JSObjectPropDescriptor,
 ) -> bool {
     // 1. Return OrdinaryDefineOwnProperty(O, P, Desc).
-    ordinary_define_own_property(object, key, descriptor)
+    ordinary_define_own_property(agent, object, key, descriptor)
 }
 
 /// 10.1.6.1 OrdinaryDefineOwnProperty ( O, P, Desc )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
 fn ordinary_define_own_property(
+    agent: &mut JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     descriptor: JSObjectPropDescriptor,
@@ -226,18 +224,27 @@ fn ordinary_define_own_property(
     let extensible = is_extensible(object);
 
     // 3. 3. Return ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current).
-    validate_and_apply_property_descriptor(Some(object), key, extensible, descriptor, current)
+    validate_and_apply_property_descriptor(
+        agent,
+        Some(object),
+        key,
+        extensible,
+        descriptor,
+        current,
+    )
 }
 
 /// 10.1.6.2 IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
 /// https://262.ecma-international.org/15.0/index.html#sec-iscompatiblepropertydescriptor
 fn is_compatible_property_descriptor(
+    agent: &mut JSAgent,
     extensible: bool,
     descriptor: JSObjectPropDescriptor,
     current: Option<JSObjectPropDescriptor>,
 ) -> bool {
-    // 1. 1. Return ValidateAndApplyPropertyDescriptor(undefined, "", Extensible, Desc, Current).
+    // 1. Return ValidateAndApplyPropertyDescriptor(undefined, "", Extensible, Desc, Current).
     validate_and_apply_property_descriptor(
+        agent,
         None,
         &JSObjectPropKey::String(JSString::from("")),
         extensible,
@@ -249,6 +256,7 @@ fn is_compatible_property_descriptor(
 /// 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
 /// https://262.ecma-international.org/15.0/index.html#sec-validateandapplypropertydescriptor
 fn validate_and_apply_property_descriptor(
+    agent: &mut JSAgent,
     object: Option<&mut JSObject>,
     key: &JSObjectPropKey,
     extensible: bool,
@@ -257,39 +265,184 @@ fn validate_and_apply_property_descriptor(
 ) -> bool {
     // 1. Assert: IsPropertyKey(P) is true.
     // 2. If current is undefined, then
-    // a. If extensible is false, return false.
-    // b. If O is undefined, return true.
-    // c. If IsAccessorDescriptor(Desc) is true, then
-    // i. Create an own accessor property named P of object O whose [[Get]], [[Set]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
-    // d. Else,
-    // i. Create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
-    // e. Return true.
+    let Some(current) = current else {
+        // a. If extensible is false, return false.
+        if !extensible {
+            return false;
+        }
+
+        // b. If O is undefined, return true.
+        let Some(object) = object else {
+            return true;
+        };
+
+        // c. If IsAccessorDescriptor(Desc) is true, then
+        if descriptor.is_accessor_descriptor() {
+            // i. Create an own accessor property named P of object O whose [[Get]], [[Set]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+            object.set_property(
+                key,
+                JSObjectPropDescriptor {
+                    get: descriptor.get,
+                    set: descriptor.set,
+                    enumerable: descriptor.enumerable,
+                    configurable: descriptor.configurable,
+                    ..JSObjectPropDescriptor::default()
+                },
+            );
+        }
+        // d. Else,
+        else {
+            // i. Create an own data property named P of object O whose [[Value]], [[Writable]], [[Enumerable]], and [[Configurable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+            object.set_property(
+                key,
+                JSObjectPropDescriptor {
+                    value: descriptor.value,
+                    writable: descriptor.writable,
+                    enumerable: descriptor.enumerable,
+                    configurable: descriptor.configurable,
+                    ..JSObjectPropDescriptor::default()
+                },
+            );
+        }
+
+        // e. Return true.
+        return true;
+    };
+
     // 3. Assert: current is a fully populated Property Descriptor.
+    debug_assert!(current.is_fully_populated());
+
     // 4. If Desc does not have any fields, return true.
+    if !descriptor.is_fully_populated() {
+        return true;
+    }
+
     // 5. If current.[[Configurable]] is false, then
-    // a. If Desc has a [[Configurable]] field and Desc.[[Configurable]] is true, return false.
-    // b. If Desc has an [[Enumerable]] field and Desc.[[Enumerable]] is not current.[[Enumerable]], return false.
-    // c. If IsGenericDescriptor(Desc) is false and IsAccessorDescriptor(Desc) is not IsAccessorDescriptor(current), return false.
-    // d. If IsAccessorDescriptor(current) is true, then
-    // i. If Desc has a [[Get]] field and SameValue(Desc.[[Get]], current.[[Get]]) is false, return false.
-    // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
-    // e. Else if current.[[Writable]] is false, then
-    // i. If Desc has a [[Writable]] field and Desc.[[Writable]] is true, return false.
-    // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
+    if current.configurable == Some(false) {
+        // a. If Desc has a [[Configurable]] field and Desc.[[Configurable]] is true, return false.
+        if descriptor.configurable.is_some() && descriptor.configurable == Some(true) {
+            return false;
+        }
+
+        // b. If Desc has an [[Enumerable]] field and Desc.[[Enumerable]] is not current.[[Enumerable]], return false.
+        if descriptor.enumerable.is_some() && descriptor.enumerable != current.enumerable {
+            return false;
+        }
+
+        // c. If IsGenericDescriptor(Desc) is false and IsAccessorDescriptor(Desc) is not IsAccessorDescriptor(current), return false.
+        if !descriptor.is_generic_descriptor()
+            && descriptor.is_accessor_descriptor() != current.is_accessor_descriptor()
+        {
+            return false;
+        }
+
+        // d. If IsAccessorDescriptor(current) is true, then
+        if current.is_accessor_descriptor() {
+            // i. If Desc has a [[Get]] field and SameValue(Desc.[[Get]], current.[[Get]]) is false, return false.
+            if descriptor.get.is_some()
+                && !same_value(
+                    agent,
+                    descriptor.get.as_ref().unwrap_or_else(|| unreachable!()),
+                    current.get.as_ref().unwrap_or_else(|| unreachable!()),
+                )
+            {
+                return false;
+            }
+
+            // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
+            if descriptor.set.is_some()
+                && !same_value(
+                    agent,
+                    descriptor.set.as_ref().unwrap_or_else(|| unreachable!()),
+                    current.set.as_ref().unwrap_or_else(|| unreachable!()),
+                )
+            {
+                return false;
+            }
+        }
+        // e. Else if current.[[Writable]] is false, then
+        else if current.writable == Some(false) {
+            // i. If Desc has a [[Writable]] field and Desc.[[Writable]] is true, return false.
+            if descriptor.writable.is_some() && descriptor.writable == Some(true) {
+                return false;
+            }
+
+            // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
+            if descriptor.value.is_some()
+                && !same_value(
+                    agent,
+                    descriptor.value.as_ref().unwrap_or_else(|| unreachable!()),
+                    current.value.as_ref().unwrap_or_else(|| unreachable!()),
+                )
+            {
+                return false;
+            }
+        }
+    }
+
     // 6. If O is not undefined, then
-    // a. If IsDataDescriptor(current) is true and IsAccessorDescriptor(Desc) is true, then
-    // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
-    // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
-    // iii. Replace the property named P of object O with an accessor property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Get]] and [[Set]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
-    // b. Else if IsAccessorDescriptor(current) is true and IsDataDescriptor(Desc) is true, then
-    // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
-    // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
-    // iii. Replace the property named P of object O with a data property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Value]] and [[Writable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
-    // c. Else,
-    // i. For each field of Desc, set the corresponding attribute of the property named P of object O to the value of the field.
-    // TODO Remove the below and implement the above.
     if let Some(object) = object {
-        object.set_property(key.clone(), descriptor);
+        // a. If IsDataDescriptor(current) is true and IsAccessorDescriptor(Desc) is true, then
+        if current.is_data_descriptor() && descriptor.is_accessor_descriptor() {
+            // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
+            let configurable = if descriptor.configurable.is_some() {
+                descriptor.configurable.unwrap_or_else(|| unreachable!())
+            } else {
+                current.configurable.unwrap_or_else(|| unreachable!())
+            };
+
+            // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
+            let enumerable = if descriptor.enumerable.is_some() {
+                descriptor.enumerable.unwrap_or_else(|| unreachable!())
+            } else {
+                current.enumerable.unwrap_or_else(|| unreachable!())
+            };
+
+            // iii. Replace the property named P of object O with an accessor property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Get]] and [[Set]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+            object.set_property(
+                key,
+                JSObjectPropDescriptor {
+                    configurable: Some(configurable),
+                    enumerable: Some(enumerable),
+                    get: descriptor.get,
+                    set: descriptor.set,
+                    ..JSObjectPropDescriptor::default()
+                },
+            );
+        }
+        // b. Else if IsAccessorDescriptor(current) is true and IsDataDescriptor(Desc) is true, then
+        else if current.is_accessor_descriptor() && descriptor.is_data_descriptor() {
+            // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
+            let configurable = if descriptor.configurable.is_some() {
+                descriptor.configurable.unwrap_or_else(|| unreachable!())
+            } else {
+                current.configurable.unwrap_or_else(|| unreachable!())
+            };
+
+            // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
+            let enumerable = if descriptor.enumerable.is_some() {
+                descriptor.enumerable.unwrap_or_else(|| unreachable!())
+            } else {
+                current.enumerable.unwrap_or_else(|| unreachable!())
+            };
+
+            // iii. Replace the property named P of object O with a data property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Value]] and [[Writable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
+            object.set_property(
+                key,
+                JSObjectPropDescriptor {
+                    configurable: Some(configurable),
+                    enumerable: Some(enumerable),
+                    value: descriptor.value,
+                    writable: descriptor.writable,
+                    ..JSObjectPropDescriptor::default()
+                },
+            );
+        }
+        // c. Else,
+        // i. For each field of Desc, set the corresponding attribute of the property named P of object O to the value of the field.
+        else {
+            object.set_property(key, descriptor);
+        }
     }
 
     // 7. Return true.
@@ -493,7 +646,7 @@ fn ordinary_set_with_own_descriptor(
             };
 
             // iv. Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
-            return (receiver.methods.define_own_property)(&mut receiver, key, value_desc);
+            return (receiver.methods.define_own_property)(agent, &mut receiver, key, value_desc);
         }
         // e. Else,
         else {
@@ -501,7 +654,7 @@ fn ordinary_set_with_own_descriptor(
             debug_assert!(!receiver.has_property(key));
 
             // ii. Return ? CreateDataProperty(Receiver, P, V).
-            return create_data_property(&mut receiver, key, value);
+            return create_data_property(agent, &mut receiver, key, value);
         }
     }
 
@@ -576,10 +729,7 @@ fn ordinary_own_property_keys(object: &JSObject) -> Vec<JSObjectPropKey> {
     }
 
     // Ascending numeric index order.
-    keys.sort_by_key(|key| {
-        key.as_array_index()
-            .unwrap_or_else(|| unreachable!("Keys vector should only contain valid array indices."))
-    });
+    keys.sort_by_key(|key| key.as_array_index().unwrap_or_else(|| unreachable!()));
 
     // 3. For each own property key P of O such that P is a String and P is not an array index, in ascending chronological order of property creation, do
     for key in object.keys() {

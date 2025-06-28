@@ -1,6 +1,7 @@
 use crate::value::big_int::JSBigInt;
 
 mod big_int;
+mod comparison;
 mod number;
 mod object;
 mod string;
@@ -51,6 +52,20 @@ impl JSValue {
         }
     }
 
+    pub(crate) fn as_number(&self) -> &JSNumber {
+        match self {
+            JSValue::Number(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
+    pub(crate) fn as_number_mut(&mut self) -> &mut JSNumber {
+        match self {
+            JSValue::Number(value) => value,
+            _ => unreachable!(),
+        }
+    }
+
     pub(crate) fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }
@@ -67,5 +82,16 @@ impl JSValue {
             JSValue::Object(object) => object,
             _ => unreachable!(),
         }
+    }
+}
+
+impl JSValue {
+    /// 7.2.7 IsPropertyKey ( argument )
+    /// https://262.ecma-international.org/15.0/#sec-ispropertykey
+    pub(crate) fn is_property_key(&self) -> bool {
+        // 1. If Type(argument) is String, return true.
+        // 2. If Type(argument) is Symbol, return false.
+        // 3. Return false.
+        matches!(self, JSValue::String(_) | JSValue::Symbol)
     }
 }

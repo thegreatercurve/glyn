@@ -61,6 +61,26 @@ pub struct JSObjectPropDescriptor {
 }
 
 impl JSObjectPropDescriptor {
+    pub(crate) fn is_fully_populated(&self) -> bool {
+        self.value.is_some()
+            && self.writable.is_some()
+            && self.get.is_some()
+            && self.set.is_some()
+            && self.enumerable.is_some()
+            && self.configurable.is_some()
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.value.is_none()
+            && self.writable.is_none()
+            && self.get.is_none()
+            && self.set.is_none()
+            && self.enumerable.is_none()
+            && self.configurable.is_none()
+    }
+}
+
+impl JSObjectPropDescriptor {
     /// 6.2.6.1 IsAccessorDescriptor ( Desc )
     /// https://262.ecma-international.org/15.0/index.html#sec-property-descriptor-specification-type
     pub(crate) fn is_accessor_descriptor(&self) -> bool {

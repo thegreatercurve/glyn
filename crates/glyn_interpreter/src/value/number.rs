@@ -40,7 +40,7 @@ impl JSNumber {
         matches!(self, JSNumber::Int(_))
     }
 
-    pub(crate) fn is_zero(&self) -> bool {
+    fn is_zero(&self) -> bool {
         match self {
             JSNumber::Float(f) => *f == 0.0,
             JSNumber::Int(i) => *i == 0,
@@ -48,7 +48,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_pos_zero(&self) -> bool {
+    fn is_pos_zero(&self) -> bool {
         match self {
             JSNumber::Float(f) => *f == 0.0 && f.is_sign_positive(),
             JSNumber::Int(i) => *i == 0,
@@ -56,7 +56,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_neg_zero(&self) -> bool {
+    fn is_neg_zero(&self) -> bool {
         match self {
             JSNumber::Float(f) => *f == 0.0 && f.is_sign_negative(),
             JSNumber::Int(i) => *i == 0,
@@ -64,7 +64,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_nan(&self) -> bool {
+    fn is_nan(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_nan(),
             JSNumber::Int(_) => false,
@@ -72,7 +72,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_finite(&self) -> bool {
+    fn is_finite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_finite(),
             JSNumber::Int(_) => true,
@@ -80,7 +80,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_infinite(&self) -> bool {
+    fn is_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite(),
             JSNumber::Int(_) => false,
@@ -88,7 +88,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_pos_infinite(&self) -> bool {
+    fn is_pos_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f > 0.0,
             JSNumber::Int(_) => false,
@@ -96,7 +96,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_neg_infinite(&self) -> bool {
+    fn is_neg_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f < 0.0,
             JSNumber::Int(_) => false,
@@ -108,7 +108,7 @@ impl JSNumber {
 impl JSNumber {
     /// 6.1.6.1.3 Number::exponentiate ( base, exponent )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-exponentiate
-    pub(crate) fn exponentiate(self, other: Self) -> Self {
+    fn exponentiate(self, other: Self) -> Self {
         match self {
             JSNumber::Float(f) => JSNumber::Float(f.powf(other.as_f64())),
             JSNumber::Int(i) => JSNumber::Int(i.pow(other.as_u32())),
@@ -124,7 +124,7 @@ impl JSNumber {
 
     /// 6.1.6.1.13 Number::equal ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-equal
-    pub(crate) fn equal(self, y: Self) -> bool {
+    fn equal(self, y: Self) -> bool {
         // 1. If x is NaN, return false.
         // 2. If y is NaN, return false.
         if self.is_nan() || y.is_nan() {
@@ -143,6 +143,24 @@ impl JSNumber {
 
         // 6. Return false.
         false
+    }
+
+    /// 6.1.6.1.14 Number::sameValue ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-samevalue
+    pub(crate) fn same_value(&self, y: &Self) -> bool {
+        // 1. 1. If x is NaN and y is NaN, return true.
+        if self.is_nan() || y.is_nan() {
+            return true;
+        }
+
+        // 2. If x is +0𝔽 and y is -0𝔽, return false.
+        // 3. If x is -0𝔽 and y is +0𝔽, return false.
+        if (self.is_pos_zero() && y.is_neg_zero()) || (self.is_neg_zero() && y.is_pos_zero()) {
+            return false;
+        }
+
+        // 4. If x is y, return true.
+        self == y
     }
 }
 
