@@ -34,9 +34,14 @@ pub fn make_basic_object(_internal_slots_list: &[&str]) -> JSObject {
 
 /// 7.3.2 Get ( O, P )
 /// https://262.ecma-international.org/15.0/index.html#sec-get-o-p
-pub(crate) fn get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+pub(crate) fn get(
+    agent: &JSAgent,
+    object: &JSObject,
+    key: &JSObjectPropKey,
+    receiver: Option<&JSValue>,
+) -> CompletionRecord {
     // 1. Return ? O.[[Get]](P, O).
-    (object.methods.get)(agent, object, key)
+    (object.methods.get)(agent, object, key, receiver)
 }
 
 /// 7.3.3 GetV ( V, P )
@@ -48,18 +53,19 @@ pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> J
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
-/// https://262.ecma-international.org/15.0/index.html#sec-set
+/// https://262.ecma-international.org/15.0/index.html#sec-set-o-p-v-throw
 pub(crate) fn set(
     agent: &JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
+    throw: bool,
 ) -> bool {
     // 1. Let success be ? O.[[Set]](P, V, O).
-    let success = (object.methods.set)(agent, object, key, value);
+    let success = (object.methods.set)(agent, object, key, value, None);
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if !success {
+    if !success && throw {
         agent.type_error("Failed to set property on object");
     }
 

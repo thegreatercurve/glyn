@@ -36,10 +36,20 @@ pub struct JSObjectInternalMethods {
     /// [[HasProperty]]
     pub has_property: fn(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> bool,
     /// [[Get]]
-    pub get: fn(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord,
+    pub get: fn(
+        agent: &JSAgent,
+        object: &JSObject,
+        key: &JSObjectPropKey,
+        receiver: Option<&JSValue>,
+    ) -> CompletionRecord,
     /// [[Set]]
-    pub set:
-        fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey, value: JSValue) -> bool,
+    pub set: fn(
+        agent: &JSAgent,
+        object: &mut JSObject,
+        key: &JSObjectPropKey,
+        value: JSValue,
+        receiver: Option<&JSValue>,
+    ) -> bool,
     /// [[Delete]]
     pub delete: fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> bool,
     /// [[OwnPropertyKeys]]

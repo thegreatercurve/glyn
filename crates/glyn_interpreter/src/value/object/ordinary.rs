@@ -331,14 +331,24 @@ fn ordinary_has_property(agent: &JSAgent, object: &JSObject, key: &JSObjectPropK
 
 /// 10.1.8 [[Get]] ( P, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-get-p-receiver
-fn get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+fn get(
+    agent: &JSAgent,
+    object: &JSObject,
+    key: &JSObjectPropKey,
+    receiver: Option<&JSValue>,
+) -> CompletionRecord {
     // 1. Return OrdinaryGet(O, P, Receiver).
-    ordinary_get(agent, object, key)
+    ordinary_get(agent, object, key, receiver)
 }
 
 /// 10.1.8.1 OrdinaryGet ( O, P, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinaryget
-fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+fn ordinary_get(
+    agent: &JSAgent,
+    object: &JSObject,
+    key: &JSObjectPropKey,
+    receiver: Option<&JSValue>,
+) -> CompletionRecord {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
     let desc = (object.methods.get_own_property)(object, key);
 
@@ -355,7 +365,7 @@ fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> Co
         // c. Return ? parent.[[Get]](P, Receiver).
         let parent_object = agent.get_object(parent);
 
-        return (parent_object.methods.get)(agent, parent_object, key);
+        return (parent_object.methods.get)(agent, parent_object, key, receiver);
     };
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
@@ -380,9 +390,15 @@ fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> Co
 
 /// 10.1.9 [[Set]] ( P, V, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
-fn set(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey, value: JSValue) -> bool {
+fn set(
+    agent: &JSAgent,
+    object: &mut JSObject,
+    key: &JSObjectPropKey,
+    value: JSValue,
+    receiver: Option<&JSValue>,
+) -> bool {
     // 1. Return OrdinarySet(O, P, V, Receiver).
-    ordinary_set(agent, object, key, value)
+    ordinary_set(agent, object, key, value, receiver)
 }
 
 /// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
@@ -392,12 +408,13 @@ fn ordinary_set(
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
+    receiver: Option<&JSValue>,
 ) -> bool {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
     let own_desc = (object.methods.get_own_property)(object, &key);
 
     // 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
-    ordinary_set_with_own_descriptor(object, key, value, own_desc)
+    ordinary_set_with_own_descriptor(object, key, value, receiver, own_desc)
 }
 
 /// 10.1.9.2 OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )
@@ -406,6 +423,7 @@ fn ordinary_set_with_own_descriptor(
     _object: &mut JSObject,
     _key: &JSObjectPropKey,
     _value: JSValue,
+    _receiver: Option<&JSValue>,
     _own_desc: Option<JSObjectPropDescriptor>,
 ) -> bool {
     // 1. If ownDesc is undefined, then

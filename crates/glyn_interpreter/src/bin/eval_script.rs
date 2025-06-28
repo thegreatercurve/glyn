@@ -27,7 +27,9 @@ fn main() {
         &agent,
         &obj2,
         &JSObjectPropKey::String(JSString::from("hello")),
+        None,
     );
+
     println!("value: {:?}", value);
 
     let script_str = r#"
