@@ -56,7 +56,7 @@ pub struct JSObjectInternalMethods {
     pub own_property_keys: fn(agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey>,
 }
 
-pub(crate) struct PropertyIndex(usize);
+struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
@@ -78,36 +78,36 @@ impl Trace for JSObject {
 
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
-    pub(crate) fn ordinary_prototype(&self) -> Option<Gc<JSObject>> {
+    fn ordinary_prototype(&self) -> Option<Gc<JSObject>> {
         self.slots.prototype
     }
 
-    pub(crate) fn set_prototype(&mut self, prototype: Option<Gc<JSObject>>) {
+    fn set_prototype(&mut self, prototype: Option<Gc<JSObject>>) {
         self.slots.prototype = prototype;
     }
 
     /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
-    pub(crate) fn ordinary_extensible(&self) -> bool {
+    fn ordinary_extensible(&self) -> bool {
         self.slots.extensible.unwrap_or(true)
     }
 
-    pub(crate) fn set_extensible(&mut self, extensible: bool) {
+    fn set_extensible(&mut self, extensible: bool) {
         self.slots.extensible = Some(extensible);
     }
 
-    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
+    fn keys(&self) -> &[JSObjectPropKey] {
         &self.keys
     }
 
-    pub(crate) fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
+    fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
         self.values.get(index.0)
     }
 
-    pub(crate) fn has_property(&self, key: &JSObjectPropKey) -> bool {
-        self.keys.iter().find(|k| *k == key).is_some()
+    fn has_property(&self, key: &JSObjectPropKey) -> bool {
+        self.keys.iter().any(|k| k == key)
     }
 
-    pub(crate) fn set_property(
+    fn set_property(
         &mut self,
         key: JSObjectPropKey,
         value: JSObjectPropDescriptor,
@@ -118,14 +118,14 @@ impl JSObject {
         PropertyIndex(self.keys.len() - 1)
     }
 
-    pub(crate) fn delete_property(&mut self, index: PropertyIndex) -> bool {
+    fn delete_property(&mut self, index: PropertyIndex) -> bool {
         self.keys.remove(index.0);
         self.values.remove(index.0);
 
         true
     }
 
-    pub(crate) fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
+    fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
         self.keys.iter().position(|k| k == key).map(PropertyIndex)
     }
 }
