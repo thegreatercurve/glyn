@@ -556,20 +556,47 @@ fn ordinary_delete(_agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKe
 
 /// 10.1.11 [[OwnPropertyKeys]] ( )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
-fn own_property_keys(agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey> {
+fn own_property_keys(_agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey> {
     // 1. Return OrdinaryOwnPropertyKeys(O).
-    ordinary_own_property_keys(agent, object)
+    ordinary_own_property_keys(object)
 }
 
 /// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinaryownpropertykeys
-fn ordinary_own_property_keys(_agent: &JSAgent, _object: &JSObject) -> Vec<JSObjectPropKey> {
-    // 1. Let keys be a new empty List.
+fn ordinary_own_property_keys(object: &JSObject) -> Vec<JSObjectPropKey> {
+    // Let keys be a new empty List.
+    let mut keys: Vec<JSObjectPropKey> = Vec::new();
+
     // 2. For each own property key P of O such that P is an array index, in ascending numeric index order, do
+    for key in object.keys() {
+        if key.is_array_index() {
+            // a. Append P to keys.
+            keys.push(key.clone());
+        }
+    }
+
+    // Ascending numeric index order.
+    keys.sort_by_key(|key| {
+        key.as_array_index()
+            .unwrap_or_else(|| unreachable!("Keys vector should only contain valid array indices."))
+    });
+
     // 3. For each own property key P of O such that P is a String and P is not an array index, in ascending chronological order of property creation, do
-    // a. Append P to keys.
+    for key in object.keys() {
+        if key.is_string() {
+            // a. Append P to keys.
+            keys.push(key.clone());
+        }
+    }
+
     // 4. For each own property key P of O such that P is a Symbol, in ascending chronological order of property creation, do
-    // a. Append P to keys.
+    for key in object.keys() {
+        if key.is_symbol() {
+            // a. Append P to keys.
+            keys.push(key.clone());
+        }
+    }
+
     // 5. Return keys.
-    todo!()
+    keys
 }

@@ -1,5 +1,7 @@
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 
+use crate::{value::number, JSString};
+
 /// 6.1.6.1 The Number Type
 /// https://262.ecma-international.org/15.0/#sec-numeric-types-number
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -101,7 +103,9 @@ impl JSNumber {
             JSNumber::UInt(_) => false,
         }
     }
+}
 
+impl JSNumber {
     /// 6.1.6.1.3 Number::exponentiate ( base, exponent )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-exponentiate
     pub(crate) fn exponentiate(self, other: Self) -> Self {
@@ -142,6 +146,24 @@ impl JSNumber {
     }
 }
 
+impl TryFrom<JSString> for JSNumber {
+    type Error = String;
+
+    fn try_from(value: JSString) -> Result<Self, Self::Error> {
+        let string = value.0;
+
+        if let Ok(number) = string.parse::<u32>() {
+            Ok(JSNumber::UInt(number))
+        } else if let Ok(number) = string.parse::<i32>() {
+            Ok(JSNumber::Int(number))
+        } else if let Ok(number) = string.parse::<f64>() {
+            Ok(JSNumber::Float(number))
+        } else {
+            Err(format!("Invalid number: {}", string))
+        }
+    }
+}
+
 impl From<f64> for JSNumber {
     fn from(value: f64) -> Self {
         // Optimize for for i32 for memory efficiency.
@@ -156,6 +178,12 @@ impl From<f64> for JSNumber {
 impl From<i32> for JSNumber {
     fn from(value: i32) -> Self {
         JSNumber::Int(value)
+    }
+}
+
+impl From<u32> for JSNumber {
+    fn from(value: u32) -> Self {
+        JSNumber::UInt(value)
     }
 }
 

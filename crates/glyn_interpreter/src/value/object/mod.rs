@@ -63,9 +63,9 @@ pub(crate) struct PropertyIndex(usize);
 #[derive(Clone, Debug, PartialEq)]
 pub struct JSObject {
     pub methods: &'static JSObjectInternalMethods,
-    pub slots: ObjectInternalSlots,
-    pub keys: Vec<JSObjectPropKey>,
-    pub values: Vec<JSObjectPropDescriptor>,
+    slots: ObjectInternalSlots,
+    keys: Vec<JSObjectPropKey>,
+    values: Vec<JSObjectPropDescriptor>,
 }
 
 impl Trace for JSObject {
@@ -83,7 +83,6 @@ impl JSObject {
     }
 
     pub(crate) fn set_prototype(&mut self, prototype: Option<Gc<JSObject>>) {
-        // TODO: Add proper GC to support the below.
         self.slots.prototype = prototype;
     }
 
@@ -94,6 +93,10 @@ impl JSObject {
 
     pub(crate) fn set_extensible(&mut self, extensible: bool) {
         self.slots.extensible = Some(extensible);
+    }
+
+    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
+        &self.keys
     }
 
     pub(crate) fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {

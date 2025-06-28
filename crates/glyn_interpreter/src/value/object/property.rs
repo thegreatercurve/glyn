@@ -1,4 +1,4 @@
-use crate::{value::string::JSString, JSValue};
+use crate::{value::string::JSString, JSNumber, JSValue};
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
@@ -6,6 +6,35 @@ use crate::{value::string::JSString, JSValue};
 pub enum JSObjectPropKey {
     String(JSString),
     Symbol(JSValue),
+}
+
+impl JSObjectPropKey {
+    pub(crate) fn is_string(&self) -> bool {
+        matches!(self, JSObjectPropKey::String(_))
+    }
+
+    pub(crate) fn is_symbol(&self) -> bool {
+        matches!(self, JSObjectPropKey::Symbol(_))
+    }
+
+    /// An array index is an integer index n such that CanonicalNumericIndexString(n) returns
+    /// an integral Number in the inclusive interval from +0𝔽 to 𝔽(2****32 - 2).
+    /// https://262.ecma-international.org/15.0/index.html#sec-object-type
+    pub(crate) fn as_array_index(&self) -> Option<u32> {
+        if let JSObjectPropKey::String(value) = self {
+            if let Ok(number) = JSNumber::try_from(value.clone()) {
+                if let JSNumber::UInt(number) = number {
+                    return Some(number);
+                }
+            }
+        }
+
+        None
+    }
+
+    pub(crate) fn is_array_index(&self) -> bool {
+        self.as_array_index().is_some()
+    }
 }
 
 /// 6.2.6 The Property Descriptor Specification Type
