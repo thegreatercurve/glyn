@@ -38,20 +38,15 @@ pub struct JSObjectInternalMethods {
     /// [[Get]]
     pub get: fn(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> CompletionRecord,
     /// [[Set]]
-    pub set: fn(
-        agent: &JSAgent,
-        object: &mut JSObject,
-        key: &JSObjectPropKey,
-        value: JSValue,
-    ) -> CompletionRecord,
+    pub set:
+        fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey, value: JSValue) -> bool,
     /// [[Delete]]
-    pub delete:
-        fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> CompletionRecord,
+    pub delete: fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> bool,
     /// [[OwnPropertyKeys]]
     pub own_property_keys: fn(agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey>,
 }
 
-struct PropertyIndex(usize);
+pub(crate) struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type

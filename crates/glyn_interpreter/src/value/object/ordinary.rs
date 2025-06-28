@@ -380,12 +380,7 @@ fn ordinary_get(agent: &JSAgent, object: &JSObject, key: &JSObjectPropKey) -> Co
 
 /// 10.1.9 [[Set]] ( P, V, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
-fn set(
-    agent: &JSAgent,
-    object: &mut JSObject,
-    key: &JSObjectPropKey,
-    value: JSValue,
-) -> CompletionRecord {
+fn set(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey, value: JSValue) -> bool {
     // 1. Return OrdinarySet(O, P, V, Receiver).
     ordinary_set(agent, object, key, value)
 }
@@ -397,7 +392,7 @@ fn ordinary_set(
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> CompletionRecord {
+) -> bool {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
     let own_desc = (object.methods.get_own_property)(object, &key);
 
@@ -412,7 +407,7 @@ fn ordinary_set_with_own_descriptor(
     _key: &JSObjectPropKey,
     _value: JSValue,
     _own_desc: Option<JSObjectPropDescriptor>,
-) -> CompletionRecord {
+) -> bool {
     // 1. If ownDesc is undefined, then
     // a. Let parent be ? O.[[GetPrototypeOf]]().
     // b. If parent is not null, then
@@ -441,24 +436,20 @@ fn ordinary_set_with_own_descriptor(
 
 /// 10.1.10 [[Delete]] ( P )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-delete-p
-fn delete(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> CompletionRecord {
+fn delete(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> bool {
     // 1. Return OrdinaryDelete(O, P).
     ordinary_delete(agent, object, key)
 }
 
 /// 10.1.10.1 OrdinaryDelete ( O, P )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarydelete
-fn ordinary_delete(
-    _agent: &JSAgent,
-    object: &mut JSObject,
-    key: &JSObjectPropKey,
-) -> CompletionRecord {
+fn ordinary_delete(_agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> bool {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
     let desc = (object.methods.get_own_property)(object, key);
 
     // 2. If desc is undefined, return true.
     let Some(desc) = desc else {
-        return normal_completion(JSValue::Boolean(true));
+        return true;
     };
 
     // 3. If desc.[[Configurable]] is true, then
@@ -467,11 +458,11 @@ fn ordinary_delete(
         object.delete_property(object.find_property_index(key).unwrap());
 
         // b. Return true.
-        return normal_completion(JSValue::Boolean(true));
+        return true;
     }
 
     // 4. Return false.
-    normal_completion(JSValue::Boolean(false))
+    false
 }
 
 /// 10.1.11 [[OwnPropertyKeys]] ( )

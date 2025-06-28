@@ -50,20 +50,18 @@ pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> J
 /// 7.3.4 Set ( O, P, V, Throw )
 /// https://262.ecma-international.org/15.0/index.html#sec-set
 pub(crate) fn set(
-    agent: &mut JSAgent,
+    agent: &JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> CompletionRecord {
+) -> bool {
     // 1. Let success be ? O.[[Set]](P, V, O).
     let success = (object.methods.set)(agent, object, key, value);
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if let Ok(ref completion) = success {
-        if completion.value == JSValue::Boolean(false) {
-            agent.type_error("Failed to set property on object");
-        }
-    };
+    if !success {
+        agent.type_error("Failed to set property on object");
+    }
 
     // 3. Return unused.
     success
