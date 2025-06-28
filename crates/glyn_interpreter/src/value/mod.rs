@@ -51,6 +51,10 @@ impl JSValue {
         }
     }
 
+    pub(crate) fn is_object(&self) -> bool {
+        matches!(self, JSValue::Object(_))
+    }
+
     pub(crate) fn to_object(&self) -> Gc<JSObject> {
         match self {
             JSValue::Object(object) => *object,

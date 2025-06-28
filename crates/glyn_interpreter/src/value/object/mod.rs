@@ -19,7 +19,7 @@ pub struct JSObjectInternalMethods {
     pub get_prototype_of: fn(agent: &JSAgent, object: &JSObject) -> Option<Gc<JSObject>>,
     /// [[SetPrototypeOf]]
     pub set_prototype_of:
-        fn(agent: &JSAgent, object: &mut JSObject, prototype: Option<Gc<JSObject>>) -> bool,
+        fn(agent: &mut JSAgent, object: &mut JSObject, prototype: Option<Gc<JSObject>>) -> bool,
     /// [[IsExtensible]]
     pub is_extensible: fn(object: &JSObject) -> bool,
     /// [[PreventExtensions]]
@@ -44,7 +44,7 @@ pub struct JSObjectInternalMethods {
     ) -> CompletionRecord,
     /// [[Set]]
     pub set: fn(
-        agent: &JSAgent,
+        agent: &mut JSAgent,
         object: &mut JSObject,
         key: &JSObjectPropKey,
         value: JSValue,
@@ -79,7 +79,6 @@ impl Trace for JSObject {
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
     pub(crate) fn ordinary_prototype(&self) -> Option<Gc<JSObject>> {
-        // TODO: Add proper GC to support the below.
         self.slots.prototype
     }
 

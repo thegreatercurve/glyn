@@ -4,6 +4,7 @@ use crate::{
     runtime::{normal_completion, CompletionRecord},
     value::{
         object::{
+            operations::create_data_property,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjectInternalMethods,
         },
@@ -47,7 +48,7 @@ fn ordinary_get_prototype_of(object: &JSObject) -> Option<Gc<JSObject>> {
 /// 10.1.2 [[SetPrototypeOf]] ( V )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
 fn set_prototype_of(
-    agent: &JSAgent,
+    agent: &mut JSAgent,
     object: &mut JSObject,
     prototype: Option<Gc<JSObject>>,
 ) -> bool {
@@ -88,27 +89,26 @@ fn ordinary_set_prototype_of(
 
     // 6. Let done be false.
     // 7. Repeat, while done is false,
-    while let Some(p) = opt_p {
+    while let Some(parent_ptr) = opt_p {
         // a. If p is null, then
         // i. Set done to true.
         // b. Else if SameValue(p, O) is true, then
-        let parent_object = agent.get_object(p);
+        let parent = agent.deref_object_ptr(parent_ptr);
 
-        if parent_object == object {
+        if *object == parent {
             // i. Return false.
             return false;
         }
         // c. Else,
         else {
             // i. If p.[[GetPrototypeOf]] is not the ordinary object internal method defined in 10.1.1, set done to true.
-            if parent_object.methods.get_prototype_of as usize != ordinary_get_prototype_of as usize
-            {
+            if parent.methods.get_prototype_of as usize != ordinary_get_prototype_of as usize {
                 // i. Set done to true.
                 break;
             }
 
             // ii. Else, set p to p.[[Prototype]].
-            opt_p = parent_object.ordinary_prototype();
+            opt_p = parent.ordinary_prototype();
         }
     }
 
@@ -315,14 +315,14 @@ fn ordinary_has_property(agent: &JSAgent, object: &JSObject, key: &JSObjectPropK
     }
 
     // 3. Let parent be ? O.[[GetPrototypeOf]]().
-    let parent = (object.methods.get_prototype_of)(agent, object);
+    let opt_parent_ptr = (object.methods.get_prototype_of)(agent, object);
 
     // 4. If parent is not null, then
-    if let Some(parent) = parent {
+    if let Some(parent_ptr) = opt_parent_ptr {
         // a. Return ? parent.[[HasProperty]](P).
-        let parent_object = agent.get_object(parent);
+        let parent = agent.deref_object_ptr(parent_ptr);
 
-        return (parent_object.methods.has_property)(agent, parent_object, key);
+        return (parent.methods.has_property)(agent, &parent, key);
     }
 
     // 5. Return false.
@@ -355,17 +355,17 @@ fn ordinary_get(
     // 2. If desc is undefined, then
     let Some(desc) = desc else {
         // a. Let parent be ? O.[[GetPrototypeOf]]().
-        let parent = (object.methods.get_prototype_of)(agent, object);
+        let opt_parent_ptr = (object.methods.get_prototype_of)(agent, object);
 
         // b. If parent is null, return undefined.
-        let Some(parent) = parent else {
+        let Some(parent_ptr) = opt_parent_ptr else {
             return normal_completion(JSValue::Undefined);
         };
 
         // c. Return ? parent.[[Get]](P, Receiver).
-        let parent_object = agent.get_object(parent);
+        let parent = agent.deref_object_ptr(parent_ptr);
 
-        return (parent_object.methods.get)(agent, parent_object, key, receiver);
+        return (parent.methods.get)(agent, &parent, key, receiver);
     };
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
@@ -391,7 +391,7 @@ fn ordinary_get(
 /// 10.1.9 [[Set]] ( P, V, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
 fn set(
-    agent: &JSAgent,
+    agent: &mut JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
@@ -404,7 +404,7 @@ fn set(
 /// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinaryset
 fn ordinary_set(
-    _agent: &JSAgent,
+    agent: &mut JSAgent,
     object: &mut JSObject,
     key: &JSObjectPropKey,
     value: JSValue,
@@ -414,42 +414,113 @@ fn ordinary_set(
     let own_desc = (object.methods.get_own_property)(object, &key);
 
     // 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
-    ordinary_set_with_own_descriptor(object, key, value, receiver, own_desc)
+    ordinary_set_with_own_descriptor(agent, object, key, value, receiver, own_desc)
 }
 
 /// 10.1.9.2 OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarysetwithowndescriptor
 fn ordinary_set_with_own_descriptor(
-    _object: &mut JSObject,
-    _key: &JSObjectPropKey,
-    _value: JSValue,
-    _receiver: Option<&JSValue>,
-    _own_desc: Option<JSObjectPropDescriptor>,
+    agent: &mut JSAgent,
+    object: &mut JSObject,
+    key: &JSObjectPropKey,
+    value: JSValue,
+    receiver: Option<&JSValue>,
+    opt_own_desc: Option<JSObjectPropDescriptor>,
 ) -> bool {
     // 1. If ownDesc is undefined, then
-    // a. Let parent be ? O.[[GetPrototypeOf]]().
-    // b. If parent is not null, then
-    // i. Return ? parent.[[Set]](P, V, Receiver).
-    // c. Else,
-    // i. Set ownDesc to the PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
+    let own_desc = if let Some(own_desc) = opt_own_desc {
+        own_desc
+    } else {
+        // a. Let parent be ? O.[[GetPrototypeOf]]().
+        let parent = (object.methods.get_prototype_of)(agent, object);
+
+        // b. If parent is not null, then
+        if let Some(parent_ptr) = parent {
+            // i. Return ? parent.[[Set]](P, V, Receiver).
+            let mut parent = agent.deref_object_ptr(parent_ptr);
+
+            return (parent.methods.set)(agent, &mut parent, key, value, receiver);
+        }
+
+        // c. Else,
+        // i. Set ownDesc to the PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
+        JSObjectPropDescriptor {
+            value: Some(JSValue::Undefined),
+            writable: Some(true),
+            enumerable: Some(true),
+            configurable: Some(true),
+            ..JSObjectPropDescriptor::default()
+        }
+    };
+
     // 2. If IsDataDescriptor(ownDesc) is true, then
-    // a. If ownDesc.[[Writable]] is false, return false.
-    // b. If Receiver is not an Object, return false.
-    // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
-    // d. If existingDescriptor is not undefined, then
-    // i. If IsAccessorDescriptor(existingDescriptor) is true, return false.
-    // ii. If existingDescriptor.[[Writable]] is false, return false.
-    // iii. Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
-    // iv. Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
-    // e. Else,
-    // i. Assert: Receiver does not currently have a property P.
-    // ii. Return ? CreateDataProperty(Receiver, P, V).
+    if own_desc.is_data_descriptor() {
+        // a. If ownDesc.[[Writable]] is false, return false.
+        if own_desc.writable == Some(true) {
+            return false;
+        }
+
+        // b. If Receiver is not an Object, return false.
+        let Some(receiver) = receiver else {
+            return false;
+        };
+
+        if !receiver.is_object() {
+            return false;
+        }
+
+        // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
+        let mut receiver = agent.deref_object_ptr(receiver.to_object());
+
+        let existing_desc = (receiver.methods.get_own_property)(&mut receiver, key);
+
+        // d. If existingDescriptor is not undefined, then
+        if let Some(existing_desc) = existing_desc {
+            // i. If IsAccessorDescriptor(existingDescriptor) is true, return false.
+            if existing_desc.is_accessor_descriptor() {
+                return false;
+            }
+
+            // ii. If existingDescriptor.[[Writable]] is false, return false.
+            if existing_desc.writable == Some(false) {
+                return false;
+            }
+
+            // iii. Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
+            let value_desc = JSObjectPropDescriptor {
+                value: Some(value),
+                ..JSObjectPropDescriptor::default()
+            };
+
+            // iv. Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
+            return (receiver.methods.define_own_property)(&mut receiver, key, value_desc);
+        }
+        // e. Else,
+        else {
+            // i. Assert: Receiver does not currently have a property P.
+            debug_assert!(!receiver.has_property(key));
+
+            // ii. Return ? CreateDataProperty(Receiver, P, V).
+            return create_data_property(&mut receiver, key, value);
+        }
+    }
+
     // 3. Assert: IsAccessorDescriptor(ownDesc) is true.
+    debug_assert!(own_desc.is_accessor_descriptor());
+
     // 4. Let setter be ownDesc.[[Set]].
+    let setter = own_desc.set;
+
     // 5. If setter is undefined, return false.
+    if setter.is_none() {
+        return false;
+    }
+
     // 6. Perform ? Call(setter, Receiver, « V »).
+    todo!();
+
     // 7. Return true.
-    todo!()
+    true
 }
 
 /// 10.1.10 [[Delete]] ( P )

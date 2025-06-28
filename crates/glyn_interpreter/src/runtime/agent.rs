@@ -52,8 +52,8 @@ impl JSAgent {
         panic!("SyntaxError: {message:?}");
     }
 
-    pub fn get_object(&self, object: Gc<JSObject>) -> &JSObject {
-        self.object_heap.get(object)
+    pub fn deref_object_ptr(&self, object: Gc<JSObject>) -> JSObject {
+        self.object_heap.get(object).clone()
     }
 
     pub fn allocate_object(&mut self, object: JSObject) -> Gc<JSObject> {
