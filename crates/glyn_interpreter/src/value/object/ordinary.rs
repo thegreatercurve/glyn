@@ -566,7 +566,7 @@ fn ordinary_set(
     receiver: Option<&JSValue>,
 ) -> bool {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
-    let own_desc = (object.methods.get_own_property)(object, &key);
+    let own_desc = (object.methods.get_own_property)(object, key);
 
     // 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
     ordinary_set_with_own_descriptor(agent, object, key, value, receiver, own_desc)

@@ -72,7 +72,7 @@ impl JSNumber {
         }
     }
 
-    fn is_finite(&self) -> bool {
+    pub(crate) fn is_finite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_finite(),
             JSNumber::Int(_) => true,

@@ -1,6 +1,4 @@
-use crate::runtime::{normal_completion, CompletionRecord};
 use crate::value::big_int::JSBigInt;
-use crate::JSAgent;
 
 mod big_int;
 mod comparison;
@@ -73,52 +71,3 @@ impl JSValue {
     }
 }
 
-impl JSValue {
-    /// 7.2.3 IsCallable ( argument )
-    /// https://262.ecma-international.org/15.0/#sec-iscallable
-    pub(crate) fn is_callable(&self, agent: &JSAgent) -> bool {
-        // If argument is not an Object, return false.
-        let Some(object_ptr) = self.as_object() else {
-            return false;
-        };
-
-        // 2. If argument has a [[Call]] internal method, return true.
-        if agent.deref_object_ptr(object_ptr).methods.call.is_some() {
-            return true;
-        }
-
-        // 3. Return false.
-        false
-    }
-
-    /// 7.2.4 IsConstructor ( argument )
-    /// https://262.ecma-international.org/15.0/#sec-isconstructor
-    pub(crate) fn is_constructor(&self, agent: &JSAgent) -> bool {
-        // If argument is not an Object, return false.
-        let Some(object_ptr) = self.as_object() else {
-            return false;
-        };
-
-        // 2. If argument has a [[Construct]] internal method, return true.
-        if agent
-            .deref_object_ptr(object_ptr)
-            .methods
-            .construct
-            .is_some()
-        {
-            return true;
-        }
-
-        // 3. Return false.
-        false
-    }
-
-    /// 7.2.7 IsPropertyKey ( argument )
-    /// https://262.ecma-international.org/15.0/#sec-ispropertykey
-    pub(crate) fn is_property_key(&self) -> bool {
-        // 1. If Type(argument) is String, return true.
-        // 2. If Type(argument) is Symbol, return false.
-        // 3. Return false.
-        matches!(self, JSValue::String(_) | JSValue::Symbol)
-    }
-}
