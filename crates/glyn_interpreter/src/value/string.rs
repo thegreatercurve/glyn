@@ -3,6 +3,12 @@
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct JSString(pub String);
 
+impl JSString {
+    pub(crate) fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
 impl From<String> for JSString {
     fn from(value: String) -> Self {
         JSString(value)

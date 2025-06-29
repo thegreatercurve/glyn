@@ -40,9 +40,9 @@ impl JSNumber {
         matches!(self, JSNumber::Int(_))
     }
 
-    fn is_zero(&self) -> bool {
+    pub(crate) fn is_zero(&self) -> bool {
         match self {
-            JSNumber::Float(f) => *f == 0.0,
+            JSNumber::Float(f) => *f == 0.0 || self.is_pos_zero() || self.is_neg_zero(),
             JSNumber::Int(i) => *i == 0,
             JSNumber::UInt(u) => *u == 0,
         }
@@ -64,7 +64,7 @@ impl JSNumber {
         }
     }
 
-    fn is_nan(&self) -> bool {
+    pub(crate) fn is_nan(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_nan(),
             JSNumber::Int(_) => false,

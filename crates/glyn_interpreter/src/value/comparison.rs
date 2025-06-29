@@ -1,4 +1,7 @@
-use crate::{runtime::{normal_completion, CompletionRecord}, JSAgent, JSNumber, JSValue};
+use crate::{
+    runtime::{normal_completion, CompletionRecord},
+    JSAgent, JSNumber, JSValue,
+};
 
 impl JSValue {
     /// 7.2.1 RequireObjectCoercible ( argument )
@@ -95,7 +98,6 @@ impl JSValue {
         matches!(self, JSValue::String(_) | JSValue::Symbol)
     }
 }
-
 
 /// 7.2.10 SameValue ( x, y )
 /// https://262.ecma-international.org/15.0/#sec-samevalue

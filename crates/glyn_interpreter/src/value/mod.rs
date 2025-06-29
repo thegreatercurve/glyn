@@ -2,6 +2,7 @@ use crate::value::big_int::JSBigInt;
 
 mod big_int;
 mod comparison;
+mod conversion;
 mod number;
 mod object;
 mod string;
@@ -38,36 +39,46 @@ impl From<Gc<JSObject>> for JSValue {
 }
 
 impl JSValue {
-    pub(crate) fn as_number(&self) -> Option<&JSNumber> {
+    fn is_boolean(&self) -> bool {
+        matches!(self, JSValue::Boolean(_))
+    }
+
+    fn as_boolean(&self) -> Option<&bool> {
+        match self {
+            JSValue::Boolean(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    fn as_number(&self) -> Option<&JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn as_number_mut(&mut self) -> Option<&mut JSNumber> {
+    fn as_number_mut(&mut self) -> Option<&mut JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn is_object(&self) -> bool {
+    fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }
 
-    pub(crate) fn as_object(&self) -> Option<Gc<JSObject>> {
+    fn as_object(&self) -> Option<Gc<JSObject>> {
         match self {
             JSValue::Object(object) => Some(*object),
             _ => None,
         }
     }
 
-    pub(crate) fn as_object_mut(&mut self) -> Option<&mut Gc<JSObject>> {
+    fn as_object_mut(&mut self) -> Option<&mut Gc<JSObject>> {
         match self {
             JSValue::Object(object) => Some(object),
             _ => None,
         }
     }
 }
-
