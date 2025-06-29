@@ -1,4 +1,6 @@
+use crate::runtime::{normal_completion, CompletionRecord};
 use crate::value::big_int::JSBigInt;
+use crate::JSAgent;
 
 mod big_int;
 mod comparison;
@@ -38,31 +40,17 @@ impl From<Gc<JSObject>> for JSValue {
 }
 
 impl JSValue {
-    pub(crate) fn to_boolean(&self) -> bool {
+    pub(crate) fn as_number(&self) -> Option<&JSNumber> {
         match self {
-            JSValue::Boolean(value) => *value,
-            _ => unreachable!(),
+            JSValue::Number(value) => Some(value),
+            _ => None,
         }
     }
 
-    pub(crate) fn to_boolean_mut(&mut self) -> &mut bool {
+    pub(crate) fn as_number_mut(&mut self) -> Option<&mut JSNumber> {
         match self {
-            JSValue::Boolean(value) => value,
-            _ => unreachable!(),
-        }
-    }
-
-    pub(crate) fn as_number(&self) -> &JSNumber {
-        match self {
-            JSValue::Number(value) => value,
-            _ => unreachable!(),
-        }
-    }
-
-    pub(crate) fn as_number_mut(&mut self) -> &mut JSNumber {
-        match self {
-            JSValue::Number(value) => value,
-            _ => unreachable!(),
+            JSValue::Number(value) => Some(value),
+            _ => None,
         }
     }
 
@@ -70,22 +58,61 @@ impl JSValue {
         matches!(self, JSValue::Object(_))
     }
 
-    pub(crate) fn to_object(&self) -> Gc<JSObject> {
+    pub(crate) fn as_object(&self) -> Option<Gc<JSObject>> {
         match self {
-            JSValue::Object(object) => *object,
-            _ => unreachable!(),
+            JSValue::Object(object) => Some(*object),
+            _ => None,
         }
     }
 
-    pub(crate) fn to_object_mut(&mut self) -> &mut Gc<JSObject> {
+    pub(crate) fn as_object_mut(&mut self) -> Option<&mut Gc<JSObject>> {
         match self {
-            JSValue::Object(object) => object,
-            _ => unreachable!(),
+            JSValue::Object(object) => Some(object),
+            _ => None,
         }
     }
 }
 
 impl JSValue {
+    /// 7.2.3 IsCallable ( argument )
+    /// https://262.ecma-international.org/15.0/#sec-iscallable
+    pub(crate) fn is_callable(&self, agent: &JSAgent) -> bool {
+        // If argument is not an Object, return false.
+        let Some(object_ptr) = self.as_object() else {
+            return false;
+        };
+
+        // 2. If argument has a [[Call]] internal method, return true.
+        if agent.deref_object_ptr(object_ptr).methods.call.is_some() {
+            return true;
+        }
+
+        // 3. Return false.
+        false
+    }
+
+    /// 7.2.4 IsConstructor ( argument )
+    /// https://262.ecma-international.org/15.0/#sec-isconstructor
+    pub(crate) fn is_constructor(&self, agent: &JSAgent) -> bool {
+        // If argument is not an Object, return false.
+        let Some(object_ptr) = self.as_object() else {
+            return false;
+        };
+
+        // 2. If argument has a [[Construct]] internal method, return true.
+        if agent
+            .deref_object_ptr(object_ptr)
+            .methods
+            .construct
+            .is_some()
+        {
+            return true;
+        }
+
+        // 3. Return false.
+        false
+    }
+
     /// 7.2.7 IsPropertyKey ( argument )
     /// https://262.ecma-international.org/15.0/#sec-ispropertykey
     pub(crate) fn is_property_key(&self) -> bool {

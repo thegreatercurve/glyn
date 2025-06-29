@@ -11,7 +11,7 @@ pub(crate) fn same_value(agent: &JSAgent, x: &JSValue, y: &JSValue) -> bool {
     // 2. If x is a Number, then
     if let JSValue::Number(x) = x {
         // a. Return Number::sameValue(x, y).
-        return x.same_value(y.as_number());
+        return x.same_value(y.as_number().unwrap_or_else(|| unreachable!()));
     }
 
     // 3. Return SameValueNonNumber(x, y).

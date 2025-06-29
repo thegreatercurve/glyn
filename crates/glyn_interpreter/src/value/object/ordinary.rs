@@ -30,6 +30,8 @@ pub(crate) static ORDINARY_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
         set,
         delete,
         own_property_keys,
+        call: None,
+        construct: None,
     };
 
 /// 10.1.1 [[GetPrototypeOf]] ( )
@@ -523,7 +525,7 @@ fn ordinary_get(
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
     if desc.is_data_descriptor() {
-        return normal_completion(desc.value.unwrap());
+        return normal_completion(desc.value.unwrap_or_else(|| unreachable!()));
     }
 
     // 4. Assert: IsAccessorDescriptor(desc) is true.
@@ -623,7 +625,8 @@ fn ordinary_set_with_own_descriptor(
         }
 
         // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
-        let mut receiver = agent.deref_object_ptr(receiver.to_object());
+        let mut receiver =
+            agent.deref_object_ptr(receiver.as_object().unwrap_or_else(|| unreachable!()));
 
         let existing_desc = (receiver.methods.get_own_property)(&mut receiver, key);
 
@@ -697,7 +700,11 @@ fn ordinary_delete(_agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKe
     // 3. If desc.[[Configurable]] is true, then
     if desc.configurable.unwrap_or(false) {
         // a. Remove the own property with name P from O.
-        object.delete_property(object.find_property_index(key).unwrap());
+        object.delete_property(
+            object
+                .find_property_index(key)
+                .unwrap_or_else(|| unreachable!()),
+        );
 
         // b. Return true.
         return true;

@@ -55,6 +55,18 @@ pub struct JSObjectInternalMethods {
     pub delete: fn(agent: &JSAgent, object: &mut JSObject, key: &JSObjectPropKey) -> bool,
     /// [[OwnPropertyKeys]]
     pub own_property_keys: fn(agent: &JSAgent, object: &JSObject) -> Vec<JSObjectPropKey>,
+    /// [[Call]]
+    pub call: Option<
+        fn(
+            agent: &mut JSAgent,
+            object: &mut JSObject,
+            this: Option<&JSValue>,
+            args: &[JSValue],
+        ) -> CompletionRecord,
+    >,
+    /// [[Construct]]
+    pub construct:
+        Option<fn(agent: &mut JSAgent, args: &[JSValue], object: &mut JSObject) -> JSObject>,
 }
 
 struct PropertyIndex(usize);
