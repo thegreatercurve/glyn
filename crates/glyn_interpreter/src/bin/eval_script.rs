@@ -16,7 +16,8 @@ fn main() {
             value: Some(JSValue::String(JSString::from("world"))),
             ..Default::default()
         },
-    );
+    )
+    .unwrap();
 
     let obj_2_handle = make_basic_object(&mut agent, vec![]);
 
@@ -30,7 +31,7 @@ fn main() {
         &agent,
         obj_2_handle,
         &JSObjectPropKey::String(JSString::from("hello")),
-        None,
+        &JSValue::Undefined,
     );
 
     println!("value: {:?}", value);

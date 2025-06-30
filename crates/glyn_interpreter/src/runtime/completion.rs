@@ -6,10 +6,16 @@ pub type CompletionRecord<T = NormalCompletion> = Result<T, ThrowCompletion>;
 
 /// 6.2.4.1 NormalCompletion ( value )
 /// https://262.ecma-international.org/15.0/#sec-normalcompletion
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum NormalCompletion {
     Value(JSValue),
     Unused,
+}
+
+impl From<bool> for NormalCompletion {
+    fn from(value: bool) -> Self {
+        NormalCompletion::Value(JSValue::Boolean(value))
+    }
 }
 
 /// 6.2.4.2 ThrowCompletion ( value )

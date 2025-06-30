@@ -70,3 +70,15 @@ impl JSValue {
         }
     }
 }
+
+impl From<bool> for JSValue {
+    fn from(value: bool) -> Self {
+        JSValue::Boolean(value)
+    }
+}
+
+impl From<JSObjAddr> for JSValue {
+    fn from(value: JSObjAddr) -> Self {
+        JSValue::Object(value)
+    }
+}

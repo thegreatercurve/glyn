@@ -4,9 +4,8 @@ mod ordinary;
 mod property;
 
 use crate::{
-    runtime::CompletionRecord,
-    value::object::internal_slots::{JSObjectInternalSlots, JSObjectSlotName, JSObjectSlotValue},
-    JSAgent, JSValue,
+    runtime::CompletionRecord, value::object::internal_slots::JSObjectInternalSlots, JSAgent,
+    JSValue,
 };
 
 pub use operations::make_basic_object;
@@ -17,9 +16,9 @@ pub(crate) type JSObjAddr = Gc<JSObject>;
 
 type InternalMethodsCallFn = Option<
     fn(
-        agent: &mut JSAgent,
+        agent: &JSAgent,
         obj_addr: JSObjAddr,
-        this: Option<&JSValue>,
+        this_value: &JSValue,
         args: &[JSValue],
     ) -> CompletionRecord,
 >;
@@ -57,7 +56,7 @@ pub struct JSObjectInternalMethods {
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
-    ) -> bool,
+    ) -> CompletionRecord,
 
     /// [[HasProperty]]
     pub has_property: fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
@@ -67,7 +66,7 @@ pub struct JSObjectInternalMethods {
         agent: &JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
-        receiver: Option<&JSValue>,
+        receiver: &JSValue,
     ) -> CompletionRecord,
 
     /// [[Set]]
@@ -76,8 +75,8 @@ pub struct JSObjectInternalMethods {
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         value: JSValue,
-        receiver: Option<&mut JSValue>,
-    ) -> bool,
+        receiver: JSValue,
+    ) -> CompletionRecord,
 
     /// [[Delete]]
     pub delete: fn(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,

@@ -1,5 +1,5 @@
 use crate::{
-    runtime::CompletionRecord,
+    runtime::{CompletionRecord, NormalCompletion},
     value::object::{
         internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
         ordinary::ORDINARY_OBJECT_INTERNAL_METHODS,
@@ -39,7 +39,7 @@ pub(crate) fn get(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
-    receiver: Option<&JSValue>,
+    receiver: &JSValue,
 ) -> CompletionRecord {
     // 1. Return ? O.[[Get]](P, O).
     (agent.object(obj_addr).methods.get)(agent, obj_addr, key, receiver)
@@ -61,17 +61,19 @@ pub(crate) fn set(
     key: &JSObjectPropKey,
     value: JSValue,
     throw: bool,
-) -> bool {
+) -> CompletionRecord {
     // 1. Let success be ? O.[[Set]](P, V, O).
-    let success = (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, None);
+    let success =
+        (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into());
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if !success && throw {
+
+    if (success.is_err() || success.is_ok_and(|value| value == false.into())) && throw {
         agent.type_error("Failed to set property on object");
     }
 
     // 3. Return unused.
-    success
+    Ok(NormalCompletion::Unused)
 }
 
 /// 7.3.5 CreateDataProperty ( O, P, V )
@@ -81,7 +83,7 @@ pub(crate) fn create_data_property(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> bool {
+) -> CompletionRecord {
     // 1. Let newDesc be the PropertyDescriptor { [[Value]]: V, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
     let new_desc = JSObjectPropDescriptor {
         value: Some(value),
@@ -102,14 +104,43 @@ pub(crate) fn create_data_property_or_throw(
     object_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
-) {
+) -> CompletionRecord {
     // 1. 1. Let success be ? CreateDataProperty(O, P, V).
     let success = create_data_property(agent, object_addr, key, value);
 
     // 2. If success is false, throw a TypeError exception.
-    if !success {
+    if success.is_err() || success.is_ok_and(|value| value == false.into()) {
         agent.type_error("Failed to create data property on object");
     }
 
     // 3. Return unused.
+    Ok(NormalCompletion::Unused)
+}
+
+/// 7.3.13 Call ( F, V [ , argumentsList ] )
+/// https://262.ecma-international.org/15.0/index.html#sec-call
+pub(crate) fn call(
+    agent: &JSAgent,
+    function_value: JSValue,
+    this_value: &JSValue,
+    arguments_list: Option<Vec<JSValue>>,
+) -> CompletionRecord {
+    // 1. If argumentsList is not present, set argumentsList to a new empty List.
+    let args = arguments_list.unwrap_or_default();
+
+    // 2. If IsCallable(F) is false, throw a TypeError exception.
+    if !function_value.is_callable(agent) {
+        agent.type_error("Function cannot be called.");
+    }
+
+    // 3. Return ? F.[[Call]](V, argumentsList).
+    let function_obj_addr = function_value.as_object().unwrap_or_else(|| unreachable!());
+
+    let call_fn = agent
+        .object(function_obj_addr)
+        .methods
+        .call
+        .unwrap_or_else(|| unreachable!());
+
+    call_fn(agent, function_obj_addr, &this_value, &args)
 }
