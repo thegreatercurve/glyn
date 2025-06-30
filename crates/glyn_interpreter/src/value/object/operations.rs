@@ -10,12 +10,15 @@ use crate::{
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
 /// https://262.ecma-international.org/15.0/index.html#sec-makebasicobject
-pub fn make_basic_object(internal_slots_list: &[JSObjectSlotName]) -> JSObject {
+pub fn make_basic_object(
+    agent: &mut JSAgent,
+    internal_slots_list: Vec<JSObjectSlotName>,
+) -> JSObjAddr {
     // 1. Let obj be a newly created object with an internal slot for each name in internalSlotsList.
     let mut obj = JSObject {
         // 2. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
         methods: &ORDINARY_OBJECT_INTERNAL_METHODS,
-        slots: JSObjectInternalSlots::default(),
+        slots: JSObjectInternalSlots::from(internal_slots_list),
         keys: vec![],
         values: vec![],
     };
@@ -24,10 +27,10 @@ pub fn make_basic_object(internal_slots_list: &[JSObjectSlotName]) -> JSObject {
     // 4. Assert: If the caller will not be overriding all of obj's [[SetPrototypeOf]], [[IsExtensible]], and [[PreventExtensions]] essential internal methods, then internalSlotsList contains [[Extensible]].
 
     // 5. If internalSlotsList contains [[Extensible]], set obj.[[Extensible]] to true.
-    obj.set_extensible(true);
+    obj.slots.set_extensible(true);
 
     // 6. Return obj.
-    obj
+    agent.allocate_object(obj)
 }
 
 /// 7.3.2 Get ( O, P )

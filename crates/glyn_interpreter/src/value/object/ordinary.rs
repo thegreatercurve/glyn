@@ -1,8 +1,10 @@
 use crate::{
+    make_basic_object,
     runtime::{normal_completion, CompletionRecord},
     value::{
         comparison::same_value,
         object::{
+            internal_slots::JSObjectSlotName,
             operations::create_data_property,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObjectInternalMethods,
@@ -108,7 +110,7 @@ fn ordinary_set_prototype_of(
     }
 
     // 8. Set O.[[Prototype]] to V.
-    agent.object_mut(obj_addr).set_prototype(proto_addr);
+    agent.object_mut(obj_addr).slots.set_prototype(proto_addr);
 
     // 9. Return true.
     true
@@ -139,7 +141,7 @@ fn prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
 /// https://262.ecma-international.org/15.0/index.html#sec-ordinarypreventextensions
 fn ordinary_prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
     // 1. Set O.[[Extensible]] to false.
-    agent.object_mut(object_addr).set_extensible(false);
+    agent.object_mut(object_addr).slots.set_extensible(false);
 
     // 2. Return true.
     true
@@ -766,4 +768,29 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObj
 
     // 5. Return keys.
     keys
+}
+
+/// 10.1.12 OrdinaryObjectCreate ( proto [ , additionalInternalSlotsList ] )
+/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryobjectcreate
+pub(crate) fn ordinary_object_create(
+    agent: &mut JSAgent,
+    proto_addr: Option<JSObjAddr>,
+    additional_internal_slots: Option<Vec<JSObjectSlotName>>,
+) -> JSObjAddr {
+    // 1. Let internalSlotsList be « [[Prototype]], [[Extensible]] ».
+    let mut internal_slots_list = vec![JSObjectSlotName::Prototype, JSObjectSlotName::Extensible];
+
+    // 2. If additionalInternalSlotsList is present, set internalSlotsList to the list-concatenation of internalSlotsList and additionalInternalSlotsList.
+    if let Some(additional_internal_slots) = additional_internal_slots {
+        internal_slots_list.extend(additional_internal_slots);
+    }
+
+    // 3. Let O be MakeBasicObject(internalSlotsList).
+    let obj = make_basic_object(agent, internal_slots_list);
+
+    // 4. Set O.[[Prototype]] to proto.
+    agent.object_mut(obj).slots.set_prototype(proto_addr);
+
+    // 5. Return O.
+    obj
 }

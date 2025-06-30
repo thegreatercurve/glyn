@@ -36,16 +36,12 @@ impl JSObjectInternalSlots {
         Self(HashMap::new())
     }
 
-    pub(crate) fn insert(&mut self, name: JSObjectSlotName, value: JSObjectSlotValue) {
+    fn insert(&mut self, name: JSObjectSlotName, value: JSObjectSlotValue) {
         self.0.insert(name, value);
     }
 
     fn get(&self, name: &JSObjectSlotName) -> Option<&JSObjectSlotValue> {
         self.0.get(name)
-    }
-
-    fn has(&self, name: &JSObjectSlotName) -> bool {
-        self.0.contains_key(name)
     }
 
     pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
@@ -55,10 +51,36 @@ impl JSObjectInternalSlots {
         }
     }
 
+    pub(crate) fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
+        self.0.insert(
+            JSObjectSlotName::Prototype,
+            prototype.map_or(JSObjectSlotValue::NotSet, |p| JSValue::Object(p).into()),
+        );
+    }
+
     pub(crate) fn extensible(&self) -> bool {
         match self.get(&JSObjectSlotName::Extensible) {
             Some(JSObjectSlotValue::Value(JSValue::Boolean(value))) => *value,
             _ => false,
         }
+    }
+
+    pub(crate) fn set_extensible(&mut self, extensible: bool) {
+        self.0.insert(
+            JSObjectSlotName::Extensible,
+            JSValue::Boolean(extensible).into(),
+        );
+    }
+}
+
+impl From<Vec<JSObjectSlotName>> for JSObjectInternalSlots {
+    fn from(slots: Vec<JSObjectSlotName>) -> Self {
+        let mut internal_slots = JSObjectInternalSlots::new();
+
+        for slot in slots {
+            internal_slots.insert(slot, JSObjectSlotValue::NotSet);
+        }
+
+        internal_slots
     }
 }

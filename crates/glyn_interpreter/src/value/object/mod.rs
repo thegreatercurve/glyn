@@ -118,27 +118,9 @@ impl JSObject {
         self.slots.prototype()
     }
 
-    fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
-        self.slots.insert(
-            JSObjectSlotName::Prototype,
-            if let Some(prototype) = prototype {
-                JSValue::Object(prototype).into()
-            } else {
-                JSObjectSlotValue::NotSet
-            },
-        );
-    }
-
     /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
     pub(crate) fn extensible(&self) -> bool {
         self.slots.extensible()
-    }
-
-    fn set_extensible(&mut self, extensible: bool) {
-        self.slots.insert(
-            JSObjectSlotName::Extensible,
-            JSObjectSlotValue::Value(JSValue::Boolean(extensible)),
-        );
     }
 
     // Utility methods for getting and setting properties.
