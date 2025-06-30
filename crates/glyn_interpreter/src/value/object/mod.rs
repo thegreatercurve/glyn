@@ -4,7 +4,9 @@ mod ordinary;
 mod property;
 
 use crate::{
-    runtime::CompletionRecord, value::object::internal_slots::ObjectInternalSlots, JSAgent, JSValue,
+    runtime::CompletionRecord,
+    value::object::internal_slots::{JSObjectInternalSlots, JSObjectSlotName, JSObjectSlotValue},
+    JSAgent, JSValue,
 };
 
 pub use operations::make_basic_object;
@@ -94,17 +96,17 @@ struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct JSObject {
     pub methods: &'static JSObjectInternalMethods,
-    slots: ObjectInternalSlots,
+    slots: JSObjectInternalSlots,
     keys: Vec<JSObjectPropKey>,
     values: Vec<JSObjectPropDescriptor>,
 }
 
 impl Trace for JSObject {
     fn trace(&self, collector: &mut Collector) {
-        if let Some(prototype) = self.slots.prototype {
+        if let Some(prototype) = self.prototype() {
             collector.edge(prototype);
         }
     }
@@ -113,22 +115,33 @@ impl Trace for JSObject {
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
     fn prototype(&self) -> Option<JSObjAddr> {
-        self.slots.prototype
+        self.slots.prototype()
     }
 
     fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
-        self.slots.prototype = prototype;
+        self.slots.insert(
+            JSObjectSlotName::Prototype,
+            if let Some(prototype) = prototype {
+                JSValue::Object(prototype).into()
+            } else {
+                JSObjectSlotValue::NotSet
+            },
+        );
     }
 
     /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
     pub(crate) fn extensible(&self) -> bool {
-        self.slots.extensible.unwrap_or(true)
+        self.slots.extensible()
     }
 
     fn set_extensible(&mut self, extensible: bool) {
-        self.slots.extensible = Some(extensible);
+        self.slots.insert(
+            JSObjectSlotName::Extensible,
+            JSObjectSlotValue::Value(JSValue::Boolean(extensible)),
+        );
     }
 
+    // Utility methods for getting and setting properties.
     fn keys(&self) -> &[JSObjectPropKey] {
         &self.keys
     }
