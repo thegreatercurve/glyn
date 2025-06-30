@@ -1,5 +1,5 @@
 use crate::{
-    runtime::{Realm, ScriptRecord},
+    runtime::{NormalCompletion, Realm, ScriptRecord},
     JSAgent, JSValue,
 };
 
@@ -22,7 +22,8 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
 
     // 6. Return Completion(status).
     match status {
-        Ok(completion) => Ok(completion.value),
+        Ok(NormalCompletion::Value(value)) => Ok(value),
+        Ok(NormalCompletion::Unused) => Ok(JSValue::Undefined),
         Err(err) => Err(format!("Script parsing error: {err:?}")),
     }
 }

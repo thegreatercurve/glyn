@@ -1,7 +1,7 @@
 use crate::{
     runtime::{
         agent::ExecutionContext,
-        completion::{normal_completion, CompletionRecord},
+        completion::{CompletionRecord, NormalCompletion},
         JSAgent, Realm,
     },
     JSValue,
@@ -64,7 +64,7 @@ impl ScriptRecord {
         // a. Set result to Completion(Evaluation of script).
         // b. If result is a normal completion and result.[[Value]] is empty, then
         // i. Set result to NormalCompletion(undefined).
-        let result = normal_completion(JSValue::Undefined);
+        let result = Ok(NormalCompletion::Value(JSValue::Undefined));
 
         // 14. Suspend scriptContext and remove it from the execution context stack.
         // 15. Assert: The execution context stack is not empty.

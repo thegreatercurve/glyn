@@ -1,6 +1,6 @@
 use crate::{
     make_basic_object,
-    runtime::{normal_completion, CompletionRecord},
+    runtime::{CompletionRecord, NormalCompletion},
     value::{
         comparison::same_value,
         object::{
@@ -523,7 +523,7 @@ fn ordinary_get(
 
         // b. If parent is null, return undefined.
         let Some(parent) = opt_parent_ptr else {
-            return normal_completion(JSValue::Undefined);
+            return Ok(NormalCompletion::Value(JSValue::Undefined));
         };
 
         // c. Return ? parent.[[Get]](P, Receiver).
@@ -532,7 +532,9 @@ fn ordinary_get(
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
     if desc.is_data_descriptor() {
-        return normal_completion(desc.value.unwrap_or_else(|| unreachable!()));
+        return Ok(NormalCompletion::Value(
+            desc.value.unwrap_or_else(|| unreachable!()),
+        ));
     }
 
     // 4. Assert: IsAccessorDescriptor(desc) is true.
@@ -543,7 +545,7 @@ fn ordinary_get(
 
     // 6. If getter is undefined, return undefined.
     if getter.is_none() {
-        return normal_completion(JSValue::Undefined);
+        return Ok(NormalCompletion::Value(JSValue::Undefined));
     }
 
     // 7. Return ? Call(getter, Receiver).

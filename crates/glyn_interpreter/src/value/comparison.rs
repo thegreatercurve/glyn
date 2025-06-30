@@ -1,5 +1,5 @@
 use crate::{
-    runtime::{normal_completion, CompletionRecord},
+    runtime::{CompletionRecord, NormalCompletion},
     JSAgent, JSNumber, JSValue,
 };
 
@@ -12,7 +12,7 @@ impl JSValue {
             agent.type_error("Cannot convert null or undefined to object");
         }
 
-        normal_completion(self)
+        Ok(NormalCompletion::Value(self))
     }
 
     /// 7.2.3 IsCallable ( argument )
