@@ -1,4 +1,4 @@
-use crate::{JSNumber, JSValue};
+use crate::JSValue;
 
 impl JSValue {
     /// 7.1.2 ToBoolean ( argument )

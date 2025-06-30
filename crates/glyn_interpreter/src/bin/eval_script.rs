@@ -6,11 +6,13 @@ use glyn_interpreter::{
 fn main() {
     let mut agent = JSAgent::default();
 
-    let mut obj1 = make_basic_object(&[]);
+    let obj1 = make_basic_object(&[]);
 
-    (obj1.methods.define_own_property)(
+    let obj_1_handle = agent.allocate_object(obj1);
+
+    (agent.object(obj_1_handle).methods.define_own_property)(
         &mut agent,
-        &mut obj1,
+        obj_1_handle,
         &JSObjectPropKey::String(JSString::from("hello")),
         JSObjectPropDescriptor {
             value: Some(JSValue::String(JSString::from("world"))),
@@ -18,15 +20,19 @@ fn main() {
         },
     );
 
-    let mut obj2 = make_basic_object(&[]);
+    let obj2 = make_basic_object(&[]);
 
-    let obj_1_handle = agent.allocate_object(obj1);
+    let obj_2_handle = agent.allocate_object(obj2);
 
-    (obj2.methods.set_prototype_of)(&mut agent, &mut obj2, Some(obj_1_handle));
+    (agent.object(obj_2_handle).methods.set_prototype_of)(
+        &mut agent,
+        obj_2_handle,
+        Some(obj_1_handle),
+    );
 
-    let value = (obj2.methods.get)(
+    let value = (agent.object(obj_2_handle).methods.get)(
         &agent,
-        &obj2,
+        obj_2_handle,
         &JSObjectPropKey::String(JSString::from("hello")),
         None,
     );

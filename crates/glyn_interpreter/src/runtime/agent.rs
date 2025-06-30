@@ -1,6 +1,6 @@
-use safe_gc::{Gc, Heap};
+use safe_gc::Heap;
 
-use crate::{runtime::Environment, JSObject};
+use crate::{runtime::Environment, JSObjAddr, JSObject};
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;
@@ -52,11 +52,15 @@ impl JSAgent {
         panic!("SyntaxError: {message:?}");
     }
 
-    pub fn deref_object_ptr(&self, object: Gc<JSObject>) -> JSObject {
-        self.object_heap.get(object).clone()
+    pub fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
+        self.object_heap.alloc(object).into()
     }
 
-    pub fn allocate_object(&mut self, object: JSObject) -> Gc<JSObject> {
-        self.object_heap.alloc(object).into()
+    pub fn object(&self, obj_addr: JSObjAddr) -> &JSObject {
+        self.object_heap.get(obj_addr)
+    }
+
+    pub fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
+        self.object_heap.get_mut(obj_addr)
     }
 }

@@ -1,10 +1,9 @@
 use crate::{
     runtime::CompletionRecord,
-    value::{
-        object::{internal_slots::ObjectInternalSlots, ordinary::ORDINARY_OBJECT_INTERNAL_METHODS},
-        JSObject,
+    value::object::{
+        internal_slots::ObjectInternalSlots, ordinary::ORDINARY_OBJECT_INTERNAL_METHODS, JSObjAddr,
     },
-    JSAgent, JSObjectPropDescriptor, JSObjectPropKey, JSValue,
+    JSAgent, JSObject, JSObjectPropDescriptor, JSObjectPropKey, JSValue,
 };
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
@@ -36,12 +35,12 @@ pub fn make_basic_object(_internal_slots_list: &[&str]) -> JSObject {
 /// https://262.ecma-international.org/15.0/index.html#sec-get-o-p
 pub(crate) fn get(
     agent: &JSAgent,
-    object: &JSObject,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     receiver: Option<&JSValue>,
 ) -> CompletionRecord {
     // 1. Return ? O.[[Get]](P, O).
-    (object.methods.get)(agent, object, key, receiver)
+    (agent.object(obj_addr).methods.get)(agent, obj_addr, key, receiver)
 }
 
 /// 7.3.3 GetV ( V, P )
@@ -56,13 +55,13 @@ pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> J
 /// https://262.ecma-international.org/15.0/index.html#sec-set-o-p-v-throw
 pub(crate) fn set(
     agent: &mut JSAgent,
-    object: &mut JSObject,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
     throw: bool,
 ) -> bool {
     // 1. Let success be ? O.[[Set]](P, V, O).
-    let success = (object.methods.set)(agent, object, key, value, None);
+    let success = (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, None);
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
     if !success && throw {
@@ -77,7 +76,7 @@ pub(crate) fn set(
 /// https://262.ecma-international.org/15.0/index.html#sec-createdataproperty
 pub(crate) fn create_data_property(
     agent: &mut JSAgent,
-    object: &mut JSObject,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) -> bool {
@@ -91,19 +90,19 @@ pub(crate) fn create_data_property(
     };
 
     // 2. Return ? O.[[DefineOwnProperty]](P, newDesc).
-    (object.methods.define_own_property)(agent, object, key, new_desc)
+    (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, new_desc)
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
 /// https://262.ecma-international.org/15.0/index.html#sec-createdatapropertyorthrow
 pub(crate) fn create_data_property_or_throw(
     agent: &mut JSAgent,
-    object: &mut JSObject,
+    object_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) {
     // 1. 1. Let success be ? CreateDataProperty(O, P, V).
-    let success = create_data_property(agent, object, key, value);
+    let success = create_data_property(agent, object_addr, key, value);
 
     // 2. If success is false, throw a TypeError exception.
     if !success {

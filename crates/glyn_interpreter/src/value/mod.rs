@@ -8,10 +8,11 @@ mod object;
 mod string;
 mod symbol;
 
+pub(crate) use object::JSObjAddr;
+
 pub use number::JSNumber;
 pub use object::JSObject;
 pub use object::{make_basic_object, JSObjectPropDescriptor, JSObjectPropKey};
-use safe_gc::Gc;
 pub use string::JSString;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -29,13 +30,7 @@ pub enum JSValue {
     Number(JSNumber),
     BigInt(JSBigInt),
     Symbol,
-    Object(Gc<JSObject>),
-}
-
-impl From<Gc<JSObject>> for JSValue {
-    fn from(object: Gc<JSObject>) -> Self {
-        JSValue::Object(object)
-    }
+    Object(JSObjAddr),
 }
 
 impl JSValue {
@@ -68,16 +63,9 @@ impl JSValue {
         matches!(self, JSValue::Object(_))
     }
 
-    fn as_object(&self) -> Option<Gc<JSObject>> {
+    fn as_object(&self) -> Option<JSObjAddr> {
         match self {
             JSValue::Object(object) => Some(*object),
-            _ => None,
-        }
-    }
-
-    fn as_object_mut(&mut self) -> Option<&mut Gc<JSObject>> {
-        match self {
-            JSValue::Object(object) => Some(object),
             _ => None,
         }
     }

@@ -24,7 +24,7 @@ impl JSValue {
         };
 
         // 2. If argument has a [[Call]] internal method, return true.
-        if agent.deref_object_ptr(object_ptr).methods.call.is_some() {
+        if agent.object(object_ptr).methods.call.is_some() {
             return true;
         }
 
@@ -41,12 +41,7 @@ impl JSValue {
         };
 
         // 2. If argument has a [[Construct]] internal method, return true.
-        if agent
-            .deref_object_ptr(object_ptr)
-            .methods
-            .construct
-            .is_some()
-        {
+        if agent.object(object_ptr).methods.construct.is_some() {
             return true;
         }
 
@@ -58,14 +53,12 @@ impl JSValue {
     /// https://262.ecma-international.org/15.0/#sec-isextensible
     pub(crate) fn is_extensible(&self, agent: &JSAgent) -> bool {
         // 1. If Type(O) is not Object, return false.
-        let Some(object_ptr) = self.as_object() else {
+        let Some(obj_addr) = self.as_object() else {
             return false;
         };
 
-        let object = agent.deref_object_ptr(object_ptr);
-
         // 2. Return O.[[Extensible]].
-        (object.methods.is_extensible)(&object)
+        agent.object(obj_addr).extensible()
     }
 
     /// 7.2.6 IsIntegralNumber ( argument )
@@ -101,7 +94,7 @@ impl JSValue {
 
 /// 7.2.10 SameValue ( x, y )
 /// https://262.ecma-international.org/15.0/#sec-samevalue
-pub(crate) fn same_value(agent: &JSAgent, x: &JSValue, y: &JSValue) -> bool {
+pub(crate) fn same_value(x: &JSValue, y: &JSValue) -> bool {
     // 1. If Type(x) is not Type(y), return false.
     if std::mem::discriminant(x) != std::mem::discriminant(y) {
         return false;
@@ -114,12 +107,12 @@ pub(crate) fn same_value(agent: &JSAgent, x: &JSValue, y: &JSValue) -> bool {
     }
 
     // 3. Return SameValueNonNumber(x, y).
-    same_value_non_number(agent, x, y)
+    same_value_non_number(x, y)
 }
 
 /// 7.2.12 SameValueNonNumber ( x, y )
 /// https://262.ecma-international.org/15.0/#sec-samevaluenonnumber
-fn same_value_non_number(agent: &JSAgent, x: &JSValue, y: &JSValue) -> bool {
+fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
     // 1. Assert: Type(x) is Type(y).
     match (x, y) {
         // 2. If x is either null or undefined, return true.
@@ -139,9 +132,7 @@ fn same_value_non_number(agent: &JSAgent, x: &JSValue, y: &JSValue) -> bool {
 
         // 6. NOTE: All other ECMAScript language values are compared by identity.
         (JSValue::Number(_x), JSValue::Number(_y)) => unreachable!(),
-        (JSValue::Object(x), JSValue::Object(y)) => {
-            agent.deref_object_ptr(*x) == agent.deref_object_ptr(*y)
-        }
+        (JSValue::Object(x), JSValue::Object(y)) => x == y,
         (JSValue::Symbol, JSValue::Symbol) => todo!(),
 
         // 7. If x is y, return true; otherwise, return false.
