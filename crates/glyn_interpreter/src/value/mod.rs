@@ -45,6 +45,10 @@ impl JSValue {
         }
     }
 
+    fn is_number(&self) -> bool {
+        matches!(self, JSValue::Number(_))
+    }
+
     fn as_number(&self) -> Option<&JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),

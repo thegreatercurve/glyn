@@ -1,9 +1,61 @@
-use crate::JSValue;
+use crate::runtime::WellKnownSymbol;
+use crate::{JSAgent, JSNumber, JSString, JSValue};
 
+enum PrimitivePreferredType {
+    Default,
+    String,
+    Number,
+}
+
+/// 7.1 Type Conversion
+/// https://262.ecma-international.org/15.0/#sec-type-conversion
 impl JSValue {
+    /// 7.1.1 ToPrimitive ( input [ , preferredType ] )
+    /// https://262.ecma-international.org/15.0/#sec-toprimitive
+    fn to_primitive(&self, agent: &JSAgent, mut preferred_type: PrimitivePreferredType) -> Self {
+        // 1. If input is an Object, then
+        if let Some(obj_addr) = self.as_object() {
+            // a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
+            let exotic_to_prim = agent.well_known_symbol(obj_addr, WellKnownSymbol::ToPrimitive);
+
+            // b. If exoticToPrim is not undefined, then
+            if let Some(exotic_to_prim) = exotic_to_prim {
+                preferred_type = match preferred_type {
+                    // i. If preferredType is not present, then
+                    // 1. Let hint be "default".
+                    PrimitivePreferredType::Default => PrimitivePreferredType::Default,
+                    // ii. Else if preferredType is string, then
+                    // 1. Let hint be "string".
+                    PrimitivePreferredType::String => PrimitivePreferredType::String,
+                    // iii. Else,
+                    // 1. Assert: preferredType is number.
+                    // 2. Let hint be "number".
+                    PrimitivePreferredType::Number => PrimitivePreferredType::Number,
+                };
+
+                todo!();
+
+                // iv. Let result be ? Call(exoticToPrim, input, « hint »).
+                // v. If result is not an Object, return result.
+                // vi. Throw a TypeError exception
+            }
+
+            // c. If preferredType is not present, let preferredType be number.
+            if matches!(preferred_type, PrimitivePreferredType::Default) {
+                preferred_type = PrimitivePreferredType::Number;
+            }
+
+            // d. Return ? OrdinaryToPrimitive(input, preferredType).
+            todo!()
+        }
+
+        // 2. Return input.
+        self.clone()
+    }
+
     /// 7.1.2 ToBoolean ( argument )
     /// https://262.ecma-international.org/15.0/#sec-toboolean
-    pub(crate) fn to_boolean(&self) -> bool {
+    pub(crate) fn to_boolean(self) -> bool {
         // 1. If argument is a Boolean, return argument.
         if let Some(value) = self.as_boolean() {
             return *value;
@@ -23,5 +75,55 @@ impl JSValue {
 
         // 4. Return true.
         true
+    }
+
+    /// 7.1.4 ToNumber ( argument )
+    /// https://262.ecma-international.org/15.0/#sec-tonumber
+    pub(crate) fn to_number(&self, agent: &JSAgent) -> JSNumber {
+        match self {
+            // 1. If argument is a Number, return argument.
+            JSValue::Number(number) => return number.clone(),
+            // 2. If argument is either a Symbol or a BigInt, throw a TypeError exception.
+            JSValue::Symbol => agent.type_error("Cannot convert Symbol to JSNumber"),
+            JSValue::BigInt(_) => agent.type_error("Cannot convert BigInt to JSNumber"),
+            // 3. If argument is undefined, return NaN.
+            JSValue::Undefined => return JSNumber::nan(),
+            // 4. If argument is either null or false, return +0𝔽.
+            JSValue::Null | JSValue::Boolean(false) => return JSNumber::from(0),
+            // 5. If argument is true, return +1𝔽
+            JSValue::Boolean(true) => return JSNumber::from(1),
+            // 6. If argument is a String, return StringToNumber(argument).
+            JSValue::String(ref string) => return self.string_to_number(string),
+            _ => {}
+        };
+
+        // 7. Assert: argument is an Object.
+        debug_assert!(self.is_object(),);
+
+        // 8. Let primValue be ? ToPrimitive(argument, number).
+        let prim_value = self.to_primitive(agent, PrimitivePreferredType::Number);
+
+        // 9. Assert: primValue is not an Object.
+        debug_assert!(!prim_value.is_object());
+
+        // 10. Return ? ToNumber(primValue).
+        prim_value.to_number(agent)
+    }
+
+    /// 7.1.4.1.1 StringToNumber ( str )
+    /// https://262.ecma-international.org/15.0/#sec-stringtonumber
+    pub(crate) fn string_to_number(&self, str: &JSString) -> JSNumber {
+        // 1. Let text be StringToCodePoints(str).
+        // 2. Let literal be ParseText(text, StringNumericLiteral).
+        // TODO Implement the below exactly.
+        let literal = str.0.parse::<f64>();
+
+        // 3. If literal is a List of errors, return NaN.
+        let Ok(literal) = literal else {
+            return JSNumber::nan();
+        };
+
+        // 4. Return StringNumericValue of literal.
+        JSNumber::from(literal)
     }
 }

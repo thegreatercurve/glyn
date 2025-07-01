@@ -4,6 +4,7 @@ mod environment;
 mod realm;
 mod script;
 
+pub(crate) use agent::WellKnownSymbol;
 pub(crate) use completion::{CompletionRecord, NormalCompletion};
 pub(crate) use environment::Environment;
 pub(crate) use realm::Realm;

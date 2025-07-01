@@ -36,6 +36,10 @@ impl JSNumber {
         }
     }
 
+    pub(crate) fn nan() -> Self {
+        JSNumber::Float(f64::NAN)
+    }
+
     fn is_int(&self) -> bool {
         matches!(self, JSNumber::Int(_))
     }

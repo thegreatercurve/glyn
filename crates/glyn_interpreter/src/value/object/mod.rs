@@ -8,6 +8,7 @@ use crate::{
     JSValue,
 };
 
+pub(crate) use operations::call;
 pub use operations::make_basic_object;
 pub use property::{JSObjectPropDescriptor, JSObjectPropKey};
 use safe_gc::{Collector, Gc, Trace};

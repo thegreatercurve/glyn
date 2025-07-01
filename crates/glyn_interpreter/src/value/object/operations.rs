@@ -117,6 +117,21 @@ pub(crate) fn create_data_property_or_throw(
     Ok(NormalCompletion::Unused)
 }
 
+/// 7.3.10 GetMethod ( V, P )
+/// https://262.ecma-international.org/15.0/index.html#sec-getmethod
+pub(crate) fn get_method(
+    agent: &JSAgent,
+    value: &JSValue,
+    key: &JSObjectPropKey,
+) -> Option<JSValue> {
+    // 1. Let func be ? GetV(V, P).
+    let func = getv(agent, value, key);
+    // 2. If func is either undefined or null, return undefined.
+    // 3. If IsCallable(func) is false, throw a TypeError exception.
+    // 4. Return func.
+    todo!()
+}
+
 /// 7.3.13 Call ( F, V [ , argumentsList ] )
 /// https://262.ecma-international.org/15.0/index.html#sec-call
 pub(crate) fn call(

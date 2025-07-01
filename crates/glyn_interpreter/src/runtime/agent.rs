@@ -1,9 +1,26 @@
 use safe_gc::Heap;
 
-use crate::{runtime::Environment, JSObjAddr, JSObject};
+use crate::{runtime::Environment, value::JSObjAddr, JSObject, JSValue};
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;
+
+#[derive(Debug)]
+pub(crate) enum WellKnownSymbol {
+    AsyncIterator,
+    HasInstance,
+    IsConcatSpreadable,
+    Iterator,
+    Match,
+    MatchAll,
+    Replace,
+    Search,
+    Species,
+    Split,
+    ToPrimitive,
+    ToStringTag,
+    Unscopables,
+}
 
 #[derive(Default)]
 pub struct JSAgent {
@@ -52,7 +69,7 @@ impl JSAgent {
         panic!("SyntaxError: {message:?}");
     }
 
-    pub fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
+    pub(crate) fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
         self.object_heap.alloc(object).into()
     }
 
@@ -62,5 +79,16 @@ impl JSAgent {
 
     pub fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
         self.object_heap.get_mut(obj_addr)
+    }
+
+    pub(crate) fn well_known_symbol(
+        &self,
+        obj_addr: JSObjAddr,
+        symbol: WellKnownSymbol,
+    ) -> Option<fn(agent: &JSAgent) -> Self> {
+        let object = self.object(obj_addr);
+
+        // Add a v-table look-up to check if object type has a well-known symbol.
+        todo!()
     }
 }
