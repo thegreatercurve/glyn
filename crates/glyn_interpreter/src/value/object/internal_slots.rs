@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{value::JSObjAddr, JSValue};
+use crate::value::{object::JSObjAddr, JSValue};
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum JSObjectSlotName {

@@ -1,17 +1,19 @@
 use crate::{
-    make_basic_object,
-    runtime::{CompletionRecord, NormalCompletion},
+    runtime::{
+        agent::JSAgent,
+        completion::{CompletionRecord, NormalCompletion},
+    },
     value::{
         comparison::same_value,
         object::{
             internal_slots::JSObjectSlotName,
-            operations::{call, create_data_property},
+            operations::{call, create_data_property, make_basic_object},
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObjectInternalMethods,
         },
         string::JSString,
+        JSValue,
     },
-    JSAgent, JSValue,
 };
 
 /// 10.1 Ordinary Object Internal Methods and Internal Slots

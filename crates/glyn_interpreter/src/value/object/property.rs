@@ -1,4 +1,4 @@
-use crate::{value::string::JSString, JSNumber, JSValue};
+use crate::value::{number::JSNumber, string::JSString, JSValue};
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type

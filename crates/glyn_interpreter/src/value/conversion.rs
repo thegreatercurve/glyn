@@ -1,5 +1,7 @@
-use crate::runtime::WellKnownSymbol;
-use crate::{JSAgent, JSNumber, JSString, JSValue};
+use crate::{
+    runtime::agent::{JSAgent, WellKnownSymbol},
+    value::{number::JSNumber, string::JSString, JSValue},
+};
 
 enum PrimitivePreferredType {
     Default,

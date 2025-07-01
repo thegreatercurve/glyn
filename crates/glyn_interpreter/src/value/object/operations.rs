@@ -1,11 +1,17 @@
 use crate::{
-    runtime::{CompletionRecord, NormalCompletion},
-    value::object::{
-        internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
-        ordinary::ORDINARY_OBJECT_INTERNAL_METHODS,
-        JSObjAddr,
+    runtime::{
+        agent::JSAgent,
+        completion::{CompletionRecord, NormalCompletion},
     },
-    JSAgent, JSObject, JSObjectPropDescriptor, JSObjectPropKey, JSValue,
+    value::{
+        object::{
+            internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
+            ordinary::ORDINARY_OBJECT_INTERNAL_METHODS,
+            property::{JSObjectPropDescriptor, JSObjectPropKey},
+            JSObjAddr, JSObject,
+        },
+        JSValue,
+    },
 };
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )

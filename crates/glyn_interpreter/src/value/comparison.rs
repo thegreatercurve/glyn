@@ -1,6 +1,9 @@
 use crate::{
-    runtime::{CompletionRecord, NormalCompletion},
-    JSAgent, JSNumber, JSValue,
+    runtime::{
+        agent::JSAgent,
+        completion::{CompletionRecord, NormalCompletion},
+    },
+    value::{number::JSNumber, JSValue},
 };
 
 /// 7.2 Testing and Comparison Operations

@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::{runtime::Environment, value::JSObject};
+use crate::{runtime::environment::Environment, value::object::JSObject};
 
 #[derive(Debug, Default)]
 struct Intrinsics;

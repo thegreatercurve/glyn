@@ -1,6 +1,6 @@
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 
-use crate::JSString;
+use crate::value::string::JSString;
 
 /// 6.1.6.1 The Number Type
 /// https://262.ecma-international.org/15.0/#sec-numeric-types-number

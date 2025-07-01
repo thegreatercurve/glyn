@@ -1,10 +1,10 @@
 use crate::{
     runtime::{
-        agent::ExecutionContext,
+        agent::{ExecutionContext, JSAgent},
         completion::{CompletionRecord, NormalCompletion},
-        JSAgent, Realm,
+        realm::Realm,
     },
-    JSValue,
+    value::JSValue,
 };
 
 /// 16.1.4 Script Records

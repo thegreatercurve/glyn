@@ -1,6 +1,6 @@
 use crate::{
-    runtime::{NormalCompletion, Realm, ScriptRecord},
-    JSAgent, JSValue,
+    runtime::{agent::JSAgent, completion::NormalCompletion, realm::Realm, script::ScriptRecord},
+    value::JSValue,
 };
 
 /// https://github.com/tc39/test262/blob/main/INTERPRETING.md

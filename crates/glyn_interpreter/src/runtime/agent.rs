@@ -1,6 +1,9 @@
 use safe_gc::Heap;
 
-use crate::{runtime::Environment, value::JSObjAddr, JSObject, JSValue};
+use crate::{
+    runtime::environment::Environment,
+    value::object::{JSObjAddr, JSObject},
+};
 
 #[derive(Debug, Default)]
 pub struct ExecutionContext;
@@ -87,7 +90,6 @@ impl JSAgent {
         symbol: WellKnownSymbol,
     ) -> Option<fn(agent: &JSAgent) -> Self> {
         let object = self.object(obj_addr);
-
         // Add a v-table look-up to check if object type has a well-known symbol.
         todo!()
     }

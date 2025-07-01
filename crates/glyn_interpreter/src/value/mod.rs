@@ -1,19 +1,12 @@
-use crate::value::big_int::JSBigInt;
+pub(crate) mod big_int;
+pub(crate) mod comparison;
+pub(crate) mod conversion;
+pub(crate) mod number;
+pub(crate) mod object;
+pub(crate) mod string;
+pub(crate) mod symbol;
 
-mod big_int;
-mod comparison;
-mod conversion;
-mod number;
-mod object;
-mod string;
-mod symbol;
-
-pub(crate) use object::JSObjAddr;
-
-pub use number::JSNumber;
-pub use object::JSObject;
-pub use object::{make_basic_object, JSObjectPropDescriptor, JSObjectPropKey};
-pub use string::JSString;
+use crate::value::{big_int::JSBigInt, number::JSNumber, object::JSObjAddr, string::JSString};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JSValue {

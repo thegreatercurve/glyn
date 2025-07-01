@@ -1,17 +1,20 @@
-mod internal_slots;
-mod operations;
-mod ordinary;
-mod property;
+pub(crate) mod internal_slots;
+pub(crate) mod operations;
+pub(crate) mod ordinary;
+pub(crate) mod property;
+
+use safe_gc::{Collector, Gc, Trace};
 
 use crate::{
-    runtime::CompletionRecord, value::object::internal_slots::JSObjectInternalSlots, JSAgent,
-    JSValue,
+    runtime::{agent::JSAgent, completion::CompletionRecord},
+    value::{
+        object::{
+            internal_slots::JSObjectInternalSlots,
+            property::{JSObjectPropDescriptor, JSObjectPropKey},
+        },
+        JSValue,
+    },
 };
-
-pub(crate) use operations::call;
-pub use operations::make_basic_object;
-pub use property::{JSObjectPropDescriptor, JSObjectPropKey};
-use safe_gc::{Collector, Gc, Trace};
 
 pub(crate) type JSObjAddr = Gc<JSObject>;
 
