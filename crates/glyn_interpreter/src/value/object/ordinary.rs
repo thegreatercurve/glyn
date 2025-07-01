@@ -4,13 +4,13 @@ use crate::{
         completion::{CompletionRecord, NormalCompletion},
     },
     value::{
-        comparison::same_value,
         object::{
             internal_slots::JSObjectSlotName,
             operations::{call, create_data_property, make_basic_object},
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObjectInternalMethods,
         },
+        operations::comparison::same_value,
         string::JSString,
         JSValue,
     },

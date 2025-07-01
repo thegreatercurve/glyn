@@ -10,6 +10,7 @@ use crate::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObject,
         },
+        operations::comparison::is_callable,
         JSValue,
     },
 };
@@ -150,7 +151,7 @@ pub(crate) fn call(
     let args = arguments_list.unwrap_or_default();
 
     // 2. If IsCallable(F) is false, throw a TypeError exception.
-    if !function_value.is_callable(agent) {
+    if !is_callable(agent, &function_value) {
         agent.type_error("Function cannot be called.");
     }
 

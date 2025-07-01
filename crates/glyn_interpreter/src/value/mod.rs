@@ -1,8 +1,7 @@
 pub(crate) mod big_int;
-pub(crate) mod comparison;
-pub(crate) mod conversion;
 pub(crate) mod number;
 pub(crate) mod object;
+pub(crate) mod operations;
 pub(crate) mod string;
 pub(crate) mod symbol;
 
