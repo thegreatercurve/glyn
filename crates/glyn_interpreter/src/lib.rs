@@ -1,5 +1,6 @@
 mod abstract_ops;
 mod eval_script;
+mod intrinsics;
 mod runtime;
 mod value;
 

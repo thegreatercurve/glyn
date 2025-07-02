@@ -2,7 +2,7 @@ use crate::value::JSValue;
 
 /// 6.2.4 The Completion Record Specification Type
 /// https://262.ecma-international.org/15.0/#sec-completion-record-specification-type
-pub type CompletionRecord<T = NormalCompletion> = Result<T, ThrowCompletion>;
+pub type CompletionRecord = Result<NormalCompletion, ThrowCompletion>;
 
 /// 6.2.4.1 NormalCompletion ( value )
 /// https://262.ecma-international.org/15.0/#sec-normalcompletion

@@ -800,7 +800,7 @@ pub(crate) fn ordinary_object_create(
     }
 
     // 3. Let O be MakeBasicObject(internalSlotsList).
-    let obj = make_basic_object(agent, internal_slots_list);
+    let obj = make_basic_object(agent, internal_slots_list, None);
 
     // 4. Set O.[[Prototype]] to proto.
     agent.object_mut(obj).slots.set_prototype(proto_addr);

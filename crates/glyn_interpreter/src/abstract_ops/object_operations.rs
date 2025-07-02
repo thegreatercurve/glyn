@@ -9,7 +9,7 @@ use crate::{
             internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
             ordinary::ORDINARY_OBJECT_INTERNAL_METHODS,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr, JSObject,
+            JSObjAddr, JSObject, JSObjectInternalMethods,
         },
         JSValue,
     },
@@ -23,11 +23,12 @@ use crate::{
 pub fn make_basic_object(
     agent: &mut JSAgent,
     internal_slots_list: Vec<JSObjectSlotName>,
+    internal_methods: Option<&'static JSObjectInternalMethods>,
 ) -> JSObjAddr {
     // 1. Let obj be a newly created object with an internal slot for each name in internalSlotsList.
     let mut obj = JSObject {
         // 2. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
-        methods: &ORDINARY_OBJECT_INTERNAL_METHODS,
+        methods: internal_methods.unwrap_or(&ORDINARY_OBJECT_INTERNAL_METHODS),
         slots: JSObjectInternalSlots::from(internal_slots_list),
         keys: vec![],
         values: vec![],
