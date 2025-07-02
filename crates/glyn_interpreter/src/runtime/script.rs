@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     runtime::{
         agent::{ExecutionContext, JSAgent},
@@ -12,7 +14,7 @@ use crate::{
 #[derive(Debug, Default)]
 pub(crate) struct ScriptRecord {
     /// [[Realm]]
-    pub realm: Box<Realm>,
+    pub realm: Rc<Realm>,
 
     /// [[HostDefined]]
     pub host_defined: Option<()>,
@@ -25,7 +27,7 @@ impl ScriptRecord {
         &self,
         _agent: &mut JSAgent,
         _source_text: &str,
-        realm: Box<Realm>,
+        realm: Rc<Realm>,
         host_defined: Option<()>,
     ) -> Self {
         // 1. Let script be ParseText(sourceText, Script)

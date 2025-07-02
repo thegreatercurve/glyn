@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     runtime::realm::Realm,
@@ -15,7 +15,7 @@ pub enum JSObjectSlotName {
 
 #[derive(Debug)]
 pub enum JSObjectSlotValue {
-    Realm(Box<Realm>),
+    Realm(Rc<Realm>),
     Value(JSValue),
     NotSet,
 }
@@ -72,14 +72,14 @@ impl JSObjectInternalSlots {
         );
     }
 
-    pub(crate) fn realm(self) -> Option<Box<Realm>> {
+    pub(crate) fn realm(self) -> Option<Rc<Realm>> {
         match self.get(&JSObjectSlotName::Realm) {
             Some(JSObjectSlotValue::Realm(realm)) => Some(realm.clone()),
             _ => None,
         }
     }
 
-    pub(crate) fn set_realm(&mut self, realm: Box<Realm>) {
+    pub(crate) fn set_realm(&mut self, realm: Rc<Realm>) {
         self.0
             .insert(JSObjectSlotName::Realm, JSObjectSlotValue::Realm(realm));
     }

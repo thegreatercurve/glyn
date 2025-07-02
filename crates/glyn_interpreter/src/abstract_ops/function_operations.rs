@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     abstract_ops::object_operations::make_basic_object,
     runtime::{completion::CompletionRecord, realm::Realm},
@@ -13,7 +15,7 @@ pub(crate) fn create_builtin_function(
     length: usize,
     name: Option<String>,
     additional_internal_slots: Vec<JSObjectSlotName>,
-    realm: Option<Box<Realm>>,
+    realm: Option<Rc<Realm>>,
     prototype: Option<JSObjAddr>,
     prefix: Option<String>,
 ) -> CompletionRecord {

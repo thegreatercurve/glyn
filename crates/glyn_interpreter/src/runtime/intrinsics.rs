@@ -2,7 +2,7 @@ use crate::value::object::JSObjAddr;
 
 /// 6.1.7.4 Well-Known Intrinsic Objects
 /// https://262.ecma-international.org/15.0/#sec-well-known-intrinsic-objects
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct Intrinsics {
     // %AggregateError%
     pub aggregate_error: Option<JSObjAddr>,

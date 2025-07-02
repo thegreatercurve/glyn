@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     runtime::{agent::JSAgent, completion::NormalCompletion, realm::Realm, script::ScriptRecord},
     value::JSValue,
@@ -9,7 +11,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     let host_defined = None;
 
     // 2. Let realm be the current Realm Record.
-    let realm = Box::new(Realm::create_realm(agent));
+    let realm = Rc::new(Realm::create_realm(agent));
 
     // 3. Let s be ParseScript(sourceText, realm, hostDefined).
     let s = ScriptRecord::default().parse_script(agent, script_str, realm, host_defined);

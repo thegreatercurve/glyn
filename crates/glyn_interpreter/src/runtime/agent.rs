@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use safe_gc::Heap;
 
 use crate::{
@@ -7,7 +9,7 @@ use crate::{
 
 pub struct ExecutionContext {
     // Realm
-    pub realm: Box<Realm>,
+    pub realm: Rc<Realm>,
 }
 
 #[derive(Debug)]
@@ -52,7 +54,7 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub(crate) fn current_realm(&self) -> Box<Realm> {
+    pub(crate) fn current_realm(&self) -> Rc<Realm> {
         self.running_execution_context().realm.clone()
     }
 
