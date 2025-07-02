@@ -1,12 +1,14 @@
 use safe_gc::Heap;
 
 use crate::{
-    runtime::environment::Environment,
+    runtime::{environment::Environment, realm::Realm},
     value::object::{JSObjAddr, JSObject},
 };
 
-#[derive(Debug, Default)]
-pub struct ExecutionContext;
+pub struct ExecutionContext {
+    // Realm
+    pub realm: Box<Realm>,
+}
 
 #[derive(Debug)]
 pub(crate) enum WellKnownSymbol {
@@ -35,7 +37,7 @@ pub struct JSAgent {
 impl JSAgent {
     pub fn new() -> Self {
         Self {
-            execution_contexts: vec![ExecutionContext],
+            execution_contexts: vec![],
             environment_records: vec![],
             object_heap: Heap::new(),
         }
@@ -48,6 +50,10 @@ impl JSAgent {
         self.execution_contexts
             .last()
             .unwrap_or_else(|| unreachable!())
+    }
+
+    pub(crate) fn current_realm(&self) -> Box<Realm> {
+        self.running_execution_context().realm.clone()
     }
 
     pub(crate) fn push_execution_context(&mut self, context: ExecutionContext) {

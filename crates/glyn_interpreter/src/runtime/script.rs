@@ -46,7 +46,9 @@ impl ScriptRecord {
         let _global_env = &self.realm.global_env;
 
         // 2. Let scriptContext be a new ECMAScript code execution context.
-        let script_context = ExecutionContext {};
+        let script_context = ExecutionContext {
+            realm: self.realm.clone(),
+        };
 
         // 3. Set the Function of scriptContext to null.
         // 4. Set the Realm of scriptContext to scriptRecord.[[Realm]].

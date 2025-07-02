@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use crate::value::{object::JSObjAddr, JSValue};
+use crate::{
+    runtime::realm::Realm,
+    value::{object::JSObjAddr, string::JSString, JSValue},
+};
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum JSObjectSlotName {
-    /// [[Prototype]]
-    Prototype,
-
-    /// [[Extensible]]
     Extensible,
+    InitialName,
+    Prototype,
+    Realm,
 }
 
 #[derive(Debug)]
 pub enum JSObjectSlotValue {
-    /// The value of the slot, if it exists.
+    Realm(Box<Realm>),
     Value(JSValue),
-
-    /// The slot is not set.
     NotSet,
 }
 
@@ -61,7 +61,7 @@ impl JSObjectInternalSlots {
     pub(crate) fn extensible(&self) -> bool {
         match self.get(&JSObjectSlotName::Extensible) {
             Some(JSObjectSlotValue::Value(JSValue::Boolean(value))) => *value,
-            _ => false,
+            _ => true,
         }
     }
 
@@ -70,6 +70,30 @@ impl JSObjectInternalSlots {
             JSObjectSlotName::Extensible,
             JSValue::Boolean(extensible).into(),
         );
+    }
+
+    pub(crate) fn realm(self) -> Option<Box<Realm>> {
+        match self.get(&JSObjectSlotName::Realm) {
+            Some(JSObjectSlotValue::Realm(realm)) => Some(realm.clone()),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn set_realm(&mut self, realm: Box<Realm>) {
+        self.0
+            .insert(JSObjectSlotName::Realm, JSObjectSlotValue::Realm(realm));
+    }
+
+    pub(crate) fn initial_name(&self) -> Option<JSString> {
+        match self.get(&JSObjectSlotName::InitialName) {
+            Some(JSObjectSlotValue::Value(JSValue::String(name))) => Some(name.clone()),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn set_initial_name(&mut self, name: JSString) {
+        self.0
+            .insert(JSObjectSlotName::InitialName, JSValue::String(name).into());
     }
 }
 

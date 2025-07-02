@@ -1,24 +1,26 @@
-use std::any::Any;
+use safe_gc::Trace;
 
 use crate::{
     intrinsics::object_prototype::JSObjectPrototype,
     runtime::{environment::Environment, intrinsics::Intrinsics},
-    value::object::JSObject,
+    value::object::JSObjAddr,
     JSAgent,
 };
 
 /// 9.3 Realms
 /// https://262.ecma-international.org/15.0/#sec-code-realms
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Realm {
     /// [[Intrinsics]]
-    intrinsics: Intrinsics,
-
+    pub intrinsics: Intrinsics,
     /// [[GlobalObject]]
-    global_object: Option<Box<JSObject>>,
-
+    global_object: Option<Box<JSObjAddr>>,
     /// [[GlobalEnv]]
     pub global_env: Option<Box<Environment>>,
+}
+
+impl Trace for Realm {
+    fn trace(&self, _collector: &mut safe_gc::Collector) {}
 }
 
 impl Realm {
