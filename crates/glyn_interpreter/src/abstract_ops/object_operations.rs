@@ -169,3 +169,30 @@ pub(crate) fn call(
 
     call_fn(agent, function_obj_addr, &this_value, &args)
 }
+
+/// 7.1.18 ToObject ( argument )
+/// https://262.ecma-international.org/15.0/#sec-toobject
+pub(crate) fn to_object(agent: &JSAgent, arg: JSValue) -> JSObjAddr {
+    match arg {
+        JSValue::Undefined => {
+            // Throw a TypeError exception.
+            agent.type_error("Cannot convert undefined to object");
+        }
+        JSValue::Null => {
+            // Throw a TypeError exception.
+            agent.type_error("Cannot convert null to object");
+        }
+        // Return a new Boolean object whose [[BooleanData]] internal slot is set to argument.
+        JSValue::Boolean(_value) => todo!(),
+        // Return a new Number object whose [[NumberData]] internal slot is set to argument.
+        JSValue::Number(_value) => todo!(),
+        // Return a new String object whose [[StringData]] internal slot is set to argument.
+        JSValue::String(_value) => todo!(),
+        // Return a new Symbol object whose [[SymbolData]] internal slot is set to argument.
+        JSValue::Symbol => todo!(),
+        // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
+        JSValue::BigInt(_value) => todo!(),
+        // If argument is an Object, return argument.
+        JSValue::Object(addr) => addr,
+    }
+}
