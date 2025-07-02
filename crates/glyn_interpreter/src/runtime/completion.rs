@@ -12,9 +12,18 @@ pub enum NormalCompletion {
     Unused,
 }
 
-impl From<bool> for NormalCompletion {
-    fn from(value: bool) -> Self {
-        NormalCompletion::Value(JSValue::Boolean(value))
+impl From<JSValue> for NormalCompletion {
+    fn from(value: JSValue) -> Self {
+        match value {
+            JSValue::Undefined => NormalCompletion::Value(JSValue::Undefined),
+            JSValue::Null => NormalCompletion::Value(JSValue::Null),
+            JSValue::Boolean(b) => NormalCompletion::Value(JSValue::Boolean(b)),
+            JSValue::Number(n) => NormalCompletion::Value(JSValue::Number(n)),
+            JSValue::String(s) => NormalCompletion::Value(JSValue::String(s)),
+            JSValue::Object(o) => NormalCompletion::Value(JSValue::Object(o)),
+            JSValue::BigInt(b) => NormalCompletion::Value(JSValue::BigInt(b)),
+            JSValue::Symbol => NormalCompletion::Value(JSValue::Symbol),
+        }
     }
 }
 

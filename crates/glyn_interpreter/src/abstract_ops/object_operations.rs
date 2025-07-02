@@ -80,7 +80,9 @@ pub(crate) fn set(
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
 
-    if (success.is_err() || success.is_ok_and(|value| value == false.into())) && throw {
+    if (success.is_err() || success.is_ok_and(|value| value == JSValue::Boolean(false).into()))
+        && throw
+    {
         agent.type_error("Failed to set property on object");
     }
 
@@ -121,7 +123,7 @@ pub(crate) fn create_data_property_or_throw(
     let success = create_data_property(agent, object_addr, key, value);
 
     // 2. If success is false, throw a TypeError exception.
-    if success.is_err() || success.is_ok_and(|value| value == false.into()) {
+    if success.is_err() || success.is_ok_and(|value| value == JSValue::Boolean(false).into()) {
         agent.type_error("Failed to create data property on object");
     }
 
@@ -135,13 +137,22 @@ pub(crate) fn get_method(
     agent: &JSAgent,
     value: &JSValue,
     key: &JSObjectPropKey,
-) -> Option<JSValue> {
+) -> CompletionRecord {
     // 1. Let func be ? GetV(V, P).
     let func = getv(agent, value, key);
+
     // 2. If func is either undefined or null, return undefined.
+    let Ok(NormalCompletion::Value(ref func_value)) = func else {
+        return Ok(NormalCompletion::Value(JSValue::Undefined));
+    };
+
     // 3. If IsCallable(func) is false, throw a TypeError exception.
+    if !is_callable(agent, func_value) {
+        agent.type_error("Method is not callable.");
+    }
+
     // 4. Return func.
-    todo!()
+    func
 }
 
 /// 7.3.13 Call ( F, V [ , argumentsList ] )

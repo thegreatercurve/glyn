@@ -282,12 +282,12 @@ fn validate_and_apply_property_descriptor(
     let Some(current) = current else {
         // a. If extensible is false, return false.
         if !extensible {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // b. If O is undefined, return true.
         let Some(obj_addr) = opt_obj_addr else {
-            return Ok(true.into());
+            return Ok(JSValue::Boolean(true).into());
         };
 
         let object_mut = agent.object_mut(obj_addr);
@@ -322,7 +322,7 @@ fn validate_and_apply_property_descriptor(
         }
 
         // e. Return true.
-        return Ok(true.into());
+        return Ok(JSValue::Boolean(true).into());
     };
 
     // 3. Assert: current is a fully populated Property Descriptor.
@@ -330,26 +330,26 @@ fn validate_and_apply_property_descriptor(
 
     // 4. If Desc does not have any fields, return true.
     if !descriptor.is_fully_populated() {
-        return Ok(true.into());
+        return Ok(JSValue::Boolean(true).into());
     }
 
     // 5. If current.[[Configurable]] is false, then
     if current.configurable == Some(false) {
         // a. If Desc has a [[Configurable]] field and Desc.[[Configurable]] is true, return false.
         if descriptor.configurable.is_some() && descriptor.configurable == Some(true) {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // b. If Desc has an [[Enumerable]] field and Desc.[[Enumerable]] is not current.[[Enumerable]], return false.
         if descriptor.enumerable.is_some() && descriptor.enumerable != current.enumerable {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // c. If IsGenericDescriptor(Desc) is false and IsAccessorDescriptor(Desc) is not IsAccessorDescriptor(current), return false.
         if !descriptor.is_generic_descriptor()
             && descriptor.is_accessor_descriptor() != current.is_accessor_descriptor()
         {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // d. If IsAccessorDescriptor(current) is true, then
@@ -361,7 +361,7 @@ fn validate_and_apply_property_descriptor(
                     current.get.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
 
             // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
@@ -371,14 +371,14 @@ fn validate_and_apply_property_descriptor(
                     current.set.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
         }
         // e. Else if current.[[Writable]] is false, then
         else if current.writable == Some(false) {
             // i. If Desc has a [[Writable]] field and Desc.[[Writable]] is true, return false.
             if descriptor.writable.is_some() && descriptor.writable == Some(true) {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
 
             // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
@@ -388,7 +388,7 @@ fn validate_and_apply_property_descriptor(
                     current.value.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
         }
     }
@@ -461,7 +461,7 @@ fn validate_and_apply_property_descriptor(
     }
 
     // 7. Return true.
-    Ok(true.into())
+    Ok(JSValue::Boolean(true).into())
 }
 
 /// 10.1.7 [[HasProperty]] ( P )
@@ -632,12 +632,12 @@ fn ordinary_set_with_own_descriptor(
     if own_desc.is_data_descriptor() {
         // a. If ownDesc.[[Writable]] is false, return false.
         if own_desc.writable == Some(true) {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // b. If Receiver is not an Object, return false.
         if !receiver.is_object() {
-            return Ok(false.into());
+            return Ok(JSValue::Boolean(false).into());
         }
 
         // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
@@ -651,12 +651,12 @@ fn ordinary_set_with_own_descriptor(
         if let Some(existing_desc) = existing_desc {
             // i. If IsAccessorDescriptor(existingDescriptor) is true, return false.
             if existing_desc.is_accessor_descriptor() {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
 
             // ii. If existingDescriptor.[[Writable]] is false, return false.
             if existing_desc.writable == Some(false) {
-                return Ok(false.into());
+                return Ok(JSValue::Boolean(false).into());
             }
 
             // iii. Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
@@ -686,7 +686,7 @@ fn ordinary_set_with_own_descriptor(
 
     // 5. If setter is undefined, return false.
     if setter.is_none() {
-        return Ok(false.into());
+        return Ok(JSValue::Boolean(false).into());
     }
 
     // 6. Perform ? Call(setter, Receiver, « V »).
@@ -698,7 +698,7 @@ fn ordinary_set_with_own_descriptor(
     )?;
 
     // 7. Return true.
-    Ok(true.into())
+    Ok(JSValue::Boolean(true).into())
 }
 
 /// 10.1.10 [[Delete]] ( P )
