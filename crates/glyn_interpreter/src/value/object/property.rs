@@ -19,7 +19,7 @@ impl JSObjectPropKey {
 
     /// An array index is an integer index n such that CanonicalNumericIndexString(n) returns
     /// an integral Number in the inclusive interval from +0𝔽 to 𝔽(2****32 - 2).
-    /// https://262.ecma-international.org/15.0/index.html#sec-object-type
+    /// https://262.ecma-international.org/15.0/#sec-object-type
     pub(crate) fn as_array_index(&self) -> Option<u32> {
         if let JSObjectPropKey::String(value) = self {
             if let Ok(JSNumber::UInt(number)) = JSNumber::try_from(value.clone()) {
@@ -80,7 +80,7 @@ impl JSObjectPropDescriptor {
 
 impl JSObjectPropDescriptor {
     /// 6.2.6.1 IsAccessorDescriptor ( Desc )
-    /// https://262.ecma-international.org/15.0/index.html#sec-property-descriptor-specification-type
+    /// https://262.ecma-international.org/15.0/#sec-property-descriptor-specification-type
     pub(crate) fn is_accessor_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Get]] field, return true.
@@ -90,7 +90,7 @@ impl JSObjectPropDescriptor {
     }
 
     /// 6.2.6.2 IsDataDescriptor ( Desc )
-    /// https://262.ecma-international.org/15.0/index.html#sec-isdatadescriptor
+    /// https://262.ecma-international.org/15.0/#sec-isdatadescriptor
     pub(crate) fn is_data_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Value]] field, return true.
@@ -100,7 +100,7 @@ impl JSObjectPropDescriptor {
     }
 
     /// 6.2.6.3 IsGenericDescriptor ( Desc )
-    /// https://262.ecma-international.org/15.0/index.html#sec-isgenericdescriptor
+    /// https://262.ecma-international.org/15.0/#sec-isgenericdescriptor
     pub(crate) fn is_generic_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Value]] field, return true.

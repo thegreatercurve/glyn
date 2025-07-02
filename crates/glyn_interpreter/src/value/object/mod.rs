@@ -31,7 +31,7 @@ type InternalMethodsConstructFn =
     Option<fn(agent: &mut JSAgent, args: &[JSValue], obj_addr: JSObjAddr) -> JSObjAddr>;
 
 /// Essential Internal Methods
-/// https://262.ecma-international.org/15.0/index.html#table-essential-internal-methods
+/// https://262.ecma-international.org/15.0/#table-essential-internal-methods
 #[derive(Debug, PartialEq)]
 pub struct JSObjectInternalMethods {
     /// [[GetPrototypeOf]]

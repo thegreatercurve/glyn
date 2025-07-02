@@ -17,7 +17,7 @@ use crate::{
 };
 
 /// 10.1 Ordinary Object Internal Methods and Internal Slots
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots
 pub(crate) static ORDINARY_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
     JSObjectInternalMethods {
         get_prototype_of,
@@ -36,21 +36,21 @@ pub(crate) static ORDINARY_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
     };
 
 /// 10.1.1 [[GetPrototypeOf]] ( )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-getprototypeof
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-getprototypeof
 fn get_prototype_of(agent: &JSAgent, obj_addr: JSObjAddr) -> Option<JSObjAddr> {
     // 1. Return OrdinaryGetPrototypeOf(O).
     ordinary_get_prototype_of(agent, obj_addr)
 }
 
 /// 10.1.1.1 OrdinaryGetPrototypeOf ( O )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarygetprototypeof
+/// https://262.ecma-international.org/15.0/#sec-ordinarygetprototypeof
 fn ordinary_get_prototype_of(agent: &JSAgent, obj_addr: JSObjAddr) -> Option<JSObjAddr> {
     // 1. Return O.[[Prototype]].
     agent.object(obj_addr).prototype()
 }
 
 /// 10.1.2 [[SetPrototypeOf]] ( V )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
 fn set_prototype_of(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -61,7 +61,7 @@ fn set_prototype_of(
 }
 
 /// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
 fn ordinary_set_prototype_of(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -119,28 +119,28 @@ fn ordinary_set_prototype_of(
 }
 
 /// 10.1.3 [[IsExtensible]] ( )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-isextensible
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-isextensible
 fn is_extensible(agent: &JSAgent, obj_addr: JSObjAddr) -> bool {
     // 1. Return O.[[IsExtensible]]().
     ordinary_is_extensible(agent, obj_addr)
 }
 
 /// 10.1.3.1 OrdinaryIsExtensible ( O )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryisextensible
+/// https://262.ecma-international.org/15.0/#sec-ordinaryisextensible
 fn ordinary_is_extensible(agent: &JSAgent, obj_addr: JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
     agent.object(obj_addr).extensible()
 }
 
 /// 10.1.4 [[PreventExtensions]] ( )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-preventextensions
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-preventextensions
 fn prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
     // 1. Return OrdinaryPreventExtensions(O).
     ordinary_prevent_extensions(agent, object_addr)
 }
 
 /// 10.1.4.1 OrdinaryPreventExtensions ( O )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarypreventextensions
+/// https://262.ecma-international.org/15.0/#sec-ordinarypreventextensions
 fn ordinary_prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
     // 1. Set O.[[Extensible]] to false.
     agent.object_mut(object_addr).slots.set_extensible(false);
@@ -150,7 +150,7 @@ fn ordinary_prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> b
 }
 
 /// 10.1.5 [[GetOwnProperty]] ( P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-getownproperty-p
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-getownproperty-p
 fn get_own_property(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -161,7 +161,7 @@ fn get_own_property(
 }
 
 /// 10.1.5.1 OrdinaryGetOwnProperty ( O, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarygetownproperty
+/// https://262.ecma-international.org/15.0/#sec-ordinarygetownproperty
 fn ordinary_get_own_property(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -208,7 +208,7 @@ fn ordinary_get_own_property(
 }
 
 /// 10.1.6 [[DefineOwnProperty]] ( P, Desc )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
+/// https://262.ecma-international.org/15.0/#sec-ordinarydefineownproperty
 fn define_own_property(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -220,7 +220,7 @@ fn define_own_property(
 }
 
 /// 10.1.6.1 OrdinaryDefineOwnProperty ( O, P, Desc )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydefineownproperty
+/// https://262.ecma-international.org/15.0/#sec-ordinarydefineownproperty
 fn ordinary_define_own_property(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -247,7 +247,7 @@ fn ordinary_define_own_property(
 }
 
 /// 10.1.6.2 IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
-/// https://262.ecma-international.org/15.0/index.html#sec-iscompatiblepropertydescriptor
+/// https://262.ecma-international.org/15.0/#sec-iscompatiblepropertydescriptor
 fn is_compatible_property_descriptor(
     agent: &mut JSAgent,
     extensible: bool,
@@ -266,7 +266,7 @@ fn is_compatible_property_descriptor(
 }
 
 /// 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
-/// https://262.ecma-international.org/15.0/index.html#sec-validateandapplypropertydescriptor
+/// https://262.ecma-international.org/15.0/#sec-validateandapplypropertydescriptor
 fn validate_and_apply_property_descriptor(
     agent: &mut JSAgent,
     opt_obj_addr: Option<JSObjAddr>,
@@ -463,14 +463,14 @@ fn validate_and_apply_property_descriptor(
 }
 
 /// 10.1.7 [[HasProperty]] ( P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-hasproperty-p
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-hasproperty-p
 fn has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
     // 1. Return OrdinaryHasProperty(O, P).
     ordinary_has_property(agent, obj_addr, key)
 }
 
 /// 10.1.7.1 OrdinaryHasProperty ( O, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryhasproperty
+/// https://262.ecma-international.org/15.0/#sec-ordinaryhasproperty
 fn ordinary_has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
     let object = agent.object(obj_addr);
 
@@ -496,7 +496,7 @@ fn ordinary_has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPro
 }
 
 /// 10.1.8 [[Get]] ( P, Receiver )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-get-p-receiver
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-get-p-receiver
 fn get(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -508,7 +508,7 @@ fn get(
 }
 
 /// 10.1.8.1 OrdinaryGet ( O, P, Receiver )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryget
+/// https://262.ecma-international.org/15.0/#sec-ordinaryget
 fn ordinary_get(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -562,7 +562,7 @@ fn ordinary_get(
 }
 
 /// 10.1.9 [[Set]] ( P, V, Receiver )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
 fn set(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -575,7 +575,7 @@ fn set(
 }
 
 /// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryset
+/// https://262.ecma-international.org/15.0/#sec-ordinaryset
 fn ordinary_set(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -591,7 +591,7 @@ fn ordinary_set(
 }
 
 /// 10.1.9.2 OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarysetwithowndescriptor
+/// https://262.ecma-international.org/15.0/#sec-ordinarysetwithowndescriptor
 fn ordinary_set_with_own_descriptor(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -700,14 +700,14 @@ fn ordinary_set_with_own_descriptor(
 }
 
 /// 10.1.10 [[Delete]] ( P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-delete-p
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-delete-p
 fn delete(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
     // 1. Return OrdinaryDelete(O, P).
     ordinary_delete(agent, obj_addr, key)
 }
 
 /// 10.1.10.1 OrdinaryDelete ( O, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinarydelete
+/// https://262.ecma-international.org/15.0/#sec-ordinarydelete
 fn ordinary_delete(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
     let object = agent.object(obj_addr);
 
@@ -737,14 +737,14 @@ fn ordinary_delete(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropK
 }
 
 /// 10.1.11 [[OwnPropertyKeys]] ( )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
+/// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
 fn own_property_keys(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {
     // 1. Return OrdinaryOwnPropertyKeys(O).
     ordinary_own_property_keys(agent, obj_addr)
 }
 
 /// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryownpropertykeys
+/// https://262.ecma-international.org/15.0/#sec-ordinaryownpropertykeys
 fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {
     let object = agent.object(obj_addr);
 
@@ -783,7 +783,7 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObj
 }
 
 /// 10.1.12 OrdinaryObjectCreate ( proto [ , additionalInternalSlotsList ] )
-/// https://262.ecma-international.org/15.0/index.html#sec-ordinaryobjectcreate
+/// https://262.ecma-international.org/15.0/#sec-ordinaryobjectcreate
 pub(crate) fn ordinary_object_create(
     agent: &mut JSAgent,
     proto_addr: Option<JSObjAddr>,

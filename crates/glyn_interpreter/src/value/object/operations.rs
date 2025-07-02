@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
-/// https://262.ecma-international.org/15.0/index.html#sec-makebasicobject
+/// https://262.ecma-international.org/15.0/#sec-makebasicobject
 pub fn make_basic_object(
     agent: &mut JSAgent,
     internal_slots_list: Vec<JSObjectSlotName>,
@@ -41,7 +41,7 @@ pub fn make_basic_object(
 }
 
 /// 7.3.2 Get ( O, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-get-o-p
+/// https://262.ecma-international.org/15.0/#sec-get-o-p
 pub(crate) fn get(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -53,7 +53,7 @@ pub(crate) fn get(
 }
 
 /// 7.3.3 GetV ( V, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-getv
+/// https://262.ecma-international.org/15.0/#sec-getv
 pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> JSValue {
     // 1. Let O be ? ToObject(V).
     // 2. Return ? O.[[Get]](P, V).
@@ -61,7 +61,7 @@ pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> J
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
-/// https://262.ecma-international.org/15.0/index.html#sec-set-o-p-v-throw
+/// https://262.ecma-international.org/15.0/#sec-set-o-p-v-throw
 pub(crate) fn set(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -84,7 +84,7 @@ pub(crate) fn set(
 }
 
 /// 7.3.5 CreateDataProperty ( O, P, V )
-/// https://262.ecma-international.org/15.0/index.html#sec-createdataproperty
+/// https://262.ecma-international.org/15.0/#sec-createdataproperty
 pub(crate) fn create_data_property(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -105,7 +105,7 @@ pub(crate) fn create_data_property(
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
-/// https://262.ecma-international.org/15.0/index.html#sec-createdatapropertyorthrow
+/// https://262.ecma-international.org/15.0/#sec-createdatapropertyorthrow
 pub(crate) fn create_data_property_or_throw(
     agent: &mut JSAgent,
     object_addr: JSObjAddr,
@@ -125,7 +125,7 @@ pub(crate) fn create_data_property_or_throw(
 }
 
 /// 7.3.10 GetMethod ( V, P )
-/// https://262.ecma-international.org/15.0/index.html#sec-getmethod
+/// https://262.ecma-international.org/15.0/#sec-getmethod
 pub(crate) fn get_method(
     agent: &JSAgent,
     value: &JSValue,
@@ -140,7 +140,7 @@ pub(crate) fn get_method(
 }
 
 /// 7.3.13 Call ( F, V [ , argumentsList ] )
-/// https://262.ecma-international.org/15.0/index.html#sec-call
+/// https://262.ecma-international.org/15.0/#sec-call
 pub(crate) fn call(
     agent: &JSAgent,
     function_value: JSValue,

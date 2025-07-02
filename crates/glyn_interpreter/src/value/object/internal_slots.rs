@@ -27,7 +27,7 @@ impl From<JSValue> for JSObjectSlotValue {
 }
 
 /// 6.1.7.2 Object Internal Methods and Internal Slots
-/// https://262.ecma-international.org/15.0/index.html#sec-object-internal-methods-and-internal-slots
+/// https://262.ecma-international.org/15.0/#sec-object-internal-methods-and-internal-slots
 #[derive(Debug, Default)]
 pub(crate) struct JSObjectInternalSlots(HashMap<JSObjectSlotName, JSObjectSlotValue>);
 
