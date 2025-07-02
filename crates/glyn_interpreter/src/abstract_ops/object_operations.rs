@@ -1,5 +1,5 @@
 use crate::{
-    abstract_ops::testing_comparison::is_callable,
+    abstract_ops::{object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable},
     runtime::{
         agent::JSAgent,
         completion::{CompletionRecord, NormalCompletion},
@@ -7,7 +7,6 @@ use crate::{
     value::{
         object::{
             internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
-            ordinary::ORDINARY_OBJECT_INTERNAL_METHODS,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObject, JSObjectInternalMethods,
         },

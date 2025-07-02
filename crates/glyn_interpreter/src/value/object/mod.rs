@@ -1,5 +1,4 @@
 pub(crate) mod internal_slots;
-pub(crate) mod ordinary;
 pub(crate) mod property;
 
 use safe_gc::{Collector, Gc, Trace};
@@ -94,7 +93,7 @@ pub struct JSObjectInternalMethods {
     pub construct: InternalMethodsConstructFn,
 }
 
-struct PropertyIndex(usize);
+pub(crate) struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
@@ -116,7 +115,7 @@ impl Trace for JSObject {
 
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
-    fn prototype(&self) -> Option<JSObjAddr> {
+    pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
         self.slots.prototype()
     }
 
@@ -126,19 +125,19 @@ impl JSObject {
     }
 
     // Utility methods for getting and setting properties.
-    fn keys(&self) -> &[JSObjectPropKey] {
+    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
         &self.keys
     }
 
-    fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
+    pub(crate) fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
         self.values.get(index.0)
     }
 
-    fn has_property(&self, key: &JSObjectPropKey) -> bool {
+    pub(crate) fn has_property(&self, key: &JSObjectPropKey) -> bool {
         self.keys.iter().any(|k| k == key)
     }
 
-    fn set_property(
+    pub(crate) fn set_property(
         &mut self,
         key: &JSObjectPropKey,
         value: JSObjectPropDescriptor,
@@ -149,14 +148,14 @@ impl JSObject {
         PropertyIndex(self.keys.len() - 1)
     }
 
-    fn delete_property(&mut self, index: PropertyIndex) -> bool {
+    pub(crate) fn delete_property(&mut self, index: PropertyIndex) -> bool {
         self.keys.remove(index.0);
         self.values.remove(index.0);
 
         true
     }
 
-    fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
+    pub(crate) fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
         self.keys.iter().position(|k| k == key).map(PropertyIndex)
     }
 }

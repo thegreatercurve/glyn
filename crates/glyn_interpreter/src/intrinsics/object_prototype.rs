@@ -1,27 +1,16 @@
 use crate::{
-    abstract_ops::{immutable_prototype_objects, object_operations::make_basic_object},
-    value::object::{
-        internal_slots::JSObjectSlotName, ordinary::ORDINARY_OBJECT_INTERNAL_METHODS, JSObjAddr,
-        JSObjectInternalMethods,
+    abstract_ops::{
+        immutable_prototype_objects, object::ORDINARY_OBJECT_INTERNAL_METHODS,
+        object_operations::make_basic_object,
     },
+    value::object::{internal_slots::JSObjectSlotName, JSObjAddr, JSObjectInternalMethods},
     JSAgent,
 };
 
 pub(crate) static IMMUTABLE_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
     JSObjectInternalMethods {
-        get_prototype_of: ORDINARY_OBJECT_INTERNAL_METHODS.get_prototype_of,
         set_prototype_of: immutable_prototype_objects::set_immutable_prototype,
-        is_extensible: ORDINARY_OBJECT_INTERNAL_METHODS.is_extensible,
-        prevent_extensions: ORDINARY_OBJECT_INTERNAL_METHODS.prevent_extensions,
-        get_own_property: ORDINARY_OBJECT_INTERNAL_METHODS.get_own_property,
-        define_own_property: ORDINARY_OBJECT_INTERNAL_METHODS.define_own_property,
-        has_property: ORDINARY_OBJECT_INTERNAL_METHODS.has_property,
-        get: ORDINARY_OBJECT_INTERNAL_METHODS.get,
-        set: ORDINARY_OBJECT_INTERNAL_METHODS.set,
-        delete: ORDINARY_OBJECT_INTERNAL_METHODS.delete,
-        own_property_keys: ORDINARY_OBJECT_INTERNAL_METHODS.own_property_keys,
-        call: None,
-        construct: None,
+        ..ORDINARY_OBJECT_INTERNAL_METHODS
     };
 
 #[derive(Debug)]
@@ -35,7 +24,7 @@ impl JSObjectPrototype {
         make_basic_object(
             agent,
             vec![JSObjectSlotName::Prototype, JSObjectSlotName::Extensible],
-            None,
+            Some(&IMMUTABLE_OBJECT_INTERNAL_METHODS),
         )
     }
 }
