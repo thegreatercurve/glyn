@@ -1,9 +1,9 @@
 use std::any::Any;
 
-use crate::{runtime::environment::Environment, value::object::JSObject};
-
-#[derive(Debug, Default)]
-struct Intrinsics;
+use crate::{
+    runtime::{environment::Environment, intrinsics::Intrinsics},
+    value::object::JSObject,
+};
 
 /// 9.3 Realms
 /// https://262.ecma-international.org/15.0/#sec-code-realms
