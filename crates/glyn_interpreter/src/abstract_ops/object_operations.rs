@@ -115,12 +115,12 @@ pub(crate) fn create_data_property(
 /// https://262.ecma-international.org/15.0/#sec-createdatapropertyorthrow
 pub(crate) fn create_data_property_or_throw(
     agent: &mut JSAgent,
-    object_addr: JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) -> CompletionRecord {
     // 1. 1. Let success be ? CreateDataProperty(O, P, V).
-    let success = create_data_property(agent, object_addr, key, value);
+    let success = create_data_property(agent, obj_addr, key, value);
 
     // 2. If success is false, throw a TypeError exception.
     if success.is_err() || success.is_ok_and(|value| value == JSValue::Boolean(false).into()) {

@@ -136,16 +136,16 @@ fn ordinary_is_extensible(agent: &JSAgent, obj_addr: JSObjAddr) -> bool {
 
 /// 10.1.4 [[PreventExtensions]] ( )
 /// https://262.ecma-international.org/15.0/#sec-ordinary-object-internal-methods-and-internal-slots-preventextensions
-fn prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
+fn prevent_extensions(agent: &mut JSAgent, obj_addr: JSObjAddr) -> bool {
     // 1. Return OrdinaryPreventExtensions(O).
-    ordinary_prevent_extensions(agent, object_addr)
+    ordinary_prevent_extensions(agent, obj_addr)
 }
 
 /// 10.1.4.1 OrdinaryPreventExtensions ( O )
 /// https://262.ecma-international.org/15.0/#sec-ordinarypreventextensions
-fn ordinary_prevent_extensions(agent: &mut JSAgent, object_addr: JSObjAddr) -> bool {
+fn ordinary_prevent_extensions(agent: &mut JSAgent, obj_addr: JSObjAddr) -> bool {
     // 1. Set O.[[Extensible]] to false.
-    agent.object_mut(object_addr).slots.set_extensible(false);
+    agent.object_mut(obj_addr).slots.set_extensible(false);
 
     // 2. Return true.
     true
@@ -525,10 +525,10 @@ fn ordinary_get(
     // 2. If desc is undefined, then
     let Some(desc) = desc else {
         // a. Let parent be ? O.[[GetPrototypeOf]]().
-        let opt_parent_ptr = (object.methods.get_prototype_of)(agent, obj_addr);
+        let opt_parent_addr = (object.methods.get_prototype_of)(agent, obj_addr);
 
         // b. If parent is null, return undefined.
-        let Some(parent) = opt_parent_ptr else {
+        let Some(parent) = opt_parent_addr else {
             return Ok(NormalCompletion::Value(JSValue::Undefined));
         };
 

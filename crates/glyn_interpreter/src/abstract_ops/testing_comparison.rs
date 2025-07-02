@@ -24,12 +24,12 @@ pub(crate) fn require_object_coercible(agent: &JSAgent, arg: JSValue) -> Complet
 /// https://262.ecma-international.org/15.0/#sec-iscallable
 pub(crate) fn is_callable(agent: &JSAgent, arg: &JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(object_ptr) = arg.as_object() else {
+    let Some(obj_addr) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Call]] internal method, return true.
-    if agent.object(object_ptr).methods.call.is_some() {
+    if agent.object(obj_addr).methods.call.is_some() {
         return true;
     }
 
@@ -41,12 +41,12 @@ pub(crate) fn is_callable(agent: &JSAgent, arg: &JSValue) -> bool {
 /// https://262.ecma-international.org/15.0/#sec-isconstructor
 pub(crate) fn is_constructor(agent: &JSAgent, arg: JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(object_ptr) = arg.as_object() else {
+    let Some(obj_addr) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Construct]] internal method, return true.
-    if agent.object(object_ptr).methods.construct.is_some() {
+    if agent.object(obj_addr).methods.construct.is_some() {
         return true;
     }
 
