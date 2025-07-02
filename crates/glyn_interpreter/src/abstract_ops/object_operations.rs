@@ -57,10 +57,12 @@ pub(crate) fn get(
 
 /// 7.3.3 GetV ( V, P )
 /// https://262.ecma-international.org/15.0/#sec-getv
-pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> JSValue {
+pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> CompletionRecord {
     // 1. Let O be ? ToObject(V).
+    let obj_addr = to_object(agent, value);
+
     // 2. Return ? O.[[Get]](P, V).
-    todo!()
+    (agent.object(obj_addr).methods.get)(agent, obj_addr, key, value)
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
@@ -172,7 +174,7 @@ pub(crate) fn call(
 
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/15.0/#sec-toobject
-pub(crate) fn to_object(agent: &JSAgent, arg: JSValue) -> JSObjAddr {
+pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
     match arg {
         JSValue::Undefined => {
             // Throw a TypeError exception.
@@ -193,6 +195,6 @@ pub(crate) fn to_object(agent: &JSAgent, arg: JSValue) -> JSObjAddr {
         // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
         JSValue::BigInt(_value) => todo!(),
         // If argument is an Object, return argument.
-        JSValue::Object(addr) => addr,
+        JSValue::Object(addr) => *addr,
     }
 }
