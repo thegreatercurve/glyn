@@ -1,5 +1,4 @@
 pub(crate) mod internal_slots;
-pub(crate) mod operations;
 pub(crate) mod ordinary;
 pub(crate) mod property;
 
@@ -102,9 +101,9 @@ struct PropertyIndex(usize);
 #[derive(Debug)]
 pub struct JSObject {
     pub methods: &'static JSObjectInternalMethods,
-    slots: JSObjectInternalSlots,
-    keys: Vec<JSObjectPropKey>,
-    values: Vec<JSObjectPropDescriptor>,
+    pub slots: JSObjectInternalSlots,
+    pub keys: Vec<JSObjectPropKey>,
+    pub values: Vec<JSObjectPropDescriptor>,
 }
 
 impl Trace for JSObject {

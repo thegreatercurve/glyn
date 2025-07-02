@@ -1,4 +1,5 @@
 use crate::{
+    abstract_ops::testing_comparison::is_callable,
     runtime::{
         agent::JSAgent,
         completion::{CompletionRecord, NormalCompletion},
@@ -10,10 +11,12 @@ use crate::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObject,
         },
-        operations::comparison::is_callable,
         JSValue,
     },
 };
+
+// 7.3 Operations on Objects
+// https://262.ecma-international.org/15.0/#sec-operations-on-objects
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
 /// https://262.ecma-international.org/15.0/#sec-makebasicobject

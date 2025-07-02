@@ -1,7 +1,6 @@
 pub(crate) mod big_int;
 pub(crate) mod number;
 pub(crate) mod object;
-pub(crate) mod operations;
 pub(crate) mod string;
 pub(crate) mod symbol;
 
@@ -26,11 +25,11 @@ pub enum JSValue {
 }
 
 impl JSValue {
-    fn is_boolean(&self) -> bool {
+    pub(crate) fn is_boolean(&self) -> bool {
         matches!(self, JSValue::Boolean(_))
     }
 
-    fn as_boolean(&self) -> Option<&bool> {
+    pub(crate) fn as_boolean(&self) -> Option<&bool> {
         match self {
             JSValue::Boolean(value) => Some(value),
             _ => None,
@@ -41,7 +40,7 @@ impl JSValue {
         matches!(self, JSValue::Number(_))
     }
 
-    fn as_number(&self) -> Option<&JSNumber> {
+    pub(crate) fn as_number(&self) -> Option<&JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),
             _ => None,
@@ -55,11 +54,11 @@ impl JSValue {
         }
     }
 
-    fn is_object(&self) -> bool {
+    pub(crate) fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }
 
-    fn as_object(&self) -> Option<JSObjAddr> {
+    pub(crate) fn as_object(&self) -> Option<JSObjAddr> {
         match self {
             JSValue::Object(object) => Some(*object),
             _ => None,

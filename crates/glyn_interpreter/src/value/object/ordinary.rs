@@ -1,4 +1,8 @@
 use crate::{
+    abstract_ops::{
+        object_operations::{call, create_data_property, make_basic_object},
+        testing_comparison::same_value,
+    },
     runtime::{
         agent::JSAgent,
         completion::{CompletionRecord, NormalCompletion},
@@ -6,11 +10,9 @@ use crate::{
     value::{
         object::{
             internal_slots::JSObjectSlotName,
-            operations::{call, create_data_property, make_basic_object},
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObjectInternalMethods,
         },
-        operations::comparison::same_value,
         string::JSString,
         JSValue,
     },
