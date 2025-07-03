@@ -1,5 +1,8 @@
 use crate::{
-    abstract_ops::{object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable},
+    abstract_ops::{
+        object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
+        type_conversion::to_object,
+    },
     runtime::{
         agent::JSAgent,
         completion::{CompletionRecord, NormalCompletion},
@@ -425,31 +428,4 @@ pub(crate) fn test_integrity_level(
 
     // 6. Return true.
     Ok(NormalCompletion::Bool(true))
-}
-
-/// 7.1.18 ToObject ( argument )
-/// https://262.ecma-international.org/15.0/#sec-toobject
-pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
-    match arg {
-        JSValue::Undefined => {
-            // Throw a TypeError exception.
-            agent.type_error("Cannot convert undefined to object");
-        }
-        JSValue::Null => {
-            // Throw a TypeError exception.
-            agent.type_error("Cannot convert null to object");
-        }
-        // Return a new Boolean object whose [[BooleanData]] internal slot is set to argument.
-        JSValue::Bool(_value) => todo!(),
-        // Return a new Number object whose [[NumberData]] internal slot is set to argument.
-        JSValue::Number(_value) => todo!(),
-        // Return a new String object whose [[StringData]] internal slot is set to argument.
-        JSValue::String(_value) => todo!(),
-        // Return a new Symbol object whose [[SymbolData]] internal slot is set to argument.
-        JSValue::Symbol(_) => todo!(),
-        // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
-        JSValue::BigInt(_value) => todo!(),
-        // If argument is an Object, return argument.
-        JSValue::Object(addr) => *addr,
-    }
 }

@@ -1,6 +1,6 @@
 use crate::{
     runtime::agent::{JSAgent, WellKnownSymbol},
-    value::{number::JSNumber, string::JSString, JSValue},
+    value::{number::JSNumber, object::JSObjAddr, string::JSString, JSValue},
 };
 
 enum PrimitivePreferredType {
@@ -213,4 +213,31 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> JSNumber {
     // 4. Let int32bit be int modulo 2^32.
     // 5. Return 𝔽(int32bit).
     int % JSNumber::UInt(2u32.pow(32))
+}
+
+/// 7.1.18 ToObject ( argument )
+/// https://262.ecma-international.org/15.0/#sec-toobject
+pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
+    match arg {
+        JSValue::Undefined => {
+            // Throw a TypeError exception.
+            agent.type_error("Cannot convert undefined to object");
+        }
+        JSValue::Null => {
+            // Throw a TypeError exception.
+            agent.type_error("Cannot convert null to object");
+        }
+        // Return a new Boolean object whose [[BooleanData]] internal slot is set to argument.
+        JSValue::Bool(_value) => todo!(),
+        // Return a new Number object whose [[NumberData]] internal slot is set to argument.
+        JSValue::Number(_value) => todo!(),
+        // Return a new String object whose [[StringData]] internal slot is set to argument.
+        JSValue::String(_value) => todo!(),
+        // Return a new Symbol object whose [[SymbolData]] internal slot is set to argument.
+        JSValue::Symbol(_) => todo!(),
+        // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
+        JSValue::BigInt(_value) => todo!(),
+        // If argument is an Object, return argument.
+        JSValue::Object(addr) => *addr,
+    }
 }
