@@ -195,3 +195,22 @@ pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> JSNumber {
         int32bit
     }
 }
+
+/// 7.1.7 ToUint32 ( argument )
+/// https://262.ecma-international.org/15.0/#sec-touint32
+pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> JSNumber {
+    // 1. Let number be ? ToNumber(argument).
+    let number = to_number(agent, argument);
+
+    // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+    if !number.is_finite() || number.is_zero() {
+        return JSNumber::UInt(0);
+    }
+
+    // 3. Let int be truncate(ℝ(number)).
+    let int = number.truncate();
+
+    // 4. Let int32bit be int modulo 2^32.
+    // 5. Return 𝔽(int32bit).
+    int % JSNumber::UInt(2u32.pow(32))
+}
