@@ -297,6 +297,91 @@ pub(crate) fn construct(
     Ok(NormalCompletion::Value(JSValue::Object(result)))
 }
 
+/// Integrity level for SetIntegrityLevel operation
+#[derive(Debug, PartialEq)]
+pub(crate) enum IntegrityLevel {
+    Sealed,
+    Frozen,
+}
+
+/// 7.3.15 SetIntegrityLevel ( O, level )
+/// https://262.ecma-international.org/15.0/#sec-setintegritylevel
+pub(crate) fn set_integrity_level(
+    agent: &mut JSAgent,
+    obj_addr: JSObjAddr,
+    level: IntegrityLevel,
+) -> CompletionRecord {
+    // 1. Let status be ? O.[[PreventExtensions]]().
+    let status = (agent.object(obj_addr).methods.prevent_extensions)(agent, obj_addr);
+
+    // 2. If status is false, return false.
+    if !status {
+        return Ok(NormalCompletion::Value(JSValue::Boolean(false)));
+    }
+
+    // 3. Let keys be ? O.[[OwnPropertyKeys]]().
+    let keys = (agent.object(obj_addr).methods.own_property_keys)(agent, obj_addr);
+
+    // 4. If level is sealed, then
+    if matches!(level, IntegrityLevel::Sealed) {
+        // a. For each element k of keys, do
+        for key in keys {
+            // i. Perform ? DefinePropertyOrThrow(O, k, PropertyDescriptor { [[Configurable]]: false }).
+            let _ = define_property_or_throw(
+                agent,
+                obj_addr,
+                &key,
+                JSObjectPropDescriptor {
+                    configurable: Some(false),
+                    ..JSObjectPropDescriptor::default()
+                },
+            )?;
+        }
+    }
+    // 5. Else,
+    else {
+        // a. Assert: level is frozen.
+        debug_assert!(matches!(level, IntegrityLevel::Frozen));
+
+        // b. For each element k of keys, do
+        for key in keys {
+            // i. Let currentDesc be ? O.[[GetOwnProperty]](k).
+            let current_desc =
+                (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key);
+
+            // ii. If currentDesc is not undefined, then
+            if let Some(current_desc) = current_desc {
+                // 1. If IsAccessorDescriptor(currentDesc) is true, then
+                if current_desc.is_accessor_descriptor() {
+                    // a. Let desc be the PropertyDescriptor { [[Configurable]]: false }.
+                    let desc = JSObjectPropDescriptor {
+                        configurable: Some(false),
+                        ..JSObjectPropDescriptor::default()
+                    };
+
+                    // 3. Perform ? DefinePropertyOrThrow(O, k, desc).
+                    define_property_or_throw(agent, obj_addr, &key, desc)?;
+                }
+                // 2. Else,
+                else {
+                    // a. Let desc be the PropertyDescriptor { [[Configurable]]: false, [[Writable]]: false }.
+                    let desc = JSObjectPropDescriptor {
+                        configurable: Some(false),
+                        writable: Some(false),
+                        ..JSObjectPropDescriptor::default()
+                    };
+
+                    // 3. Perform ? DefinePropertyOrThrow(O, k, desc).
+                    define_property_or_throw(agent, obj_addr, &key, desc)?;
+                }
+            }
+        }
+    }
+
+    // 6. Return true.
+    Ok(NormalCompletion::Value(JSValue::Boolean(true)))
+}
+
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/15.0/#sec-toobject
 pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
