@@ -1,6 +1,11 @@
 use crate::{
     runtime::agent::{JSAgent, WellKnownSymbol},
-    value::{number::JSNumber, object::JSObjAddr, string::JSString, JSValue},
+    value::{
+        number::JSNumber,
+        object::{property::JSObjectPropKey, JSObjAddr},
+        string::JSString,
+        JSValue,
+    },
 };
 
 enum PrimitivePreferredType {
@@ -299,4 +304,20 @@ pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
         // If argument is an Object, return argument.
         JSValue::Object(addr) => *addr,
     }
+}
+
+/// 7.1.19 ToPropertyKey ( argument )
+/// https://262.ecma-international.org/15.0/#sec-topropertykey
+pub(crate) fn to_property_key(agent: &JSAgent, argument: JSValue) -> JSObjectPropKey {
+    // 1. Let key be ? ToPrimitive(argument, string).
+    let key = to_primitive(agent, argument, PrimitivePreferredType::String);
+
+    // 2. If key is a Symbol, then
+    if let Some(symbol) = key.as_symbol() {
+        // a. Return key.
+        return JSObjectPropKey::Symbol(symbol.clone());
+    }
+
+    // 3. Return ! ToString(key).
+    JSObjectPropKey::String(to_string(agent, key))
 }
