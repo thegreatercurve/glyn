@@ -117,9 +117,9 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> JSNumber {
         // 3. If argument is undefined, return NaN.
         JSValue::Undefined => return JSNumber::nan(),
         // 4. If argument is either null or false, return +0𝔽.
-        JSValue::Null | JSValue::Bool(false) => return JSNumber::from(0),
+        JSValue::Null | JSValue::Bool(false) => return JSNumber::zero(),
         // 5. If argument is true, return +1𝔽
-        JSValue::Bool(true) => return JSNumber::from(1),
+        JSValue::Bool(true) => return JSNumber::Int(1),
         // 6. If argument is a String, return StringToNumber(argument).
         JSValue::String(ref string) => return string_to_number(agent, string),
         _ => {}
@@ -161,7 +161,7 @@ pub(crate) fn to_integer_or_infinity(agent: &JSAgent, argument: JSValue) -> JSNu
 
     // 2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.
     if number.is_nan() || number.is_zero() {
-        return JSNumber::from(0);
+        return JSNumber::zero();
     }
 
     // 3. If number is +∞𝔽, return +∞.
@@ -186,7 +186,7 @@ pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> JSNumber {
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
     if !number.is_finite() || number.is_zero() {
-        return JSNumber::Int(0);
+        return JSNumber::zero();
     }
 
     // 3. Let int be truncate(ℝ(number)).
@@ -211,7 +211,7 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> JSNumber {
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
     if !number.is_finite() || number.is_zero() {
-        return JSNumber::UInt(0);
+        return JSNumber::zero();
     }
 
     // 3. Let int be truncate(ℝ(number)).
@@ -331,12 +331,35 @@ pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> JSNumber {
     let len = to_integer_or_infinity(agent, argument);
 
     // 2. If len ≤ 0, return +0𝔽.
-    if len.lt(&JSNumber::Int(0)) {
-        return JSNumber::Int(0);
+    if len.lt(&JSNumber::zero()) {
+        return JSNumber::zero();
     }
 
     // 3. Return 𝔽(min(len, 2^53 - 1)).
     let clamped_len = min(len.as_i64(), JSNumber::MAX_SAFE_INTEGER);
 
     JSNumber::Float(clamped_len as f64)
+}
+
+/// 7.1.21 CanonicalNumericIndexString ( argument )
+/// https://262.ecma-international.org/15.0/#sec-canonicalnumericindexstring
+pub(crate) fn canonical_numeric_index_string(
+    agent: &JSAgent,
+    argument: &JSString,
+) -> Option<JSNumber> {
+    // 1. If argument is "-0", return -0𝔽.
+    if argument.0 == "-0" {
+        return Some(JSNumber::neg_zero());
+    }
+
+    // 2. Let n be ! ToNumber(argument).
+    let n = to_number(agent, argument.clone().into());
+
+    // 3. If ! ToString(n) is argument, return n.
+    if to_string(agent, n.clone().into()) == *argument {
+        return Some(n);
+    }
+
+    // 4. Return undefined.
+    None
 }

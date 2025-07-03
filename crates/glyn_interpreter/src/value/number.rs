@@ -64,6 +64,18 @@ impl JSNumber {
         JSNumber::Float(f64::NAN)
     }
 
+    pub(crate) fn zero() -> Self {
+        JSNumber::Int(0)
+    }
+
+    pub(crate) fn pos_zero() -> Self {
+        JSNumber::Int(0)
+    }
+
+    pub(crate) fn neg_zero() -> Self {
+        JSNumber::Float(-0.0)
+    }
+
     fn is_int(&self) -> bool {
         matches!(self, JSNumber::Int(_))
     }
@@ -213,7 +225,7 @@ impl JSNumber {
         }
 
         // 3. If x < -0𝔽, return the string-concatenation of "-" and Number::toString(-x, radix).
-        if self.lt(&JSNumber::from(0)) {
+        if self.lt(&JSNumber::zero()) {
             return format!("-{:?}", self.clone().neg().to_string(radix)).into();
         }
 

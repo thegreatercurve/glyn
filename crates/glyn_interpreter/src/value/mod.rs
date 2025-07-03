@@ -145,6 +145,12 @@ impl From<JSString> for JSValue {
     }
 }
 
+impl From<JSNumber> for JSValue {
+    fn from(value: JSNumber) -> Self {
+        JSValue::Number(value)
+    }
+}
+
 impl From<JSObjAddr> for JSValue {
     fn from(value: JSObjAddr) -> Self {
         JSValue::Object(value)
