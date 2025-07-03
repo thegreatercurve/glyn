@@ -260,7 +260,7 @@ fn is_compatible_property_descriptor(
     validate_and_apply_property_descriptor(
         agent,
         None,
-        &JSObjectPropKey::String(JSString::from("")),
+        &JSObjectPropKey::String("".into()),
         extensible,
         descriptor,
         current,

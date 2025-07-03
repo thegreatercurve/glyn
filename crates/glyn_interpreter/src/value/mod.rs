@@ -4,7 +4,9 @@ pub(crate) mod object;
 pub(crate) mod string;
 pub(crate) mod symbol;
 
-use crate::value::{big_int::JSBigInt, number::JSNumber, object::JSObjAddr, string::JSString};
+use crate::value::{
+    big_int::JSBigInt, number::JSNumber, object::JSObjAddr, string::JSString, symbol::JSSymbol,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JSValue {
@@ -20,7 +22,7 @@ pub enum JSValue {
     String(JSString),
     Number(JSNumber),
     BigInt(JSBigInt),
-    Symbol,
+    Symbol(JSSymbol),
     Object(JSObjAddr),
 }
 
@@ -69,6 +71,30 @@ impl JSValue {
 impl From<bool> for JSValue {
     fn from(value: bool) -> Self {
         JSValue::Boolean(value)
+    }
+}
+
+impl From<f64> for JSValue {
+    fn from(value: f64) -> Self {
+        JSValue::Number(JSNumber::Float(value))
+    }
+}
+
+impl From<u32> for JSValue {
+    fn from(value: u32) -> Self {
+        JSValue::Number(JSNumber::UInt(value))
+    }
+}
+
+impl From<i32> for JSValue {
+    fn from(value: i32) -> Self {
+        JSValue::Number(JSNumber::Int(value))
+    }
+}
+
+impl From<JSString> for JSValue {
+    fn from(value: JSString) -> Self {
+        JSValue::String(value)
     }
 }
 

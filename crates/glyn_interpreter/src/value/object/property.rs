@@ -1,11 +1,12 @@
-use crate::value::{number::JSNumber, string::JSString, JSValue};
+use crate::value::{number::JSNumber, string::JSString, symbol::JSSymbol, JSValue};
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
 #[derive(Clone, Debug, PartialEq)]
 pub enum JSObjectPropKey {
     String(JSString),
-    Symbol(JSValue),
+    Symbol(JSSymbol),
+    PrivateName(String),
 }
 
 impl JSObjectPropKey {
@@ -13,8 +14,20 @@ impl JSObjectPropKey {
         matches!(self, JSObjectPropKey::String(_))
     }
 
+    pub(crate) fn as_string(&self) -> Option<&JSString> {
+        if let JSObjectPropKey::String(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn is_symbol(&self) -> bool {
         matches!(self, JSObjectPropKey::Symbol(_))
+    }
+
+    pub(crate) fn is_array_index(&self) -> bool {
+        self.as_array_index().is_some()
     }
 
     /// An array index is an integer index n such that CanonicalNumericIndexString(n) returns
@@ -28,10 +41,6 @@ impl JSObjectPropKey {
         }
 
         None
-    }
-
-    pub(crate) fn is_array_index(&self) -> bool {
-        self.as_array_index().is_some()
     }
 }
 

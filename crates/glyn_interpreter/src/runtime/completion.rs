@@ -22,7 +22,7 @@ impl From<JSValue> for NormalCompletion {
             JSValue::String(s) => NormalCompletion::Value(JSValue::String(s)),
             JSValue::Object(o) => NormalCompletion::Value(JSValue::Object(o)),
             JSValue::BigInt(b) => NormalCompletion::Value(JSValue::BigInt(b)),
-            JSValue::Symbol => NormalCompletion::Value(JSValue::Symbol),
+            JSValue::Symbol(s) => NormalCompletion::Value(JSValue::Symbol(s)),
         }
     }
 }

@@ -90,7 +90,7 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> JSNumber {
         // 1. If argument is a Number, return argument.
         JSValue::Number(number) => return number.clone(),
         // 2. If argument is either a Symbol or a BigInt, throw a TypeError exception.
-        JSValue::Symbol => agent.type_error("Cannot convert Symbol to JSNumber"),
+        JSValue::Symbol(_) => agent.type_error("Cannot convert Symbol to JSNumber"),
         JSValue::BigInt(_) => agent.type_error("Cannot convert BigInt to JSNumber"),
         // 3. If argument is undefined, return NaN.
         JSValue::Undefined => return JSNumber::nan(),

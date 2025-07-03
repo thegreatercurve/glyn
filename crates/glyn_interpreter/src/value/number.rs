@@ -169,19 +169,17 @@ impl JSNumber {
 }
 
 impl TryFrom<JSString> for JSNumber {
-    type Error = String;
+    type Error = JSString;
 
     fn try_from(value: JSString) -> Result<Self, Self::Error> {
-        let string = value.0;
-
-        if let Ok(number) = string.parse::<u32>() {
+        if let Ok(number) = value.0.parse::<u32>() {
             Ok(JSNumber::UInt(number))
-        } else if let Ok(number) = string.parse::<i32>() {
+        } else if let Ok(number) = value.0.parse::<i32>() {
             Ok(JSNumber::Int(number))
-        } else if let Ok(number) = string.parse::<f64>() {
+        } else if let Ok(number) = value.0.parse::<f64>() {
             Ok(JSNumber::Float(number))
         } else {
-            Err(format!("Invalid number: {}", string))
+            Err(format!("Invalid number: {}", value.0).into())
         }
     }
 }

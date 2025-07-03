@@ -1,12 +1,14 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
+    abstract_ops::function_operations::BehaviourFn,
     runtime::realm::Realm,
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum JSObjectSlotName {
+    BehaviourFn,
     Extensible,
     InitialName,
     Prototype,
@@ -15,6 +17,7 @@ pub enum JSObjectSlotName {
 
 #[derive(Debug)]
 pub enum JSObjectSlotValue {
+    BehaviourFn(BehaviourFn),
     Realm(Rc<Realm>),
     Value(JSValue),
     NotSet,
@@ -94,6 +97,20 @@ impl JSObjectInternalSlots {
     pub(crate) fn set_initial_name(&mut self, name: JSString) {
         self.0
             .insert(JSObjectSlotName::InitialName, JSValue::String(name).into());
+    }
+
+    pub(crate) fn behaviour_fn(&self) -> Option<BehaviourFn> {
+        match self.get(&JSObjectSlotName::BehaviourFn) {
+            Some(JSObjectSlotValue::BehaviourFn(func)) => Some(*func),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn set_behaviour_fn(&mut self, func: BehaviourFn) {
+        self.0.insert(
+            JSObjectSlotName::BehaviourFn,
+            JSObjectSlotValue::BehaviourFn(func),
+        );
     }
 }
 

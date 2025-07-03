@@ -76,13 +76,10 @@ pub(crate) fn set(
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[Set]](P, V, O).
     let success =
-        (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into());
+        (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-
-    if (success.is_err() || success.is_ok_and(|value| value == JSValue::Boolean(false).into()))
-        && throw
-    {
+    if matches!(success, NormalCompletion::Value(JSValue::Boolean(false))) && throw {
         agent.type_error("Failed to set property on object");
     }
 
@@ -120,11 +117,31 @@ pub(crate) fn create_data_property_or_throw(
     value: JSValue,
 ) -> CompletionRecord {
     // 1. 1. Let success be ? CreateDataProperty(O, P, V).
-    let success = create_data_property(agent, obj_addr, key, value);
+    let success = create_data_property(agent, obj_addr, key, value)?;
 
     // 2. If success is false, throw a TypeError exception.
-    if success.is_err() || success.is_ok_and(|value| value == JSValue::Boolean(false).into()) {
+    if matches!(success, NormalCompletion::Value(JSValue::Boolean(false))) {
         agent.type_error("Failed to create data property on object");
+    }
+
+    // 3. Return unused.
+    Ok(NormalCompletion::Unused)
+}
+
+/// 7.3.8 DefinePropertyOrThrow ( O, P, desc )
+/// https://262.ecma-international.org/15.0/#sec-definepropertyorthrow
+pub(crate) fn define_property_or_throw(
+    agent: &mut JSAgent,
+    obj_addr: JSObjAddr,
+    key: &JSObjectPropKey,
+    desc: JSObjectPropDescriptor,
+) -> CompletionRecord {
+    // 1. Let success be ? O.[[DefineOwnProperty]](P, desc).
+    let success = (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
+
+    // 2. If success is false, throw a TypeError exception.
+    if matches!(success, NormalCompletion::Value(JSValue::Boolean(false))) {
+        agent.type_error("Failed to define property on object");
     }
 
     // 3. Return unused.
@@ -202,7 +219,7 @@ pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
         // Return a new String object whose [[StringData]] internal slot is set to argument.
         JSValue::String(_value) => todo!(),
         // Return a new Symbol object whose [[SymbolData]] internal slot is set to argument.
-        JSValue::Symbol => todo!(),
+        JSValue::Symbol(_) => todo!(),
         // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
         JSValue::BigInt(_value) => todo!(),
         // If argument is an Object, return argument.

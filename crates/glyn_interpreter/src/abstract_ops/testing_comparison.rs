@@ -88,7 +88,7 @@ pub(crate) fn is_property_key(_agent: &JSAgent, arg: JSValue) -> bool {
     // 1. If Type(argument) is String, return true.
     // 2. If Type(argument) is Symbol, return false.
     // 3. Return false.
-    matches!(arg, JSValue::String(_) | JSValue::Symbol)
+    matches!(arg, JSValue::String(_) | JSValue::Symbol(_))
 }
 
 /// 7.2.10 SameValue ( x, y )
@@ -132,7 +132,7 @@ fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
         // 6. NOTE: All other ECMAScript language values are compared by identity.
         (JSValue::Number(_x), JSValue::Number(_y)) => unreachable!(),
         (JSValue::Object(x), JSValue::Object(y)) => x == y,
-        (JSValue::Symbol, JSValue::Symbol) => todo!(),
+        (JSValue::Symbol(x), JSValue::Symbol(y)) => x == y,
 
         // 7. If x is y, return true; otherwise, return false.
         _ => false,
