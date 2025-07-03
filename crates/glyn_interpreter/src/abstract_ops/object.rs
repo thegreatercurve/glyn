@@ -245,7 +245,7 @@ fn ordinary_define_own_property(
         current,
     )?;
 
-    Ok(NormalCompletion::Value(JSValue::Boolean(true)))
+    Ok(NormalCompletion::Boolean(true))
 }
 
 /// 10.1.6.2 IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )

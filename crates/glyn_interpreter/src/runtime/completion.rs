@@ -8,6 +8,7 @@ pub type CompletionRecord = Result<NormalCompletion, ThrowCompletion>;
 /// https://262.ecma-international.org/15.0/#sec-normalcompletion
 #[derive(Debug, PartialEq)]
 pub enum NormalCompletion {
+    Boolean(bool),
     Value(JSValue),
     Unused,
 }
