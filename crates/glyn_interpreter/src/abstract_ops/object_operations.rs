@@ -271,6 +271,32 @@ pub(crate) fn call(
     call_fn(agent, function_obj_addr, this_value, &args)
 }
 
+/// 7.3.14 Construct ( F [ , argumentsList [ , newTarget ] ] )
+/// https://262.ecma-international.org/15.0/#sec-construct
+pub(crate) fn construct(
+    agent: &mut JSAgent,
+    constructor: JSObjAddr,
+    arguments_list: Option<Vec<JSValue>>,
+    new_target: Option<JSObjAddr>,
+) -> CompletionRecord {
+    // 1. If newTarget is not present, set newTarget to F.
+    let new_target_addr = new_target.unwrap_or(constructor);
+
+    // 2. If argumentsList is not present, set argumentsList to a new empty List.
+    let arguments_list = arguments_list.unwrap_or_default();
+
+    // 3. Return ? F.[[Construct]](argumentsList, newTarget).
+    let construct_fn = agent
+        .object(constructor)
+        .methods
+        .construct
+        .unwrap_or_else(|| unreachable!());
+
+    let result = construct_fn(agent, &arguments_list, new_target_addr);
+
+    Ok(NormalCompletion::Value(JSValue::Object(result)))
+}
+
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/15.0/#sec-toobject
 pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
