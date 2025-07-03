@@ -107,6 +107,14 @@ impl JSNumber {
             JSNumber::UInt(_) => false,
         }
     }
+
+    pub(crate) fn truncate(&self) -> Self {
+        match self {
+            JSNumber::Float(f) => JSNumber::Float(f.trunc()),
+            JSNumber::Int(i) => JSNumber::Int(*i as i32),
+            JSNumber::UInt(u) => JSNumber::UInt(*u as u32),
+        }
+    }
 }
 
 impl JSNumber {

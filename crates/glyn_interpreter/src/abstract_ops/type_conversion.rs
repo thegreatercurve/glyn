@@ -147,8 +147,6 @@ pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
     // 4. Return StringNumericValue of literal.
     JSNumber::from(literal)
 }
-
-/// 7.1.5 ToIntegerOrInfinity ( argument )
 /// https://262.ecma-international.org/15.0/#sec-tointegerorinfinity
 pub(crate) fn to_integer_or_infinity(agent: &JSAgent, argument: JSValue) -> JSNumber {
     // 1. Let number be ? ToNumber(argument).
@@ -170,9 +168,30 @@ pub(crate) fn to_integer_or_infinity(agent: &JSAgent, argument: JSValue) -> JSNu
     }
 
     // 5. Return truncate(ℝ(number)).
-    match number {
-        JSNumber::Float(f) => JSNumber::from(f.trunc()),
-        JSNumber::Int(i) => JSNumber::from(i),
-        JSNumber::UInt(u) => JSNumber::from(u),
+    number.truncate()
+}
+
+/// 7.1.6 ToInt32 ( argument )
+/// https://262.ecma-international.org/15.0/#sec-toint32
+pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> JSNumber {
+    // 1. Let number be ? ToNumber(argument).
+    let number = to_number(agent, argument);
+
+    // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
+    if !number.is_finite() || number.is_zero() {
+        return JSNumber::Int(0);
+    }
+
+    // 3. Let int be truncate(ℝ(number)).
+    let int = number.truncate();
+
+    // 4. Let int32bit be int modulo 2^32.
+    let int32bit = int % JSNumber::Int(2i32.pow(32));
+
+    // 5. If int32bit ≥ 2^31, return 𝔽(int32bit - 2^32); otherwise return 𝔽(int32bit).
+    if int32bit >= JSNumber::Int(2i32.pow(31)) {
+        int32bit - JSNumber::Int(2i32.pow(32))
+    } else {
+        int32bit
     }
 }
