@@ -174,6 +174,73 @@ impl JSNumber {
         // 4. If x is y, return true.
         self == y
     }
+
+    /// 6.1.6.1.20 Number::toString ( x, radix )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-tostring
+    pub(crate) fn to_string(&self, radix: u32) -> JSString {
+        // 1. If x is NaN, return "NaN".
+        if self.is_nan() {
+            return "NaN".into();
+        }
+
+        // 2. If x is either +0𝔽 or -0𝔽, return "0".
+        if self.is_zero() {
+            return "0".into();
+        }
+
+        // 3. If x < -0𝔽, return the string-concatenation of "-" and Number::toString(-x, radix).
+        if self.lt(&JSNumber::from(0)) {
+            return format!("-{:?}", self.clone().neg().to_string(radix)).into();
+        }
+
+        // 4. If x is +∞𝔽, return "Infinity".
+        if self.is_pos_infinite() {
+            return "Infinity".into();
+        }
+
+        // 5. Let n, k, and s be integers such that k ≥ 1, radix**(k - 1) ≤ s < radix**k,
+        // 𝔽(s × radix**(n - k)) is x, and k is as small as possible.
+        // For simplicity, we'll use a more direct approach for common cases
+        // 6. If radix ≠ 10 or n is in the inclusive interval from -5 to 21, then
+        // a. If n ≥ k, then
+        // i. Return the string-concatenation of:
+        // the code units of the k digits of the representation of s using radix radix
+        // n - k occurrences of the code unit 0x0030 (DIGIT ZERO)
+        // b. Else if n > 0, then
+        // i. Return the string-concatenation of:
+        // the code units of the most significant n digits of the representation of s using radix radix
+        // the code unit 0x002E (FULL STOP)
+        // the code units of the remaining k - n digits of the representation of s using radix radix
+        // c. Else,
+        // i. Assert: n ≤ 0.
+        // ii. Return the string-concatenation of:
+        // the code unit 0x0030 (DIGIT ZERO)
+        // the code unit 0x002E (FULL STOP)
+        // -n occurrences of the code unit 0x0030 (DIGIT ZERO)
+        // the code units of the k digits of the representation of s using radix radix
+        // 7. NOTE: In this case, the input will be represented using scientific E notation, such as 1.2e+3.
+        // 8. Assert: radix is 10.
+        // 9. If n < 0, then
+        // a. Let exponentSign be the code unit 0x002D (HYPHEN-MINUS).
+        // 10. Else,
+        // a. Let exponentSign be the code unit 0x002B (PLUS SIGN).
+        // 11. If k = 1, then
+        // a. Return the string-concatenation of:
+        // the code unit of the single digit of s
+        // the code unit 0x0065 (LATIN SMALL LETTER E)
+        // exponentSign
+        // the code units of the decimal representation of abs(n - 1).
+        // 12. Return the string-concatenation of:
+        // the code unit of the most significant digit of the decimal representation of s
+        // the code unit 0x002E (FULL STOP)
+        // the code units of the remaining k - 1 digits of the decimal representation of s
+        // the code unit 0x0065 (LATIN SMALL LETTER E)
+        // exponentSign
+
+        // TODO Parse the above exactly
+
+        JSString::from(self.as_f64().to_string())
+    }
 }
 
 impl TryFrom<JSString> for JSNumber {

@@ -215,6 +215,65 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> JSNumber {
     int % JSNumber::UInt(2u32.pow(32))
 }
 
+/// 7.1.17 ToString ( argument )
+/// https://262.ecma-international.org/15.0/#sec-tostring
+pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> JSString {
+    // 1. If argument is a String, return argument.
+    if argument.is_string() {
+        return argument
+            .as_string()
+            .unwrap_or_else(|| unreachable!())
+            .clone();
+    }
+
+    // 2. If argument is a Symbol, throw a TypeError exception.
+    if argument.is_symbol() {
+        agent.type_error("Cannot convert Symbol to string");
+    }
+
+    // 3. If argument is undefined, return "undefined".
+    if argument == JSValue::Undefined {
+        return JSString::from("undefined");
+    }
+
+    // 4. If argument is null, return "null".
+    if argument == JSValue::Null {
+        return JSString::from("null");
+    }
+
+    // 5. If argument is true, return "true".
+    if argument == JSValue::Bool(true) {
+        return JSString::from("true");
+    }
+
+    // 6. If argument is false, return "false".
+    if argument == JSValue::Bool(false) {
+        return JSString::from("false");
+    }
+
+    // 7. If argument is a Number, return Number::toString(argument, 10).
+    if let JSValue::Number(number) = argument {
+        return number.to_string(10);
+    }
+
+    // 8. If argument is a BigInt, return BigInt::toString(argument, 10).
+    if let JSValue::BigInt(big_int) = argument {
+        return big_int.to_string(10);
+    }
+
+    // 9. Assert: argument is an Object.
+    debug_assert!(argument.is_object());
+
+    // 10. Let primValue be ? ToPrimitive(argument, string).
+    let prim_value = to_primitive(agent, argument, PrimitivePreferredType::String);
+
+    // 11. Assert: primValue is not an Object.
+    debug_assert!(!prim_value.is_object());
+
+    // 12. Return ? ToString(primValue).
+    to_string(agent, prim_value)
+}
+
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/15.0/#sec-toobject
 pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {

@@ -38,7 +38,25 @@ impl JSValue {
         }
     }
 
-    fn is_number(&self) -> bool {
+    pub(crate) fn is_string(&self) -> bool {
+        matches!(self, JSValue::String(_))
+    }
+
+    pub(crate) fn as_string(&self) -> Option<&JSString> {
+        match self {
+            JSValue::String(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_string_mut(&mut self) -> Option<&mut JSString> {
+        match self {
+            JSValue::String(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn is_number(&self) -> bool {
         matches!(self, JSValue::Number(_))
     }
 
@@ -81,6 +99,17 @@ impl JSValue {
     pub(crate) fn as_object(&self) -> Option<JSObjAddr> {
         match self {
             JSValue::Object(object) => Some(*object),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn is_symbol(&self) -> bool {
+        matches!(self, JSValue::Symbol(_))
+    }
+
+    pub(crate) fn as_symbol(&self) -> Option<&JSSymbol> {
+        match self {
+            JSValue::Symbol(value) => Some(value),
             _ => None,
         }
     }
