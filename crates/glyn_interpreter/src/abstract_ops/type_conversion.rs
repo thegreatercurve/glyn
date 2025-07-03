@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::{
     runtime::agent::{JSAgent, WellKnownSymbol},
     value::{
@@ -320,4 +322,21 @@ pub(crate) fn to_property_key(agent: &JSAgent, argument: JSValue) -> JSObjectPro
 
     // 3. Return ! ToString(key).
     JSObjectPropKey::String(to_string(agent, key))
+}
+
+/// 7.1.20 ToLength ( argument )
+/// https://262.ecma-international.org/15.0/#sec-tolength
+pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> JSNumber {
+    // 1. Let len be ? ToIntegerOrInfinity(argument).
+    let len = to_integer_or_infinity(agent, argument);
+
+    // 2. If len ≤ 0, return +0𝔽.
+    if len.lt(&JSNumber::Int(0)) {
+        return JSNumber::Int(0);
+    }
+
+    // 3. Return 𝔽(min(len, 2^53 - 1)).
+    let clamped_len = min(len.as_i64(), JSNumber::MAX_SAFE_INTEGER);
+
+    JSNumber::Float(clamped_len as f64)
 }

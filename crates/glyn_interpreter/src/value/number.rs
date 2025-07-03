@@ -12,7 +12,23 @@ pub enum JSNumber {
 }
 
 impl JSNumber {
-    fn as_f64(&self) -> f64 {
+    /// 21.1.2.6 Number.MAX_SAFE_INTEGER
+    /// https://262.ecma-international.org/15.0/#sec-number.max_safe_integer
+    pub(crate) const MAX_SAFE_INTEGER: i64 = 2i64.pow(53) - 1;
+
+    /// 21.1.2.7 Number.MAX_VALUE
+    /// https://262.ecma-international.org/15.0/#sec-number.max_value
+    pub(crate) const MAX_VALUE: f64 = f64::MAX;
+
+    /// 21.1.2.8 Number.MIN_SAFE_INTEGER
+    /// https://262.ecma-international.org/15.0/#sec-number.min_safe_integer
+    pub(crate) const MIN_SAFE_INTEGER: i64 = -(2i64.pow(53) - 1);
+
+    /// 21.1.2.9 Number.MIN_VALUE
+    /// https://262.ecma-international.org/15.0/#sec-number.min_value
+    pub(crate) const MIN_VALUE: f64 = f64::MIN;
+
+    pub(crate) fn as_f64(&self) -> f64 {
         match self {
             JSNumber::Float(f) => *f,
             JSNumber::Int(i) => *i as f64,
@@ -20,7 +36,15 @@ impl JSNumber {
         }
     }
 
-    fn as_i32(&self) -> i32 {
+    pub(crate) fn as_i64(&self) -> i64 {
+        match self {
+            JSNumber::Float(f) => *f as i64,
+            JSNumber::Int(i) => *i as i64,
+            JSNumber::UInt(u) => *u as i64,
+        }
+    }
+
+    pub(crate) fn as_i32(&self) -> i32 {
         match self {
             JSNumber::Float(f) => *f as i32,
             JSNumber::Int(i) => *i,
@@ -28,7 +52,7 @@ impl JSNumber {
         }
     }
 
-    fn as_u32(&self) -> u32 {
+    pub(crate) fn as_u32(&self) -> u32 {
         match self {
             JSNumber::Float(f) => *f as u32,
             JSNumber::Int(i) => *i as u32,
