@@ -202,6 +202,28 @@ pub(crate) fn get_method(
     func
 }
 
+/// 7.3.11 HasProperty ( O, P )
+/// https://262.ecma-international.org/15.0/#sec-hasproperty
+pub(crate) fn has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
+    // 1. Return ? O.[[HasProperty]](P).
+    (agent.object(obj_addr).methods.has_property)(agent, obj_addr, key)
+}
+
+/// 7.3.12 HasOwnProperty ( O, P )
+/// https://262.ecma-international.org/15.0/#sec-hasownproperty
+pub(crate) fn has_own_property(
+    agent: &JSAgent,
+    obj_addr: JSObjAddr,
+    key: &JSObjectPropKey,
+) -> bool {
+    // 1. Let desc be ? O.[[GetOwnProperty]](P).
+    let desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key);
+
+    // 2. If desc is undefined, return false.
+    // 3. Return true.
+    desc.is_some()
+}
+
 /// 7.3.13 Call ( F, V [ , argumentsList ] )
 /// https://262.ecma-international.org/15.0/#sec-call
 pub(crate) fn call(
@@ -227,7 +249,7 @@ pub(crate) fn call(
         .call
         .unwrap_or_else(|| unreachable!());
 
-    call_fn(agent, function_obj_addr, &this_value, &args)
+    call_fn(agent, function_obj_addr, this_value, &args)
 }
 
 /// 7.1.18 ToObject ( argument )
