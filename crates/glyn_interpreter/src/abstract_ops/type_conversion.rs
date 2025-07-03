@@ -363,3 +363,18 @@ pub(crate) fn canonical_numeric_index_string(
     // 4. Return undefined.
     None
 }
+
+/// 7.1.22 ToIndex ( value )
+/// https://262.ecma-international.org/15.0/#sec-toindex
+pub(crate) fn to_index(agent: &JSAgent, value: JSValue) -> JSNumber {
+    // 1. Let integer be ? ToIntegerOrInfinity(value).
+    let integer = to_integer_or_infinity(agent, value);
+
+    // 2. If integer is not in the inclusive interval from 0 to 2^53 - 1, throw a RangeError exception.
+    if integer < JSNumber::zero() || integer > JSNumber::from(JSNumber::MAX_SAFE_INTEGER as f64) {
+        agent.range_error("Index must be in the range 0 - 2^53-1");
+    }
+
+    // 3. Return integer.
+    integer
+}

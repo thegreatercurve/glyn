@@ -80,6 +80,10 @@ impl JSAgent {
         panic!("SyntaxError: {message:?}");
     }
 
+    pub(crate) fn range_error(&self, message: &str) -> ! {
+        panic!("RangeError: {message:?}");
+    }
+
     pub(crate) fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
         self.object_heap.alloc(object).into()
     }
