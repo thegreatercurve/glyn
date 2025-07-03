@@ -382,6 +382,51 @@ pub(crate) fn set_integrity_level(
     Ok(NormalCompletion::Value(JSValue::Boolean(true)))
 }
 
+/// 7.3.16 TestIntegrityLevel ( O, level )
+/// https://262.ecma-international.org/15.0/#sec-testintegritylevel
+pub(crate) fn test_integrity_level(
+    agent: &JSAgent,
+    obj_addr: JSObjAddr,
+    level: IntegrityLevel,
+) -> CompletionRecord {
+    // 1. Let extensible be ? IsExtensible(O).
+    let extensible = (agent.object(obj_addr).methods.is_extensible)(agent, obj_addr);
+
+    // 2. If extensible is true, return false.
+    if extensible {
+        return Ok(NormalCompletion::Value(JSValue::Boolean(false)));
+    }
+
+    // 3. NOTE: If the object is extensible, none of its properties are examined.
+    // 4. Let keys be ? O.[[OwnPropertyKeys]]().
+    let keys = (agent.object(obj_addr).methods.own_property_keys)(agent, obj_addr);
+
+    // 5. For each element k of keys, do
+    for key in keys {
+        // a. Let currentDesc be ? O.[[GetOwnProperty]](k).
+        let current_desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key);
+
+        // b. If currentDesc is not undefined, then
+        if let Some(current_desc) = current_desc {
+            // i. If currentDesc.[[Configurable]] is true, return false.
+            if current_desc.configurable == Some(true) {
+                return Ok(NormalCompletion::Value(JSValue::Boolean(false)));
+            }
+
+            // ii. If level is frozen and IsDataDescriptor(currentDesc) is true, then
+            if level == IntegrityLevel::Frozen && current_desc.is_data_descriptor() {
+                // 1. If currentDesc.[[Writable]] is true, return false.
+                if current_desc.writable == Some(true) {
+                    return Ok(NormalCompletion::Value(JSValue::Boolean(false)));
+                }
+            }
+        }
+    }
+
+    // 6. Return true.
+    Ok(NormalCompletion::Value(JSValue::Boolean(true)))
+}
+
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/15.0/#sec-toobject
 pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
