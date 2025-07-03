@@ -56,6 +56,24 @@ impl JSValue {
         }
     }
 
+    pub(crate) fn is_big_int(&self) -> bool {
+        matches!(self, JSValue::BigInt(_))
+    }
+
+    pub(crate) fn as_big_int(&self) -> Option<&JSBigInt> {
+        match self {
+            JSValue::BigInt(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn as_big_int_mut(&mut self) -> Option<&mut JSBigInt> {
+        match self {
+            JSValue::BigInt(value) => Some(value),
+            _ => None,
+        }
+    }
+
     pub(crate) fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }

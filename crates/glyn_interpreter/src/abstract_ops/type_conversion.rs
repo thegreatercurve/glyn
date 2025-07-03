@@ -83,6 +83,21 @@ pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
     true
 }
 
+/// 7.1.3 ToNumeric ( value )
+/// https://262.ecma-international.org/15.0/#sec-tonumeric
+pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> JSValue {
+    // 1. Let primValue be ? ToPrimitive(value, number).
+    let prim_value = to_primitive(agent, value, PrimitivePreferredType::Number);
+
+    // 2. If primValue is a BigInt, return primValue.
+    if prim_value.is_big_int() {
+        return prim_value;
+    }
+
+    // 3. Return ? ToNumber(primValue).
+    JSValue::Number(to_number(agent, prim_value))
+}
+
 /// 7.1.4 ToNumber ( argument )
 /// https://262.ecma-international.org/15.0/#sec-tonumber
 pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> JSNumber {
