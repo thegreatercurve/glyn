@@ -22,7 +22,7 @@ type InternalMethodsCallFn = Option<
         obj_addr: JSObjAddr,
         this_value: &JSValue,
         args: &[JSValue],
-    ) -> CompletionRecord,
+    ) -> CompletionRecord<JSValue>,
 >;
 
 type InternalMethodsConstructFn =
@@ -58,7 +58,7 @@ pub struct JSObjectInternalMethods {
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
-    ) -> CompletionRecord,
+    ) -> CompletionRecord<bool>,
 
     /// [[HasProperty]]
     pub has_property: fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
@@ -69,7 +69,7 @@ pub struct JSObjectInternalMethods {
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         receiver: &JSValue,
-    ) -> CompletionRecord,
+    ) -> CompletionRecord<JSValue>,
 
     /// [[Set]]
     pub set: fn(
@@ -78,7 +78,7 @@ pub struct JSObjectInternalMethods {
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
-    ) -> CompletionRecord,
+    ) -> CompletionRecord<bool>,
 
     /// [[Delete]]
     pub delete: fn(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,

@@ -43,7 +43,7 @@ impl ScriptRecord {
 
     /// 16.1.6 ScriptEvaluation ( scriptRecord )
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
-    pub(crate) fn script_evaluation(&self, agent: &mut JSAgent) -> CompletionRecord {
+    pub(crate) fn script_evaluation(&self, agent: &mut JSAgent) -> CompletionRecord<JSValue> {
         // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
         let _global_env = &self.realm.global_env;
 
@@ -68,7 +68,7 @@ impl ScriptRecord {
         // a. Set result to Completion(Evaluation of script).
         // b. If result is a normal completion and result.[[Value]] is empty, then
         // i. Set result to NormalCompletion(undefined).
-        let result = Ok(NormalCompletion::Value(JSValue::Undefined));
+        let result = Ok(JSValue::Undefined);
 
         // 14. Suspend scriptContext and remove it from the execution context stack.
         // 15. Assert: The execution context stack is not empty.

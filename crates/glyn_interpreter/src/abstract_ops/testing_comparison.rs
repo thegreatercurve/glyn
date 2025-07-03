@@ -11,13 +11,13 @@ use crate::{
 
 /// 7.2.1 RequireObjectCoercible ( argument )
 /// https://262.ecma-international.org/15.0/#sec-requireobjectcoercible
-pub(crate) fn require_object_coercible(agent: &JSAgent, arg: JSValue) -> CompletionRecord {
+pub(crate) fn require_object_coercible(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSValue> {
     //  It throws an error if argument is a value that cannot be converted to an Object using ToObject (e.g. null or undefined).
     if matches!(arg, JSValue::Null | JSValue::Undefined) {
         agent.type_error("Cannot convert null or undefined to object");
     }
 
-    Ok(NormalCompletion::Value(arg))
+    Ok(arg)
 }
 
 /// 7.2.3 IsCallable ( argument )

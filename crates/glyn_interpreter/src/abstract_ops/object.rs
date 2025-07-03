@@ -216,7 +216,7 @@ fn define_own_property(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     descriptor: JSObjectPropDescriptor,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Return OrdinaryDefineOwnProperty(O, P, Desc).
     ordinary_define_own_property(agent, obj_addr, key, descriptor)
 }
@@ -228,14 +228,14 @@ fn ordinary_define_own_property(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     descriptor: JSObjectPropDescriptor,
-) -> CompletionRecord {
-    // 1. 1. Let current be ? O.[[GetOwnProperty]](P).
+) -> CompletionRecord<bool> {
+    // 1. Let current be ? O.[[GetOwnProperty]](P).
     let current = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key);
 
-    // 2. 2. Let extensible be ? IsExtensible(O).
+    // 2. Let extensible be ? IsExtensible(O).
     let extensible = is_extensible(agent, obj_addr);
 
-    // 3. 3. Return ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current).
+    // 3. Return ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current).
     validate_and_apply_property_descriptor(
         agent,
         Some(obj_addr),
@@ -243,9 +243,9 @@ fn ordinary_define_own_property(
         extensible,
         descriptor,
         current,
-    )?;
+    );
 
-    Ok(NormalCompletion::Bool(true))
+    Ok(true)
 }
 
 /// 10.1.6.2 IsCompatiblePropertyDescriptor ( Extensible, Desc, Current )
@@ -255,7 +255,7 @@ fn is_compatible_property_descriptor(
     extensible: bool,
     descriptor: JSObjectPropDescriptor,
     current: Option<JSObjectPropDescriptor>,
-) -> CompletionRecord {
+) -> bool {
     // 1. Return ValidateAndApplyPropertyDescriptor(undefined, "", Extensible, Desc, Current).
     validate_and_apply_property_descriptor(
         agent,
@@ -276,18 +276,18 @@ fn validate_and_apply_property_descriptor(
     extensible: bool,
     descriptor: JSObjectPropDescriptor,
     current: Option<JSObjectPropDescriptor>,
-) -> CompletionRecord {
+) -> bool {
     // 1. Assert: IsPropertyKey(P) is true.
     // 2. If current is undefined, then
     let Some(current) = current else {
         // a. If extensible is false, return false.
         if !extensible {
-            return Ok(JSValue::Bool(false).into());
+            return false;
         }
 
         // b. If O is undefined, return true.
         let Some(obj_addr) = opt_obj_addr else {
-            return Ok(JSValue::Bool(true).into());
+            return true;
         };
 
         let object_mut = agent.object_mut(obj_addr);
@@ -322,7 +322,7 @@ fn validate_and_apply_property_descriptor(
         }
 
         // e. Return true.
-        return Ok(JSValue::Bool(true).into());
+        return true;
     };
 
     // 3. Assert: current is a fully populated Property Descriptor.
@@ -330,26 +330,26 @@ fn validate_and_apply_property_descriptor(
 
     // 4. If Desc does not have any fields, return true.
     if !descriptor.is_fully_populated() {
-        return Ok(JSValue::Bool(true).into());
+        return true;
     }
 
     // 5. If current.[[Configurable]] is false, then
     if current.configurable == Some(false) {
         // a. If Desc has a [[Configurable]] field and Desc.[[Configurable]] is true, return false.
         if descriptor.configurable.is_some() && descriptor.configurable == Some(true) {
-            return Ok(JSValue::Bool(false).into());
+            return false;
         }
 
         // b. If Desc has an [[Enumerable]] field and Desc.[[Enumerable]] is not current.[[Enumerable]], return false.
         if descriptor.enumerable.is_some() && descriptor.enumerable != current.enumerable {
-            return Ok(JSValue::Bool(false).into());
+            return false;
         }
 
         // c. If IsGenericDescriptor(Desc) is false and IsAccessorDescriptor(Desc) is not IsAccessorDescriptor(current), return false.
         if !descriptor.is_generic_descriptor()
             && descriptor.is_accessor_descriptor() != current.is_accessor_descriptor()
         {
-            return Ok(JSValue::Bool(false).into());
+            return false;
         }
 
         // d. If IsAccessorDescriptor(current) is true, then
@@ -361,7 +361,7 @@ fn validate_and_apply_property_descriptor(
                     current.get.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(JSValue::Bool(false).into());
+                return false;
             }
 
             // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
@@ -371,14 +371,14 @@ fn validate_and_apply_property_descriptor(
                     current.set.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(JSValue::Bool(false).into());
+                return false;
             }
         }
         // e. Else if current.[[Writable]] is false, then
         else if current.writable == Some(false) {
             // i. If Desc has a [[Writable]] field and Desc.[[Writable]] is true, return false.
             if descriptor.writable.is_some() && descriptor.writable == Some(true) {
-                return Ok(JSValue::Bool(false).into());
+                return false;
             }
 
             // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
@@ -388,7 +388,7 @@ fn validate_and_apply_property_descriptor(
                     current.value.as_ref().unwrap_or_else(|| unreachable!()),
                 )
             {
-                return Ok(JSValue::Bool(false).into());
+                return false;
             }
         }
     }
@@ -461,7 +461,7 @@ fn validate_and_apply_property_descriptor(
     }
 
     // 7. Return true.
-    Ok(JSValue::Bool(true).into())
+    true
 }
 
 /// 10.1.7 [[HasProperty]] ( P )
@@ -504,7 +504,7 @@ fn get(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     receiver: &JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<JSValue> {
     // 1. Return OrdinaryGet(O, P, Receiver).
     ordinary_get(agent, obj_addr, key, receiver)
 }
@@ -516,7 +516,7 @@ fn ordinary_get(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     receiver: &JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<JSValue> {
     let object = agent.object(obj_addr);
 
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
@@ -529,7 +529,7 @@ fn ordinary_get(
 
         // b. If parent is null, return undefined.
         let Some(parent) = opt_parent_addr else {
-            return Ok(NormalCompletion::Value(JSValue::Undefined));
+            return Ok(JSValue::Undefined);
         };
 
         // c. Return ? parent.[[Get]](P, Receiver).
@@ -538,9 +538,7 @@ fn ordinary_get(
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
     if desc.is_data_descriptor() {
-        return Ok(NormalCompletion::Value(
-            desc.value.unwrap_or_else(|| unreachable!()),
-        ));
+        return Ok(desc.value.unwrap_or_else(|| unreachable!()));
     }
 
     // 4. Assert: IsAccessorDescriptor(desc) is true.
@@ -551,7 +549,7 @@ fn ordinary_get(
 
     // 6. If getter is undefined, return undefined.
     if getter.is_none() {
-        return Ok(NormalCompletion::Value(JSValue::Undefined));
+        return Ok(JSValue::Undefined);
     }
 
     // 7. Return ? Call(getter, Receiver).
@@ -571,7 +569,7 @@ fn set(
     key: &JSObjectPropKey,
     value: JSValue,
     receiver: JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Return OrdinarySet(O, P, V, Receiver).
     ordinary_set(agent, obj_addr, key, value, receiver)
 }
@@ -584,7 +582,7 @@ fn ordinary_set(
     key: &JSObjectPropKey,
     value: JSValue,
     receiver: JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
     let own_desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key);
 
@@ -601,7 +599,7 @@ fn ordinary_set_with_own_descriptor(
     value: JSValue,
     receiver: JSValue,
     opt_own_desc: Option<JSObjectPropDescriptor>,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. If ownDesc is undefined, then
     let own_desc = if let Some(own_desc) = opt_own_desc {
         own_desc
@@ -632,12 +630,12 @@ fn ordinary_set_with_own_descriptor(
     if own_desc.is_data_descriptor() {
         // a. If ownDesc.[[Writable]] is false, return false.
         if own_desc.writable == Some(true) {
-            return Ok(JSValue::Bool(false).into());
+            return Ok(false);
         }
 
         // b. If Receiver is not an Object, return false.
         if !receiver.is_object() {
-            return Ok(JSValue::Bool(false).into());
+            return Ok(false);
         }
 
         // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
@@ -651,12 +649,12 @@ fn ordinary_set_with_own_descriptor(
         if let Some(existing_desc) = existing_desc {
             // i. If IsAccessorDescriptor(existingDescriptor) is true, return false.
             if existing_desc.is_accessor_descriptor() {
-                return Ok(JSValue::Bool(false).into());
+                return Ok(false);
             }
 
             // ii. If existingDescriptor.[[Writable]] is false, return false.
             if existing_desc.writable == Some(false) {
-                return Ok(JSValue::Bool(false).into());
+                return Ok(false);
             }
 
             // iii. Let valueDesc be the PropertyDescriptor { [[Value]]: V }.
@@ -686,7 +684,7 @@ fn ordinary_set_with_own_descriptor(
 
     // 5. If setter is undefined, return false.
     if setter.is_none() {
-        return Ok(JSValue::Bool(false).into());
+        return Ok(false);
     }
 
     // 6. Perform ? Call(setter, Receiver, « V »).
@@ -698,7 +696,7 @@ fn ordinary_set_with_own_descriptor(
     )?;
 
     // 7. Return true.
-    Ok(JSValue::Bool(true).into())
+    Ok(true)
 }
 
 /// 10.1.10 [[Delete]] ( P )

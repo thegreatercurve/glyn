@@ -53,14 +53,18 @@ pub(crate) fn get(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     receiver: &JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<JSValue> {
     // 1. Return ? O.[[Get]](P, O).
     (agent.object(obj_addr).methods.get)(agent, obj_addr, key, receiver)
 }
 
 /// 7.3.3 GetV ( V, P )
 /// https://262.ecma-international.org/15.0/#sec-getv
-pub(crate) fn getv(agent: &JSAgent, value: &JSValue, key: &JSObjectPropKey) -> CompletionRecord {
+pub(crate) fn getv(
+    agent: &JSAgent,
+    value: &JSValue,
+    key: &JSObjectPropKey,
+) -> CompletionRecord<JSValue> {
     // 1. Let O be ? ToObject(V).
     let obj_addr = to_object(agent, value);
 
@@ -76,18 +80,18 @@ pub(crate) fn set(
     key: &JSObjectPropKey,
     value: JSValue,
     throw: bool,
-) -> CompletionRecord {
+) -> CompletionRecord<Option<bool>> {
     // 1. Let success be ? O.[[Set]](P, V, O).
     let success =
         (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Bool(false)) && throw {
+    if success == false && throw {
         agent.type_error("Failed to set property on object");
     }
 
     // 3. Return unused.
-    Ok(NormalCompletion::Unused)
+    Ok(None)
 }
 
 /// 7.3.5 CreateDataProperty ( O, P, V )
@@ -97,7 +101,7 @@ pub(crate) fn create_data_property(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Let newDesc be the PropertyDescriptor { [[Value]]: V, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: true }.
     let new_desc = JSObjectPropDescriptor {
         value: Some(value),
@@ -118,17 +122,17 @@ pub(crate) fn create_data_property_or_throw(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> CompletionRecord {
-    // 1. 1. Let success be ? CreateDataProperty(O, P, V).
+) -> CompletionRecord<()> {
+    // 1. Let success be ? CreateDataProperty(O, P, V).
     let success = create_data_property(agent, obj_addr, key, value)?;
 
     // 2. If success is false, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Bool(false)) {
+    if !success {
         agent.type_error("Failed to create data property on object");
     }
 
     // 3. Return unused.
-    Ok(NormalCompletion::Unused)
+    Ok(())
 }
 
 /// 7.3.7 CreateNonEnumerableDataPropertyOrThrow ( O, P, V )
@@ -168,17 +172,17 @@ pub(crate) fn define_property_or_throw(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     desc: JSObjectPropDescriptor,
-) -> CompletionRecord {
+) -> CompletionRecord<()> {
     // 1. Let success be ? O.[[DefineOwnProperty]](P, desc).
     let success = (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
 
     // 2. If success is false, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Bool(false)) {
+    if !success {
         agent.type_error("Failed to define property on object");
     }
 
     // 3. Return unused.
-    Ok(NormalCompletion::Unused)
+    Ok(())
 }
 
 /// 7.3.9 DeletePropertyOrThrow ( O, P )
@@ -187,7 +191,7 @@ pub(crate) fn delete_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
-) -> CompletionRecord {
+) -> CompletionRecord<()> {
     // 1. Let success be ? O.[[Delete]](P).
     let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key);
 
@@ -197,7 +201,7 @@ pub(crate) fn delete_property_or_throw(
     }
 
     // 3. Return unused.
-    Ok(NormalCompletion::Unused)
+    Ok(())
 }
 
 /// 7.3.10 GetMethod ( V, P )
@@ -206,22 +210,22 @@ pub(crate) fn get_method(
     agent: &JSAgent,
     value: &JSValue,
     key: &JSObjectPropKey,
-) -> CompletionRecord {
+) -> CompletionRecord<Option<JSValue>> {
     // 1. Let func be ? GetV(V, P).
-    let func = getv(agent, value, key);
+    let func = getv(agent, value, key)?;
 
     // 2. If func is either undefined or null, return undefined.
-    let Ok(NormalCompletion::Value(ref func_value)) = func else {
-        return Ok(NormalCompletion::Value(JSValue::Undefined));
+    if matches!(func, JSValue::Undefined | JSValue::Null) {
+        return Ok(None);
     };
 
     // 3. If IsCallable(func) is false, throw a TypeError exception.
-    if !is_callable(agent, func_value) {
+    if !is_callable(agent, &func) {
         agent.type_error("Method is not callable.");
     }
 
     // 4. Return func.
-    func
+    Ok(Some(func))
 }
 
 /// 7.3.11 HasProperty ( O, P )
@@ -253,7 +257,7 @@ pub(crate) fn call(
     function_value: JSValue,
     this_value: &JSValue,
     arguments_list: Option<Vec<JSValue>>,
-) -> CompletionRecord {
+) -> CompletionRecord<JSValue> {
     // 1. If argumentsList is not present, set argumentsList to a new empty List.
     let args = arguments_list.unwrap_or_default();
 
@@ -265,11 +269,7 @@ pub(crate) fn call(
     // 3. Return ? F.[[Call]](V, argumentsList).
     let function_obj_addr = function_value.as_object().unwrap_or_else(|| unreachable!());
 
-    let call_fn = agent
-        .object(function_obj_addr)
-        .methods
-        .call
-        .unwrap_or_else(|| unreachable!());
+    let call_fn = agent.object(function_obj_addr).methods.call.unwrap();
 
     call_fn(agent, function_obj_addr, this_value, &args)
 }
@@ -281,7 +281,7 @@ pub(crate) fn construct(
     constructor: JSObjAddr,
     arguments_list: Option<Vec<JSValue>>,
     new_target: Option<JSObjAddr>,
-) -> CompletionRecord {
+) -> CompletionRecord<JSObjAddr> {
     // 1. If newTarget is not present, set newTarget to F.
     let new_target_addr = new_target.unwrap_or(constructor);
 
@@ -289,15 +289,11 @@ pub(crate) fn construct(
     let arguments_list = arguments_list.unwrap_or_default();
 
     // 3. Return ? F.[[Construct]](argumentsList, newTarget).
-    let construct_fn = agent
-        .object(constructor)
-        .methods
-        .construct
-        .unwrap_or_else(|| unreachable!());
+    let construct_fn = agent.object(constructor).methods.construct.unwrap();
 
     let result = construct_fn(agent, &arguments_list, new_target_addr);
 
-    Ok(NormalCompletion::Value(JSValue::Object(result)))
+    Ok(result)
 }
 
 /// Integrity level for SetIntegrityLevel operation
@@ -313,13 +309,13 @@ pub(crate) fn set_integrity_level(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
     level: IntegrityLevel,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Let status be ? O.[[PreventExtensions]]().
     let status = (agent.object(obj_addr).methods.prevent_extensions)(agent, obj_addr);
 
     // 2. If status is false, return false.
     if !status {
-        return Ok(NormalCompletion::Bool(false));
+        return Ok(false);
     }
 
     // 3. Let keys be ? O.[[OwnPropertyKeys]]().
@@ -382,7 +378,7 @@ pub(crate) fn set_integrity_level(
     }
 
     // 6. Return true.
-    Ok(NormalCompletion::Bool(true))
+    Ok(true)
 }
 
 /// 7.3.16 TestIntegrityLevel ( O, level )
@@ -391,13 +387,13 @@ pub(crate) fn test_integrity_level(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
     level: IntegrityLevel,
-) -> CompletionRecord {
+) -> CompletionRecord<bool> {
     // 1. Let extensible be ? IsExtensible(O).
     let extensible = (agent.object(obj_addr).methods.is_extensible)(agent, obj_addr);
 
     // 2. If extensible is true, return false.
     if extensible {
-        return Ok(NormalCompletion::Bool(false));
+        return Ok(false);
     }
 
     // 3. NOTE: If the object is extensible, none of its properties are examined.
@@ -413,19 +409,19 @@ pub(crate) fn test_integrity_level(
         if let Some(current_desc) = current_desc {
             // i. If currentDesc.[[Configurable]] is true, return false.
             if current_desc.configurable == Some(true) {
-                return Ok(NormalCompletion::Bool(false));
+                return Ok(false);
             }
 
             // ii. If level is frozen and IsDataDescriptor(currentDesc) is true, then
             if level == IntegrityLevel::Frozen && current_desc.is_data_descriptor() {
                 // 1. If currentDesc.[[Writable]] is true, return false.
                 if current_desc.writable == Some(true) {
-                    return Ok(NormalCompletion::Bool(false));
+                    return Ok(false);
                 }
             }
         }
     }
 
     // 6. Return true.
-    Ok(NormalCompletion::Bool(true))
+    Ok(true)
 }

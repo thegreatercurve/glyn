@@ -196,7 +196,7 @@ impl JSNumber {
     /// 6.1.6.1.14 Number::sameValue ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-samevalue
     pub(crate) fn same_value(&self, y: &Self) -> bool {
-        // 1. 1. If x is NaN and y is NaN, return true.
+        // 1. If x is NaN and y is NaN, return true.
         if self.is_nan() || y.is_nan() {
             return true;
         }
