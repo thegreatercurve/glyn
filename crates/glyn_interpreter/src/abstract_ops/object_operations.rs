@@ -128,6 +128,36 @@ pub(crate) fn create_data_property_or_throw(
     Ok(NormalCompletion::Unused)
 }
 
+/// 7.3.7 CreateNonEnumerableDataPropertyOrThrow ( O, P, V )
+/// https://262.ecma-international.org/15.0/#sec-createnonenumerabledatapropertyorthrow
+pub(crate) fn create_non_enumerable_data_property_or_throw(
+    agent: &mut JSAgent,
+    obj_addr: JSObjAddr,
+    key: &JSObjectPropKey,
+    value: JSValue,
+) {
+    let object = agent.object_mut(obj_addr);
+
+    // 1. Assert: O is an ordinary, extensible object with no non-configurable properties.
+    debug_assert!(
+        object.extensible() && object.values.iter().all(|v| v.configurable == Some(true))
+    );
+
+    // 2. Let newDesc be the PropertyDescriptor { [[Value]]: V, [[Writable]]: true, [[Enumerable]]: false, [[Configurable]]: true }.
+    let new_desc = JSObjectPropDescriptor {
+        value: Some(value),
+        writable: Some(true),
+        enumerable: Some(false),
+        configurable: Some(true),
+        ..JSObjectPropDescriptor::default()
+    };
+
+    // 3. Perform ! DefinePropertyOrThrow(O, P, newDesc).
+    let _ = define_property_or_throw(agent, obj_addr, key, new_desc);
+
+    // 4. Return unused.
+}
+
 /// 7.3.8 DefinePropertyOrThrow ( O, P, desc )
 /// https://262.ecma-international.org/15.0/#sec-definepropertyorthrow
 pub(crate) fn define_property_or_throw(
