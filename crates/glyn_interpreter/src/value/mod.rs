@@ -18,7 +18,7 @@ pub enum JSValue {
     Null,
     /// 6.1.3 The Boolean Type
     /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-boolean-type
-    Boolean(bool),
+    Bool(bool),
     String(JSString),
     Number(JSNumber),
     BigInt(JSBigInt),
@@ -28,12 +28,12 @@ pub enum JSValue {
 
 impl JSValue {
     pub(crate) fn is_boolean(&self) -> bool {
-        matches!(self, JSValue::Boolean(_))
+        matches!(self, JSValue::Bool(_))
     }
 
     pub(crate) fn as_boolean(&self) -> Option<&bool> {
         match self {
-            JSValue::Boolean(value) => Some(value),
+            JSValue::Bool(value) => Some(value),
             _ => None,
         }
     }
@@ -70,7 +70,7 @@ impl JSValue {
 
 impl From<bool> for JSValue {
     fn from(value: bool) -> Self {
-        JSValue::Boolean(value)
+        JSValue::Bool(value)
     }
 }
 

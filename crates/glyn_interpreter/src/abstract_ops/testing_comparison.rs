@@ -127,7 +127,7 @@ fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
         (JSValue::String(x), JSValue::String(y)) => x == y,
 
         // 5. If x is a Boolean, then
-        (JSValue::Boolean(x), JSValue::Boolean(y)) => x == y,
+        (JSValue::Bool(x), JSValue::Bool(y)) => x == y,
 
         // 6. NOTE: All other ECMAScript language values are compared by identity.
         (JSValue::Number(_x), JSValue::Number(_y)) => unreachable!(),

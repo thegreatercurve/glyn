@@ -8,7 +8,7 @@ pub type CompletionRecord = Result<NormalCompletion, ThrowCompletion>;
 /// https://262.ecma-international.org/15.0/#sec-normalcompletion
 #[derive(Debug, PartialEq)]
 pub enum NormalCompletion {
-    Boolean(bool),
+    Bool(bool),
     Value(JSValue),
     Unused,
 }
@@ -18,7 +18,7 @@ impl From<JSValue> for NormalCompletion {
         match value {
             JSValue::Undefined => NormalCompletion::Value(JSValue::Undefined),
             JSValue::Null => NormalCompletion::Value(JSValue::Null),
-            JSValue::Boolean(b) => NormalCompletion::Value(JSValue::Boolean(b)),
+            JSValue::Bool(b) => NormalCompletion::Value(JSValue::Bool(b)),
             JSValue::Number(n) => NormalCompletion::Value(JSValue::Number(n)),
             JSValue::String(s) => NormalCompletion::Value(JSValue::String(s)),
             JSValue::Object(o) => NormalCompletion::Value(JSValue::Object(o)),

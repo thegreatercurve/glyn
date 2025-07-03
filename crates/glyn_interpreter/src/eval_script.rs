@@ -25,7 +25,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     // 6. Return Completion(status).
     // NOTE: We only return JSValue to avoid needing to expose additional types.
     match status {
-        Ok(NormalCompletion::Boolean(value)) => Ok(JSValue::Boolean(value)),
+        Ok(NormalCompletion::Bool(value)) => Ok(JSValue::Bool(value)),
         Ok(NormalCompletion::Value(value)) => Ok(value),
         Ok(NormalCompletion::Unused) => Ok(JSValue::Undefined),
         Err(err) => Err(format!("Script parsing error: {err:?}")),

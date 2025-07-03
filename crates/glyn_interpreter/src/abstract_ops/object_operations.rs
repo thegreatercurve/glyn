@@ -79,7 +79,7 @@ pub(crate) fn set(
         (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Boolean(false)) && throw {
+    if matches!(success, NormalCompletion::Bool(false)) && throw {
         agent.type_error("Failed to set property on object");
     }
 
@@ -120,7 +120,7 @@ pub(crate) fn create_data_property_or_throw(
     let success = create_data_property(agent, obj_addr, key, value)?;
 
     // 2. If success is false, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Boolean(false)) {
+    if matches!(success, NormalCompletion::Bool(false)) {
         agent.type_error("Failed to create data property on object");
     }
 
@@ -170,7 +170,7 @@ pub(crate) fn define_property_or_throw(
     let success = (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
 
     // 2. If success is false, throw a TypeError exception.
-    if matches!(success, NormalCompletion::Boolean(false)) {
+    if matches!(success, NormalCompletion::Bool(false)) {
         agent.type_error("Failed to define property on object");
     }
 
@@ -316,7 +316,7 @@ pub(crate) fn set_integrity_level(
 
     // 2. If status is false, return false.
     if !status {
-        return Ok(NormalCompletion::Boolean(false));
+        return Ok(NormalCompletion::Bool(false));
     }
 
     // 3. Let keys be ? O.[[OwnPropertyKeys]]().
@@ -379,7 +379,7 @@ pub(crate) fn set_integrity_level(
     }
 
     // 6. Return true.
-    Ok(NormalCompletion::Boolean(true))
+    Ok(NormalCompletion::Bool(true))
 }
 
 /// 7.3.16 TestIntegrityLevel ( O, level )
@@ -394,7 +394,7 @@ pub(crate) fn test_integrity_level(
 
     // 2. If extensible is true, return false.
     if extensible {
-        return Ok(NormalCompletion::Boolean(false));
+        return Ok(NormalCompletion::Bool(false));
     }
 
     // 3. NOTE: If the object is extensible, none of its properties are examined.
@@ -410,21 +410,21 @@ pub(crate) fn test_integrity_level(
         if let Some(current_desc) = current_desc {
             // i. If currentDesc.[[Configurable]] is true, return false.
             if current_desc.configurable == Some(true) {
-                return Ok(NormalCompletion::Boolean(false));
+                return Ok(NormalCompletion::Bool(false));
             }
 
             // ii. If level is frozen and IsDataDescriptor(currentDesc) is true, then
             if level == IntegrityLevel::Frozen && current_desc.is_data_descriptor() {
                 // 1. If currentDesc.[[Writable]] is true, return false.
                 if current_desc.writable == Some(true) {
-                    return Ok(NormalCompletion::Boolean(false));
+                    return Ok(NormalCompletion::Bool(false));
                 }
             }
         }
     }
 
     // 6. Return true.
-    Ok(NormalCompletion::Boolean(true))
+    Ok(NormalCompletion::Bool(true))
 }
 
 /// 7.1.18 ToObject ( argument )
@@ -440,7 +440,7 @@ pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
             agent.type_error("Cannot convert null to object");
         }
         // Return a new Boolean object whose [[BooleanData]] internal slot is set to argument.
-        JSValue::Boolean(_value) => todo!(),
+        JSValue::Bool(_value) => todo!(),
         // Return a new Number object whose [[NumberData]] internal slot is set to argument.
         JSValue::Number(_value) => todo!(),
         // Return a new String object whose [[StringData]] internal slot is set to argument.

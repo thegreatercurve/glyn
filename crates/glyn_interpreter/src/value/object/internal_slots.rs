@@ -63,7 +63,7 @@ impl JSObjectInternalSlots {
 
     pub(crate) fn extensible(&self) -> bool {
         match self.get(&JSObjectSlotName::Extensible) {
-            Some(JSObjectSlotValue::Value(JSValue::Boolean(value))) => *value,
+            Some(JSObjectSlotValue::Value(JSValue::Bool(value))) => *value,
             _ => true,
         }
     }
@@ -71,7 +71,7 @@ impl JSObjectInternalSlots {
     pub(crate) fn set_extensible(&mut self, extensible: bool) {
         self.0.insert(
             JSObjectSlotName::Extensible,
-            JSValue::Boolean(extensible).into(),
+            JSValue::Bool(extensible).into(),
         );
     }
 

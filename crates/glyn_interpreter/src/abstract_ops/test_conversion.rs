@@ -95,9 +95,9 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> JSNumber {
         // 3. If argument is undefined, return NaN.
         JSValue::Undefined => return JSNumber::nan(),
         // 4. If argument is either null or false, return +0𝔽.
-        JSValue::Null | JSValue::Boolean(false) => return JSNumber::from(0),
+        JSValue::Null | JSValue::Bool(false) => return JSNumber::from(0),
         // 5. If argument is true, return +1𝔽
-        JSValue::Boolean(true) => return JSNumber::from(1),
+        JSValue::Bool(true) => return JSNumber::from(1),
         // 6. If argument is a String, return StringToNumber(argument).
         JSValue::String(ref string) => return string_to_number(agent, string),
         _ => {}
