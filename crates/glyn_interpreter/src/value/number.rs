@@ -92,7 +92,7 @@ impl JSNumber {
         }
     }
 
-    fn is_pos_infinite(&self) -> bool {
+    pub(crate) fn is_pos_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f > 0.0,
             JSNumber::Int(_) => false,
@@ -100,7 +100,7 @@ impl JSNumber {
         }
     }
 
-    fn is_neg_infinite(&self) -> bool {
+    pub(crate) fn is_neg_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f < 0.0,
             JSNumber::Int(_) => false,

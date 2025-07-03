@@ -147,3 +147,32 @@ pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
     // 4. Return StringNumericValue of literal.
     JSNumber::from(literal)
 }
+
+/// 7.1.5 ToIntegerOrInfinity ( argument )
+/// https://262.ecma-international.org/15.0/#sec-tointegerorinfinity
+pub(crate) fn to_integer_or_infinity(agent: &JSAgent, argument: JSValue) -> JSNumber {
+    // 1. Let number be ? ToNumber(argument).
+    let number = to_number(agent, argument);
+
+    // 2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.
+    if number.is_nan() || number.is_zero() {
+        return JSNumber::from(0);
+    }
+
+    // 3. If number is +∞𝔽, return +∞.
+    if number.is_pos_infinite() {
+        return JSNumber::Float(f64::INFINITY);
+    }
+
+    // 4. If number is -∞𝔽, return -∞.
+    if number.is_neg_infinite() {
+        return JSNumber::Float(f64::NEG_INFINITY);
+    }
+
+    // 5. Return truncate(ℝ(number)).
+    match number {
+        JSNumber::Float(f) => JSNumber::from(f.trunc()),
+        JSNumber::Int(i) => JSNumber::from(i),
+        JSNumber::UInt(u) => JSNumber::from(u),
+    }
+}
