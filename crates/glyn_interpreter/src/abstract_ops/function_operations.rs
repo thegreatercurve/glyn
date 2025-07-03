@@ -174,13 +174,9 @@ pub(crate) fn create_builtin_function(
     set_function_length(agent, func, length);
 
     // 11. If prefix is not present, then
-    if prefix.is_none() {
-        // a. Perform SetFunctionName(func, name).
-        set_function_name(agent, func, name, None);
-    } else {
-        // a. Perform SetFunctionName(func, name, prefix).
-        set_function_name(agent, func, name, prefix);
-    }
+    // a. Perform SetFunctionName(func, name).
+    // a. Perform SetFunctionName(func, name, prefix).
+    set_function_name(agent, func, name, prefix);
 
     // 13. Return func.
     func
