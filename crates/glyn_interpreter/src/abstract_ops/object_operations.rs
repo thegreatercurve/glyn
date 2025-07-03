@@ -178,6 +178,25 @@ pub(crate) fn define_property_or_throw(
     Ok(NormalCompletion::Unused)
 }
 
+/// 7.3.9 DeletePropertyOrThrow ( O, P )
+/// https://262.ecma-international.org/15.0/#sec-deletepropertyorthrow
+pub(crate) fn delete_property_or_throw(
+    agent: &mut JSAgent,
+    obj_addr: JSObjAddr,
+    key: &JSObjectPropKey,
+) -> CompletionRecord {
+    // 1. Let success be ? O.[[Delete]](P).
+    let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key);
+
+    // 2. If success is false, throw a TypeError exception.
+    if !success {
+        agent.type_error("Failed to delete property from object");
+    }
+
+    // 3. Return unused.
+    Ok(NormalCompletion::Unused)
+}
+
 /// 7.3.10 GetMethod ( V, P )
 /// https://262.ecma-international.org/15.0/#sec-getmethod
 pub(crate) fn get_method(
