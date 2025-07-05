@@ -3,17 +3,13 @@ use crate::{
         object_operations::{call, create_data_property, make_basic_object},
         testing_comparison::same_value,
     },
-    runtime::{
-        agent::JSAgent,
-        completion::{CompletionRecord, NormalCompletion},
-    },
+    runtime::{agent::JSAgent, completion::CompletionRecord},
     value::{
         object::{
             internal_slots::JSObjectSlotName,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr, JSObjectInternalMethods,
         },
-        string::JSString,
         JSValue,
     },
 };

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    runtime::{agent::JSAgent, completion::NormalCompletion, realm::Realm, script::ScriptRecord},
+    runtime::{agent::JSAgent, realm::Realm, script::ScriptRecord},
     value::JSValue,
 };
 
@@ -10,11 +10,13 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     // 1. Let hostDefined be any host-defined values for the provided sourceText (obtained in an implementation dependent manner)
     let host_defined = None;
 
+    let realm = Realm::create_realm(agent);
+
     // 2. Let realm be the current Realm Record.
-    let realm = Rc::new(Realm::create_realm(agent));
+    let realm = Rc::new(realm);
 
     // 3. Let s be ParseScript(sourceText, realm, hostDefined).
-    let s = ScriptRecord::default().parse_script(agent, script_str, realm, host_defined);
+    let s = ScriptRecord::parse_script(agent, script_str, realm, host_defined);
 
     // 4. If s is a List of errors, then
     // a. Let error be the first element of s.

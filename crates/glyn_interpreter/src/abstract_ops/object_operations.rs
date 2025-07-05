@@ -3,10 +3,7 @@ use crate::{
         object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
         type_conversion::to_object,
     },
-    runtime::{
-        agent::JSAgent,
-        completion::{CompletionRecord, NormalCompletion},
-    },
+    runtime::{agent::JSAgent, completion::CompletionRecord},
     value::{
         object::{
             internal_slots::{JSObjectInternalSlots, JSObjectSlotName},

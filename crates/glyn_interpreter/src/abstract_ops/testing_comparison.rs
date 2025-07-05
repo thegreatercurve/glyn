@@ -1,8 +1,5 @@
 use crate::{
-    runtime::{
-        agent::JSAgent,
-        completion::{CompletionRecord, NormalCompletion},
-    },
+    runtime::{agent::JSAgent, completion::CompletionRecord},
     value::{number::JSNumber, object::JSObjAddr, JSValue},
 };
 

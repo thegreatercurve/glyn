@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     runtime::{
         agent::{ExecutionContext, JSAgent},
-        completion::{CompletionRecord, NormalCompletion},
+        completion::CompletionRecord,
         realm::Realm,
     },
     value::JSValue,
@@ -11,7 +11,7 @@ use crate::{
 
 /// 16.1.4 Script Records
 /// https://262.ecma-international.org/15.0/#script-record
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct ScriptRecord {
     /// [[Realm]]
     pub realm: Rc<Realm>,
@@ -24,7 +24,6 @@ impl ScriptRecord {
     /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
     /// https://262.ecma-international.org/15.0/#sec-parse-script
     pub(crate) fn parse_script(
-        &self,
         _agent: &mut JSAgent,
         _source_text: &str,
         realm: Rc<Realm>,
@@ -35,7 +34,7 @@ impl ScriptRecord {
         // TODO Implement parse text and error handling.
 
         // 3. Return Script Record { [[Realm]]: realm, [[ECMAScriptCode]]: script, [[LoadedModules]]: « », [[HostDefined]]: hostDefined }.
-        Self {
+        ScriptRecord {
             realm,
             host_defined,
         }
