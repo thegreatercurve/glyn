@@ -7,7 +7,7 @@ use crate::{
 
 /// 9.3 Realms
 /// https://262.ecma-international.org/15.0/#sec-code-realms
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Realm {
     /// [[Intrinsics]]
     pub intrinsics: Intrinsics,

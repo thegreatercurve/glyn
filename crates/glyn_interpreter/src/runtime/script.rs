@@ -59,7 +59,7 @@ impl ScriptRecord {
             realm: script_record.realm.clone(),
 
             // 5. Set the ScriptOrModule of scriptContext to scriptRecord.
-            script_or_module: ScriptOrModule::Script(script_record.clone()),
+            script_or_module: Some(ScriptOrModule::Script(script_record.clone())),
 
             // 6. Set the VariableEnvironment of scriptContext to globalEnv.
             variable_environment: global_env.clone(),

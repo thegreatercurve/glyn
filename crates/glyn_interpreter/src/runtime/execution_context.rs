@@ -4,6 +4,7 @@ use crate::{
 };
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub(crate) enum ScriptOrModule {
     Script(Rc<ScriptRecord>),
     Module,
@@ -11,6 +12,7 @@ pub(crate) enum ScriptOrModule {
 
 /// 9.4 Execution Contexts
 /// https://262.ecma-international.org/15.0/#sec-execution-contexts
+#[derive(Debug, Default)]
 pub struct ExecutionContext {
     /// Function
     pub function: Option<JSObjAddr>,
@@ -19,7 +21,7 @@ pub struct ExecutionContext {
     pub realm: Rc<Realm>,
 
     /// ScriptOrModule
-    pub script_or_module: ScriptOrModule,
+    pub script_or_module: Option<ScriptOrModule>,
 
     /// LexicalEnvironment
     pub lexical_environment: Option<Rc<Environment>>,
