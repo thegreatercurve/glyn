@@ -3,7 +3,7 @@ use std::rc::Rc;
 use safe_gc::Heap;
 
 use crate::{
-    runtime::{environment::Environment, realm::Realm, execution_context::ExecutionContext},
+    runtime::{environment::Environment, execution_context::ExecutionContext, realm::Realm},
     value::object::{JSObjAddr, JSObject},
 };
 
@@ -89,6 +89,10 @@ impl JSAgent {
 
     pub fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
         self.object_heap.get_mut(obj_addr)
+    }
+
+    pub fn has_object(&self, obj_addr: JSObjAddr) -> bool {
+        self.object_heap.contains(obj_addr)
     }
 
     pub(crate) fn well_known_symbol(

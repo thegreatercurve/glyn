@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
+    abstract_ops::object::ordinary_object_create,
     intrinsics::{function_prototype::FunctionPrototype, object_prototype::JSObjectPrototype},
     runtime::{environment::Environment, intrinsics::Intrinsics},
     value::object::JSObjAddr,
@@ -15,7 +16,7 @@ pub struct Realm {
     pub intrinsics: Intrinsics,
 
     /// [[GlobalObject]]
-    pub global_object: Option<Rc<JSObjAddr>>,
+    pub global_object: Option<JSObjAddr>,
 
     /// [[GlobalEnv]]
     pub global_env: Option<Rc<Environment>>,
@@ -57,5 +58,51 @@ impl Realm {
         // 4. Return unused.
 
         intrinsics
+    }
+
+    /// 9.3.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
+    /// https://262.ecma-international.org/15.0/#sec-setrealmglobalobject
+    pub fn set_realm_global_object(
+        &mut self,
+        agent: &mut JSAgent,
+        opt_global_obj_addr: Option<JSObjAddr>,
+        this_value: Option<JSObjAddr>,
+    ) {
+        // 1. If globalObj is undefined, then
+        let global_obj_addr = opt_global_obj_addr.unwrap_or_else(|| {
+            // a. Let intrinsics be realmRec.[[Intrinsics]].
+            let intrinsics = &self.intrinsics;
+
+            // b. Set globalObj to OrdinaryObjectCreate(intrinsics.[[%Object.prototype%]]).
+            ordinary_object_create(agent, intrinsics.object_prototype, None)
+        });
+
+        // 2. Assert: globalObj is an Object.
+        debug_assert!(agent.has_object(global_obj_addr));
+
+        // 3. If thisValue is undefined, set thisValue to globalObj.
+        let this_value = this_value.unwrap_or(global_obj_addr);
+
+        // 4. Set realmRec.[[GlobalObject]] to globalObj.
+        self.global_object = Some(global_obj_addr);
+
+        // 5. Let newGlobalEnv be NewGlobalEnvironment(globalObj, thisValue).
+        let new_global_env = Self::new_global_environment(agent, global_obj_addr, this_value);
+
+        // 6. Set realmRec.[[GlobalEnv]] to newGlobalEnv.
+        self.global_env = Some(Rc::new(new_global_env));
+
+        // 7. Return unused.
+    }
+
+    /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
+    /// https://262.ecma-international.org/15.0/#sec-newglobalenvironment
+    fn new_global_environment(
+        _agent: &mut JSAgent,
+        _global_object: JSObjAddr,
+        _this_value: JSObjAddr,
+    ) -> Environment {
+        // TODO: Implement proper global environment creation
+        Environment
     }
 }
