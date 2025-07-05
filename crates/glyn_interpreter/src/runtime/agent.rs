@@ -91,10 +91,6 @@ impl JSAgent {
         self.object_heap.get_mut(obj_addr)
     }
 
-    pub fn has_object(&self, obj_addr: JSObjAddr) -> bool {
-        self.object_heap.contains(obj_addr)
-    }
-
     pub(crate) fn well_known_symbol(
         &self,
         obj_addr: JSObjAddr,

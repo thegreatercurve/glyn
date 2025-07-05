@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
-    runtime::{agent::JSAgent, realm::Realm, script::ScriptRecord},
+    abstract_ops::realm::create_realm,
+    runtime::{agent::JSAgent, script::ScriptRecord},
     value::JSValue,
 };
 
@@ -10,7 +11,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     // 1. Let hostDefined be any host-defined values for the provided sourceText (obtained in an implementation dependent manner)
     let host_defined = None;
 
-    let realm = Realm::create_realm(agent);
+    let realm = create_realm(agent);
 
     // 2. Let realm be the current Realm Record.
     let realm = Rc::new(realm);
