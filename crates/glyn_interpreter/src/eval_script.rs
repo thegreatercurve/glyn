@@ -22,7 +22,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     // a. Let error be the first element of s.
     // b. Return Completion{[[Type]]: throw, [[Value]]: error, [[Target]]: empty}.
     // 5. Let status be ScriptEvaluation(s).
-    let status = s.script_evaluation(agent);
+    let status = ScriptRecord::script_evaluation(agent, Rc::new(s));
 
     // 6. Return Completion(status).
     // NOTE: We only return JSValue to avoid needing to expose additional types.

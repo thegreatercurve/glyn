@@ -1,4 +1,4 @@
-use safe_gc::Trace;
+use std::rc::Rc;
 
 use crate::{
     intrinsics::{function_prototype::FunctionPrototype, object_prototype::JSObjectPrototype},
@@ -15,14 +15,10 @@ pub struct Realm {
     pub intrinsics: Intrinsics,
 
     /// [[GlobalObject]]
-    global_object: Option<Box<JSObjAddr>>,
+    pub global_object: Option<Rc<JSObjAddr>>,
 
     /// [[GlobalEnv]]
-    pub global_env: Option<Box<Environment>>,
-}
-
-impl Trace for Realm {
-    fn trace(&self, _collector: &mut safe_gc::Collector) {}
+    pub global_env: Option<Rc<Environment>>,
 }
 
 impl Realm {
@@ -36,6 +32,7 @@ impl Realm {
 
             // 4. Set realmRec.[[GlobalObject]] to undefined.
             global_object: None,
+
             // 5. Set realmRec.[[GlobalEnv]] to undefined.
             global_env: None,
         };

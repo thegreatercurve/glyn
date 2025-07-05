@@ -2,8 +2,9 @@ use std::rc::Rc;
 
 use crate::{
     runtime::{
-        agent::{ExecutionContext, JSAgent},
+        agent::JSAgent,
         completion::CompletionRecord,
+        execution_context::{ExecutionContext, ScriptOrModule},
         realm::Realm,
     },
     value::JSValue,
@@ -42,21 +43,34 @@ impl ScriptRecord {
 
     /// 16.1.6 ScriptEvaluation ( scriptRecord )
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
-    pub(crate) fn script_evaluation(&self, agent: &mut JSAgent) -> CompletionRecord<JSValue> {
+    pub(crate) fn script_evaluation(
+        agent: &mut JSAgent,
+        script_record: Rc<Self>,
+    ) -> CompletionRecord<JSValue> {
         // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-        let _global_env = &self.realm.global_env;
+        let global_env = &script_record.realm.global_env;
 
         // 2. Let scriptContext be a new ECMAScript code execution context.
         let script_context = ExecutionContext {
-            realm: self.realm.clone(),
+            // 3. Set the Function of scriptContext to null.
+            function: None,
+
+            // 4. Set the Realm of scriptContext to scriptRecord.[[Realm]].
+            realm: script_record.realm.clone(),
+
+            // 5. Set the ScriptOrModule of scriptContext to scriptRecord.
+            script_or_module: ScriptOrModule::Script(script_record.clone()),
+
+            // 6. Set the VariableEnvironment of scriptContext to globalEnv.
+            variable_environment: global_env.clone(),
+
+            // 7. Set the LexicalEnvironment of scriptContext to globalEnv.
+            lexical_environment: global_env.clone(),
+
+            // 8. Set the PrivateEnvironment of scriptContext to null.
+            private_environment: None,
         };
 
-        // 3. Set the Function of scriptContext to null.
-        // 4. Set the Realm of scriptContext to scriptRecord.[[Realm]].
-        // 5. Set the ScriptOrModule of scriptContext to scriptRecord.
-        // 6. Set the VariableEnvironment of scriptContext to globalEnv.
-        // 7. Set the LexicalEnvironment of scriptContext to globalEnv.
-        // 8. Set the PrivateEnvironment of scriptContext to null.
         // 9. Suspend the running execution context.
         // 10. Push scriptContext onto the execution context stack; scriptContext is now the running execution context.
         agent.push_execution_context(script_context);

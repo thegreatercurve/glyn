@@ -3,14 +3,9 @@ use std::rc::Rc;
 use safe_gc::Heap;
 
 use crate::{
-    runtime::{environment::Environment, realm::Realm},
+    runtime::{environment::Environment, realm::Realm, execution_context::ExecutionContext},
     value::object::{JSObjAddr, JSObject},
 };
-
-pub struct ExecutionContext {
-    // Realm
-    pub realm: Rc<Realm>,
-}
 
 #[derive(Debug)]
 pub(crate) enum WellKnownSymbol {
