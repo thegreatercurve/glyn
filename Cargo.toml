@@ -8,6 +8,7 @@ license = "MIT"
 edition = "2021"
 
 [workspace.dependencies]
+glyn_codegen = { path = "crates/glyn_codegen" }
 glyn_interpreter = { path = "crates/glyn_interpreter" }
 glyn_lexer = { path = "crates/glyn_lexer" }
 glyn_unicode = { path = "crates/glyn_unicode" }

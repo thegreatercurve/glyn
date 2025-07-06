@@ -1,0 +1,215 @@
+use crate::{
+    bytecode_generator::LiteralType,
+    parser::{JSParserError, ParseResult, Parser},
+    token::{BinOpPrecedence, Keyword, Token},
+    value::JSString,
+};
+
+enum Literal {
+    True,
+    False,
+    Int64(f64),
+    String,
+    Null,
+}
+
+// 13 ECMAScript Language: Expressions
+// https://tc39.es/ecma262/#sec-ecmascript-language-expressions
+impl<'a> Parser<'a> {
+    // 13.1 Identifiers
+    // https://tc39.es/ecma262/#prod-IdentifierReference
+    pub(crate) fn js_parse_identifier_reference(&mut self) -> ParseResult<&'a str> {
+        let binding_identifier = self.current_token.as_str();
+
+        if self.current_token.is_identifier_reference() {
+            self.advance(); // Eat binding identifier token.
+        } else {
+            return self.error(JSParserError::UnexpectedToken);
+        }
+
+        Ok(binding_identifier)
+    }
+
+    // https://tc39.es/ecma262/#prod-BindingIdentifier
+    pub(crate) fn js_parse_binding_identifier(&mut self) -> ParseResult<JSString> {
+        let binding_identifier = self.current_token.to_string();
+
+        if self.current_token.is_binding_identifier() {
+            self.advance(); // Eat binding identifier token.
+        } else {
+            return self.error(JSParserError::UnexpectedToken);
+        }
+
+        Ok(binding_identifier)
+    }
+
+    // 13.15 Assignment Operators
+    // https://tc39.es/ecma262/#prod-AssignmentExpression
+    pub(crate) fn js_parse_assignment_expression(&mut self) -> ParseResult {
+        self.js_parse_conditional_expression()?;
+
+        let operator = if self.current_token.is_assignment_operator() {
+            self.advance(); // Eat the assignment operator token.
+
+            self.current_token.clone()
+        } else {
+            return Ok(());
+        };
+
+        self.js_parse_assignment_expression()?;
+
+        self.bytecode.compile_assigment_op(&operator);
+
+        Ok(())
+    }
+
+    // 13.16 Comma Operator ( , )
+    // https://tc39.es/ecma262/#prod-Expression
+    pub(crate) fn js_parse_expression(&mut self) -> ParseResult {
+        self.js_parse_assignment_expression()
+    }
+
+    // 13.2 Primary Expressions
+    // https://tc39.es/ecma262/#prod-PrimaryExpression
+    fn js_parse_primary_expression(&mut self) -> ParseResult {
+        match &self.current_token {
+            token if token.is_identifier_reference() => {
+                let ident = self.js_parse_identifier_reference()?;
+
+                self.bytecode
+                    .compile_get_let_variable(ident)
+                    .map_err(JSParserError::from)?;
+
+                Ok(())
+            }
+            _ => self.js_parse_literal(),
+        }
+    }
+
+    // 13.2.3 Literals
+    // https://tc39.es/ecma262/#prod-Literal
+    fn js_parse_literal(&mut self) -> ParseResult {
+        let literal_type = match self.current_token {
+            Token::Keyword(Keyword::True) => LiteralType::Boolean(true),
+            Token::Keyword(Keyword::False) => LiteralType::Boolean(false),
+            Token::Keyword(Keyword::Null) => LiteralType::Null,
+            Token::Int64(value) => {
+                let f64_value = value
+                    .parse::<f64>()
+                    .map_err(|_| JSParserError::InvalidInteger64Literal)?;
+
+                LiteralType::Int64(f64_value)
+            }
+            _ => self.error(JSParserError::UnexpectedToken)?,
+        };
+
+        self.advance(); // Eat the literal token.
+
+        self.bytecode.compile_literal(&literal_type)?;
+
+        Ok(())
+    }
+
+    // 13.3 Left-Hand-Side Expressions
+    // https://tc39.es/ecma262/#prod-LeftHandSideExpression
+    fn js_parse_left_hand_side_expression(&mut self) -> ParseResult {
+        self.js_parse_primary_expression()
+    }
+
+    // 13.4 Update Expressions
+    // https://tc39.es/ecma262/#prod-UpdateExpression
+    fn js_parse_update_expression(&mut self) -> ParseResult {
+        self.js_parse_left_hand_side_expression()
+    }
+
+    // 13.5 Unary Operators
+    // https://tc39.es/ecma262/#prod-UnaryExpression
+    fn js_parse_unary_expression(&mut self) -> ParseResult {
+        match self.current_token {
+            Token::Plus | Token::Minus => {
+                let operation = self.current_token.clone();
+
+                self.advance(); // Eat the unary operator token.
+
+                self.js_parse_unary_expression()?;
+
+                self.bytecode
+                    .compile_unary_op(&operation)
+                    .map_err(|e| e.into())
+            }
+            _ => self.js_parse_update_expression(),
+        }
+    }
+
+    // 13.6 Exponentiation Operator
+    // https://tc39.es/ecma262/#prod-ExponentiationExpression
+
+    // 13.7 Multiplicative Operators
+    // https://tc39.es/ecma262/#prod-MultiplicativeExpression
+
+    // 13.8 Additive Operators
+    // https://tc39.es/ecma262/#prod-AdditiveExpression
+
+    // 13.9 Bitwise Shift Operators
+    // https://tc39.es/ecma262/#prod-ShiftExpression
+
+    // 13.10 Relational Operators
+    // https://tc39.es/ecma262/#prod-RelationalExpression
+
+    // 13.11 Equality Operators
+    // https://tc39.es/ecma262/#prod-EqualityExpression
+
+    // 13.12 Binary Bitwise Operators
+    // https://tc39.es/ecma262/#prod-BitwiseANDExpression
+    // https://tc39.es/ecma262/#prod-BitwiseXORExpression
+    // https://tc39.es/ecma262/#prod-BitwiseORExpression
+
+    // 13.13 Binary Logical Operators
+    // https://tc39.es/ecma262/#prod-LogicalANDExpression
+    // https://tc39.es/ecma262/#prod-LogicalORExpression
+
+    // 13.14 Conditional Operator ( ? : )
+    // https://tc39.es/ecma262/#prod-ConditionalExpression
+    fn js_parse_conditional_expression(&mut self) -> ParseResult {
+        self.js_parse_binary_expression(BinOpPrecedence::Lowest)
+    }
+
+    // WIP
+    fn js_parse_binary_expression(&mut self, precedence: BinOpPrecedence) -> ParseResult {
+        self.js_parse_unary_expression()?;
+
+        if !self.current_token.is_binary_operator() {
+            return Ok(());
+        }
+
+        self.js_parse_binary_expression_rest(precedence)
+    }
+
+    fn js_parse_binary_expression_rest(&mut self, precedence: BinOpPrecedence) -> ParseResult {
+        while !self.is_eof() {
+            let operator = self.current_token.clone();
+
+            let new_precedence = BinOpPrecedence::from(operator.clone());
+
+            let stop = if new_precedence.is_right_associative() {
+                new_precedence < precedence
+            } else {
+                new_precedence <= precedence
+            };
+
+            if stop {
+                break;
+            }
+
+            self.advance(); // Eat the binary operator token.
+
+            self.js_parse_binary_expression(new_precedence)?;
+
+            self.bytecode
+                .compile_binary_op(&operator)
+                .map_err(JSParserError::from)?;
+        }
+
+        Ok(())
+    }
+}
