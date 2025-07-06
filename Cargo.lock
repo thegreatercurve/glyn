@@ -262,6 +262,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "glyn_lexer"
+version = "0.0.1"
+dependencies = [
+ "glyn_unicode",
+]
+
+[[package]]
 name = "glyn_unicode"
 version = "0.0.1"
 dependencies = [

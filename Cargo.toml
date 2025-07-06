@@ -8,5 +8,6 @@ license = "MIT"
 edition = "2021"
 
 [workspace.dependencies]
-glyn_unicode = { path = "crates/glyn_unicode" }
 glyn_interpreter = { path = "crates/glyn_interpreter" }
+glyn_lexer = { path = "crates/glyn_lexer" }
+glyn_unicode = { path = "crates/glyn_unicode" }
