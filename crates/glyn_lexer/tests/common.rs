@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! assert_lexer_eq {
     ($input: expr, $expected_tokens: expr) => {{
-        use glyn_lexer::{Lexer, Token};
+        use glyn_lexer::{Keyword, Lexer, Token};
 
         let mut lexer = Lexer::new($input);
 
