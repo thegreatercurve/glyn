@@ -5,8 +5,10 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+glyn_execution_model = { workspace = true }
+glyn_codegen = { workspace = true }
 glyn_unicode = { workspace = true }
-safe-gc = "1.1.1"
+safe-gc = { workspace = true }
 
 [[bin]]
 name = "eval_script"

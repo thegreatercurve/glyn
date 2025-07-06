@@ -1,19 +1,17 @@
 use std::rc::Rc;
 
 use crate::{
-    runtime::{
-        agent::JSAgent,
-        completion::CompletionRecord,
-        execution_context::{ExecutionContext, ScriptOrModule},
-        realm::Realm,
-    },
+    agent::JSAgent,
+    completion::CompletionRecord,
+    execution_context::{ExecutionContext, ScriptOrModule},
+    realm::Realm,
     value::JSValue,
 };
 
 /// 16.1.4 Script Records
 /// https://262.ecma-international.org/15.0/#script-record
 #[derive(Debug)]
-pub(crate) struct ScriptRecord {
+pub struct ScriptRecord {
     /// [[Realm]]
     pub realm: Rc<Realm>,
 
@@ -24,7 +22,7 @@ pub(crate) struct ScriptRecord {
 impl ScriptRecord {
     /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
     /// https://262.ecma-international.org/15.0/#sec-parse-script
-    pub(crate) fn parse_script(
+    pub fn parse_script(
         _agent: &mut JSAgent,
         _source_text: &str,
         realm: Rc<Realm>,
@@ -43,7 +41,7 @@ impl ScriptRecord {
 
     /// 16.1.6 ScriptEvaluation ( scriptRecord )
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
-    pub(crate) fn script_evaluation(
+    pub fn script_evaluation(
         agent: &mut JSAgent,
         script_record: Rc<Self>,
     ) -> CompletionRecord<JSValue> {

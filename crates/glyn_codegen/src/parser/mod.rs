@@ -4,11 +4,9 @@ mod statement;
 
 use std::iter::Peekable;
 
-use crate::{
-    bytecode_generator::{BytecodeGenerator, BytecodeGeneratorError, BytecodeProgram},
-    lexer::Lexer,
-    token::{Keyword, Token},
-};
+use glyn_lexer::{Keyword, Lexer, Token};
+
+use crate::bytecode_generator::{BytecodeGenerator, BytecodeGeneratorError, BytecodeProgram};
 
 pub(crate) type ParseResult<T = ()> = Result<T, JSParserError>;
 

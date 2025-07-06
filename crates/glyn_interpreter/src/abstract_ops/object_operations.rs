@@ -1,9 +1,6 @@
-use crate::{
-    abstract_ops::{
-        object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
-        type_conversion::to_object,
-    },
-    runtime::{agent::JSAgent, completion::CompletionRecord},
+use glyn_execution_model::{
+    agent::JSAgent,
+    completion::CompletionRecord,
     value::{
         object::{
             internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
@@ -12,6 +9,11 @@ use crate::{
         },
         JSValue,
     },
+};
+
+use crate::abstract_ops::{
+    object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
+    type_conversion::to_object,
 };
 
 // 7.3 Operations on Objects

@@ -1,7 +1,6 @@
-use crate::{
-    parser::{JSParserError, ParseResult, Parser},
-    token::{Keyword, Token},
-};
+use glyn_lexer::{Keyword, Token};
+
+use crate::parser::{JSParserError, ParseResult, Parser};
 
 // 14 ECMAScript Language: Statements and Declarations
 // https://tc39.es/ecma262/#prod-Statement

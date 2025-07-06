@@ -1,9 +1,8 @@
 [package]
-name = "glyn_codegen"
+name = "glyn_execution_model"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-glyn_execution_model = { workspace = true }
-glyn_lexer = { workspace = true }
+safe-gc = { workspace = true }

@@ -12,7 +12,7 @@ impl JSBigInt {
 }
 
 impl JSBigInt {
-    pub(crate) fn to_string(&self, radix: u32) -> JSString {
+    pub fn to_string(&self, radix: u32) -> JSString {
         todo!()
     }
 }

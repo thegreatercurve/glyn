@@ -1,4 +1,4 @@
-use crate::{runtime::environment::Environment, value::object::JSObjAddr, JSAgent};
+use glyn_execution_model::{agent::JSAgent, environment::Environment, value::object::JSObjAddr};
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
 /// https://262.ecma-international.org/15.0/#sec-newglobalenvironment

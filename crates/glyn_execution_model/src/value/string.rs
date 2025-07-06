@@ -4,7 +4,7 @@
 pub struct JSString(pub String);
 
 impl JSString {
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 }

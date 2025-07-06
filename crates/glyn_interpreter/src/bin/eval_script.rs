@@ -1,4 +1,5 @@
-use glyn_interpreter::{eval_script, JSAgent};
+use glyn_execution_model::agent::JSAgent;
+use glyn_interpreter::eval_script;
 
 fn main() {
     let mut agent = JSAgent::default();

@@ -1,10 +1,11 @@
-pub(crate) mod internal_slots;
-pub(crate) mod property;
+pub mod internal_slots;
+pub mod property;
 
 use safe_gc::{Collector, Gc, Trace};
 
 use crate::{
-    runtime::{agent::JSAgent, completion::CompletionRecord},
+    agent::JSAgent,
+    completion::CompletionRecord,
     value::{
         object::{
             internal_slots::JSObjectInternalSlots,
@@ -14,7 +15,7 @@ use crate::{
     },
 };
 
-pub(crate) type JSObjAddr = Gc<JSObject>;
+pub type JSObjAddr = Gc<JSObject>;
 
 type InternalMethodsCallFn = Option<
     fn(
@@ -93,7 +94,7 @@ pub struct JSObjectInternalMethods {
     pub construct: InternalMethodsConstructFn,
 }
 
-pub(crate) struct PropertyIndex(usize);
+pub struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
@@ -115,29 +116,29 @@ impl Trace for JSObject {
 
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
-    pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
+    pub fn prototype(&self) -> Option<JSObjAddr> {
         self.slots.prototype()
     }
 
     /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
-    pub(crate) fn extensible(&self) -> bool {
+    pub fn extensible(&self) -> bool {
         self.slots.extensible()
     }
 
     // Utility methods for getting and setting properties.
-    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
+    pub fn keys(&self) -> &[JSObjectPropKey] {
         &self.keys
     }
 
-    pub(crate) fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
+    pub fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
         self.values.get(index.0)
     }
 
-    pub(crate) fn has_property(&self, key: &JSObjectPropKey) -> bool {
+    pub fn has_property(&self, key: &JSObjectPropKey) -> bool {
         self.keys.iter().any(|k| k == key)
     }
 
-    pub(crate) fn set_property(
+    pub fn set_property(
         &mut self,
         key: &JSObjectPropKey,
         value: JSObjectPropDescriptor,
@@ -148,14 +149,14 @@ impl JSObject {
         PropertyIndex(self.keys.len() - 1)
     }
 
-    pub(crate) fn delete_property(&mut self, index: PropertyIndex) -> bool {
+    pub fn delete_property(&mut self, index: PropertyIndex) -> bool {
         self.keys.remove(index.0);
         self.values.remove(index.0);
 
         true
     }
 
-    pub(crate) fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
+    pub fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
         self.keys.iter().position(|k| k == key).map(PropertyIndex)
     }
 }

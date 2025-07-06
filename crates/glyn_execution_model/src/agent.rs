@@ -3,12 +3,14 @@ use std::rc::Rc;
 use safe_gc::Heap;
 
 use crate::{
-    runtime::{environment::Environment, execution_context::ExecutionContext, realm::Realm},
+    environment::Environment,
+    execution_context::ExecutionContext,
+    realm::Realm,
     value::object::{JSObjAddr, JSObject},
 };
 
 #[derive(Debug)]
-pub(crate) enum WellKnownSymbol {
+pub enum WellKnownSymbol {
     AsyncIterator,
     HasInstance,
     IsConcatSpreadable,
@@ -49,11 +51,11 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub(crate) fn current_realm(&self) -> Rc<Realm> {
+    pub fn current_realm(&self) -> Rc<Realm> {
         self.running_execution_context().realm.clone()
     }
 
-    pub(crate) fn push_execution_context(&mut self, context: ExecutionContext) {
+    pub fn push_execution_context(&mut self, context: ExecutionContext) {
         self.execution_contexts.push(context);
     }
 
@@ -63,23 +65,23 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub(crate) fn type_error(&self, message: &str) -> ! {
+    pub fn type_error(&self, message: &str) -> ! {
         panic!("TypeError: {message:?}");
     }
 
-    pub(crate) fn reference_error(&self, message: &str) -> ! {
+    pub fn reference_error(&self, message: &str) -> ! {
         panic!("ReferenceError: {message:?}");
     }
 
-    pub(crate) fn syntax_error(&self, message: &str) -> ! {
+    pub fn syntax_error(&self, message: &str) -> ! {
         panic!("SyntaxError: {message:?}");
     }
 
-    pub(crate) fn range_error(&self, message: &str) -> ! {
+    pub fn range_error(&self, message: &str) -> ! {
         panic!("RangeError: {message:?}");
     }
 
-    pub(crate) fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
+    pub fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
         self.object_heap.alloc(object).into()
     }
 
@@ -91,7 +93,7 @@ impl JSAgent {
         self.object_heap.get_mut(obj_addr)
     }
 
-    pub(crate) fn well_known_symbol(
+    pub fn well_known_symbol(
         &self,
         obj_addr: JSObjAddr,
         symbol: WellKnownSymbol,

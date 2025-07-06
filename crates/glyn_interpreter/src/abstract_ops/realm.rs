@@ -1,14 +1,13 @@
 use std::rc::Rc;
 
+use glyn_execution_model::{
+    agent::JSAgent, completion::CompletionRecord, execution_context::ExecutionContext,
+    intrinsics::Intrinsics, realm::Realm, value::object::JSObjAddr,
+};
+
 use crate::{
     abstract_ops::{environments::new_global_environment, object::ordinary_object_create},
     intrinsics::{function_prototype::FunctionPrototype, object_prototype::JSObjectPrototype},
-    runtime::{
-        completion::CompletionRecord, execution_context::ExecutionContext, intrinsics::Intrinsics,
-        realm::Realm,
-    },
-    value::object::JSObjAddr,
-    JSAgent,
 };
 
 /// 9.3.1 CreateRealm ( )

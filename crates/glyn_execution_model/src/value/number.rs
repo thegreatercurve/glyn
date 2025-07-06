@@ -14,21 +14,21 @@ pub enum JSNumber {
 impl JSNumber {
     /// 21.1.2.6 Number.MAX_SAFE_INTEGER
     /// https://262.ecma-international.org/15.0/#sec-number.max_safe_integer
-    pub(crate) const MAX_SAFE_INTEGER: i64 = 2i64.pow(53) - 1;
+    pub const MAX_SAFE_INTEGER: i64 = 2i64.pow(53) - 1;
 
     /// 21.1.2.7 Number.MAX_VALUE
     /// https://262.ecma-international.org/15.0/#sec-number.max_value
-    pub(crate) const MAX_VALUE: f64 = f64::MAX;
+    pub const MAX_VALUE: f64 = f64::MAX;
 
     /// 21.1.2.8 Number.MIN_SAFE_INTEGER
     /// https://262.ecma-international.org/15.0/#sec-number.min_safe_integer
-    pub(crate) const MIN_SAFE_INTEGER: i64 = -(2i64.pow(53) - 1);
+    pub const MIN_SAFE_INTEGER: i64 = -(2i64.pow(53) - 1);
 
     /// 21.1.2.9 Number.MIN_VALUE
     /// https://262.ecma-international.org/15.0/#sec-number.min_value
-    pub(crate) const MIN_VALUE: f64 = f64::MIN;
+    pub const MIN_VALUE: f64 = f64::MIN;
 
-    pub(crate) fn as_f64(&self) -> f64 {
+    pub fn as_f64(&self) -> f64 {
         match self {
             JSNumber::Float(f) => *f,
             JSNumber::Int(i) => *i as f64,
@@ -36,7 +36,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn as_i64(&self) -> i64 {
+    pub fn as_i64(&self) -> i64 {
         match self {
             JSNumber::Float(f) => *f as i64,
             JSNumber::Int(i) => *i as i64,
@@ -44,7 +44,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn as_i32(&self) -> i32 {
+    pub fn as_i32(&self) -> i32 {
         match self {
             JSNumber::Float(f) => *f as i32,
             JSNumber::Int(i) => *i,
@@ -52,7 +52,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn as_u32(&self) -> u32 {
+    pub fn as_u32(&self) -> u32 {
         match self {
             JSNumber::Float(f) => *f as u32,
             JSNumber::Int(i) => *i as u32,
@@ -60,19 +60,19 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn nan() -> Self {
+    pub fn nan() -> Self {
         JSNumber::Float(f64::NAN)
     }
 
-    pub(crate) fn zero() -> Self {
+    pub fn zero() -> Self {
         JSNumber::Int(0)
     }
 
-    pub(crate) fn pos_zero() -> Self {
+    pub fn pos_zero() -> Self {
         JSNumber::Int(0)
     }
 
-    pub(crate) fn neg_zero() -> Self {
+    pub fn neg_zero() -> Self {
         JSNumber::Float(-0.0)
     }
 
@@ -80,7 +80,7 @@ impl JSNumber {
         matches!(self, JSNumber::Int(_))
     }
 
-    pub(crate) fn is_zero(&self) -> bool {
+    pub fn is_zero(&self) -> bool {
         match self {
             JSNumber::Float(f) => *f == 0.0 || self.is_pos_zero() || self.is_neg_zero(),
             JSNumber::Int(i) => *i == 0,
@@ -104,7 +104,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_nan(&self) -> bool {
+    pub fn is_nan(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_nan(),
             JSNumber::Int(_) => false,
@@ -112,7 +112,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_finite(&self) -> bool {
+    pub fn is_finite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_finite(),
             JSNumber::Int(_) => true,
@@ -128,7 +128,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_pos_infinite(&self) -> bool {
+    pub fn is_pos_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f > 0.0,
             JSNumber::Int(_) => false,
@@ -136,7 +136,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn is_neg_infinite(&self) -> bool {
+    pub fn is_neg_infinite(&self) -> bool {
         match self {
             JSNumber::Float(f) => f.is_infinite() && *f < 0.0,
             JSNumber::Int(_) => false,
@@ -144,7 +144,7 @@ impl JSNumber {
         }
     }
 
-    pub(crate) fn truncate(&self) -> Self {
+    pub fn truncate(&self) -> Self {
         match self {
             JSNumber::Float(f) => JSNumber::Float(f.trunc()),
             JSNumber::Int(i) => JSNumber::Int(*i as i32),
@@ -195,7 +195,7 @@ impl JSNumber {
 
     /// 6.1.6.1.14 Number::sameValue ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-samevalue
-    pub(crate) fn same_value(&self, y: &Self) -> bool {
+    pub fn same_value(&self, y: &Self) -> bool {
         // 1. If x is NaN and y is NaN, return true.
         if self.is_nan() || y.is_nan() {
             return true;
@@ -213,7 +213,7 @@ impl JSNumber {
 
     /// 6.1.6.1.20 Number::toString ( x, radix )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-tostring
-    pub(crate) fn to_string(&self, radix: u32) -> JSString {
+    pub fn to_string(&self, radix: u32) -> JSString {
         // 1. If x is NaN, return "NaN".
         if self.is_nan() {
             return "NaN".into();

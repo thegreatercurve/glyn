@@ -1,5 +1,6 @@
-use crate::{
-    runtime::{agent::JSAgent, completion::CompletionRecord},
+use glyn_execution_model::{
+    agent::JSAgent,
+    completion::CompletionRecord,
     value::{number::JSNumber, object::JSObjAddr, JSValue},
 };
 

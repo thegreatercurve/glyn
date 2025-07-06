@@ -1,12 +1,14 @@
-pub(crate) mod big_int;
-pub(crate) mod number;
-pub(crate) mod object;
-pub(crate) mod string;
-pub(crate) mod symbol;
+use crate::value::big_int::JSBigInt;
+use crate::value::number::JSNumber;
+use crate::value::object::JSObjAddr;
+use crate::value::string::JSString;
+use crate::value::symbol::JSSymbol;
 
-use crate::value::{
-    big_int::JSBigInt, number::JSNumber, object::JSObjAddr, string::JSString, symbol::JSSymbol,
-};
+pub mod big_int;
+pub mod number;
+pub mod object;
+pub mod string;
+pub mod symbol;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JSValue {
@@ -27,40 +29,40 @@ pub enum JSValue {
 }
 
 impl JSValue {
-    pub(crate) fn is_boolean(&self) -> bool {
+    pub fn is_boolean(&self) -> bool {
         matches!(self, JSValue::Bool(_))
     }
 
-    pub(crate) fn as_boolean(&self) -> Option<&bool> {
+    pub fn as_boolean(&self) -> Option<&bool> {
         match self {
             JSValue::Bool(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn is_string(&self) -> bool {
+    pub fn is_string(&self) -> bool {
         matches!(self, JSValue::String(_))
     }
 
-    pub(crate) fn as_string(&self) -> Option<&JSString> {
+    pub fn as_string(&self) -> Option<&JSString> {
         match self {
             JSValue::String(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn as_string_mut(&mut self) -> Option<&mut JSString> {
+    pub fn as_string_mut(&mut self) -> Option<&mut JSString> {
         match self {
             JSValue::String(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn is_number(&self) -> bool {
+    pub fn is_number(&self) -> bool {
         matches!(self, JSValue::Number(_))
     }
 
-    pub(crate) fn as_number(&self) -> Option<&JSNumber> {
+    pub fn as_number(&self) -> Option<&JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),
             _ => None,
@@ -74,40 +76,40 @@ impl JSValue {
         }
     }
 
-    pub(crate) fn is_big_int(&self) -> bool {
+    pub fn is_big_int(&self) -> bool {
         matches!(self, JSValue::BigInt(_))
     }
 
-    pub(crate) fn as_big_int(&self) -> Option<&JSBigInt> {
+    pub fn as_big_int(&self) -> Option<&JSBigInt> {
         match self {
             JSValue::BigInt(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn as_big_int_mut(&mut self) -> Option<&mut JSBigInt> {
+    pub fn as_big_int_mut(&mut self) -> Option<&mut JSBigInt> {
         match self {
             JSValue::BigInt(value) => Some(value),
             _ => None,
         }
     }
 
-    pub(crate) fn is_object(&self) -> bool {
+    pub fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }
 
-    pub(crate) fn as_object(&self) -> Option<JSObjAddr> {
+    pub fn as_object(&self) -> Option<JSObjAddr> {
         match self {
             JSValue::Object(object) => Some(*object),
             _ => None,
         }
     }
 
-    pub(crate) fn is_symbol(&self) -> bool {
+    pub fn is_symbol(&self) -> bool {
         matches!(self, JSValue::Symbol(_))
     }
 
-    pub(crate) fn as_symbol(&self) -> Option<&JSSymbol> {
+    pub fn as_symbol(&self) -> Option<&JSSymbol> {
         match self {
             JSValue::Symbol(value) => Some(value),
             _ => None,

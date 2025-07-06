@@ -4,8 +4,7 @@ use core::fmt;
 
 use glyn_unicode::{is_unicode_id_continue, is_unicode_id_start};
 
-// Re-export token types for convenience
-pub use token::{Keyword, Token};
+pub use token::{BinOpPrecedence, Keyword, Token};
 
 #[derive(Debug)]
 pub(crate) enum LexerError {

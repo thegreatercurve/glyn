@@ -1,7 +1,7 @@
 use std::cmp::min;
 
-use crate::{
-    runtime::agent::{JSAgent, WellKnownSymbol},
+use glyn_execution_model::{
+    agent::{JSAgent, WellKnownSymbol},
     value::{
         number::JSNumber,
         object::{property::JSObjectPropKey, JSObjAddr},

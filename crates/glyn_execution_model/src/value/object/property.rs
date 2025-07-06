@@ -10,11 +10,11 @@ pub enum JSObjectPropKey {
 }
 
 impl JSObjectPropKey {
-    pub(crate) fn is_string(&self) -> bool {
+    pub fn is_string(&self) -> bool {
         matches!(self, JSObjectPropKey::String(_))
     }
 
-    pub(crate) fn as_string(&self) -> Option<&JSString> {
+    pub fn as_string(&self) -> Option<&JSString> {
         if let JSObjectPropKey::String(value) = self {
             Some(value)
         } else {
@@ -22,18 +22,18 @@ impl JSObjectPropKey {
         }
     }
 
-    pub(crate) fn is_symbol(&self) -> bool {
+    pub fn is_symbol(&self) -> bool {
         matches!(self, JSObjectPropKey::Symbol(_))
     }
 
-    pub(crate) fn is_array_index(&self) -> bool {
+    pub fn is_array_index(&self) -> bool {
         self.as_array_index().is_some()
     }
 
     /// An array index is an integer index n such that CanonicalNumericIndexString(n) returns
     /// an integral Number in the inclusive interval from +0𝔽 to 𝔽(2****32 - 2).
     /// https://262.ecma-international.org/15.0/#sec-object-type
-    pub(crate) fn as_array_index(&self) -> Option<u32> {
+    pub fn as_array_index(&self) -> Option<u32> {
         if let JSObjectPropKey::String(value) = self {
             if let Ok(JSNumber::UInt(number)) = JSNumber::try_from(value.clone()) {
                 return Some(number);
@@ -68,7 +68,7 @@ pub struct JSObjectPropDescriptor {
 }
 
 impl JSObjectPropDescriptor {
-    pub(crate) fn is_fully_populated(&self) -> bool {
+    pub fn is_fully_populated(&self) -> bool {
         self.value.is_some()
             && self.writable.is_some()
             && self.get.is_some()
@@ -77,7 +77,7 @@ impl JSObjectPropDescriptor {
             && self.configurable.is_some()
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.value.is_none()
             && self.writable.is_none()
             && self.get.is_none()
@@ -90,7 +90,7 @@ impl JSObjectPropDescriptor {
 impl JSObjectPropDescriptor {
     /// 6.2.6.1 IsAccessorDescriptor ( Desc )
     /// https://262.ecma-international.org/15.0/#sec-property-descriptor-specification-type
-    pub(crate) fn is_accessor_descriptor(&self) -> bool {
+    pub fn is_accessor_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Get]] field, return true.
         // 3. If Desc has a [[Set]] field, return true.
@@ -100,7 +100,7 @@ impl JSObjectPropDescriptor {
 
     /// 6.2.6.2 IsDataDescriptor ( Desc )
     /// https://262.ecma-international.org/15.0/#sec-isdatadescriptor
-    pub(crate) fn is_data_descriptor(&self) -> bool {
+    pub fn is_data_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Value]] field, return true.
         // 3. If Desc has a [[Writable]] field, return true.
@@ -110,7 +110,7 @@ impl JSObjectPropDescriptor {
 
     /// 6.2.6.3 IsGenericDescriptor ( Desc )
     /// https://262.ecma-international.org/15.0/#sec-isgenericdescriptor
-    pub(crate) fn is_generic_descriptor(&self) -> bool {
+    pub fn is_generic_descriptor(&self) -> bool {
         // 1. If Desc is undefined, return false.
         // 2. If Desc has a [[Value]] field, return true.
         // 3. If Desc has a [[Writable]] field, return true.

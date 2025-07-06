@@ -1,8 +1,9 @@
+use glyn_execution_model::value::string::JSString;
+use glyn_lexer::{BinOpPrecedence, Keyword, Token};
+
 use crate::{
     bytecode_generator::LiteralType,
     parser::{JSParserError, ParseResult, Parser},
-    token::{BinOpPrecedence, Keyword, Token},
-    value::JSString,
 };
 
 enum Literal {
@@ -18,8 +19,8 @@ enum Literal {
 impl<'a> Parser<'a> {
     // 13.1 Identifiers
     // https://tc39.es/ecma262/#prod-IdentifierReference
-    pub(crate) fn js_parse_identifier_reference(&mut self) -> ParseResult<&'a str> {
-        let binding_identifier = self.current_token.as_str();
+    pub(crate) fn js_parse_identifier_reference(&mut self) -> ParseResult<JSString> {
+        let binding_identifier = self.current_token.to_string();
 
         if self.current_token.is_identifier_reference() {
             self.advance(); // Eat binding identifier token.
@@ -27,7 +28,7 @@ impl<'a> Parser<'a> {
             return self.error(JSParserError::UnexpectedToken);
         }
 
-        Ok(binding_identifier)
+        Ok(binding_identifier.into())
     }
 
     // https://tc39.es/ecma262/#prod-BindingIdentifier
@@ -40,7 +41,7 @@ impl<'a> Parser<'a> {
             return self.error(JSParserError::UnexpectedToken);
         }
 
-        Ok(binding_identifier)
+        Ok(binding_identifier.into())
     }
 
     // 13.15 Assignment Operators
@@ -74,10 +75,10 @@ impl<'a> Parser<'a> {
     fn js_parse_primary_expression(&mut self) -> ParseResult {
         match &self.current_token {
             token if token.is_identifier_reference() => {
-                let ident = self.js_parse_identifier_reference()?;
+                let _ident = self.js_parse_identifier_reference()?;
 
                 self.bytecode
-                    .compile_get_let_variable(ident)
+                    .compile_get_let_variable()
                     .map_err(JSParserError::from)?;
 
                 Ok(())

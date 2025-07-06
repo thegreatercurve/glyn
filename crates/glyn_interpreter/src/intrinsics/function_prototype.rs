@@ -1,11 +1,12 @@
-use crate::{
-    abstract_ops::function_operations::create_builtin_function,
+use glyn_execution_model::{
+    agent::JSAgent,
     value::{
         object::{property::JSObjectPropKey, JSObjAddr},
         JSValue,
     },
-    JSAgent,
 };
+
+use crate::abstract_ops::function_operations::create_builtin_function;
 
 /// 20.2.3 Properties of the Function Prototype Object
 /// https://262.ecma-international.org/15.0/#sec-properties-of-the-function-prototype-object

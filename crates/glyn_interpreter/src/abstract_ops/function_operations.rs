@@ -1,19 +1,20 @@
 use std::rc::Rc;
 
-use crate::{
-    abstract_ops::object_operations::{define_property_or_throw, make_basic_object},
-    runtime::realm::Realm,
+use glyn_execution_model::{
+    agent::JSAgent,
+    realm::Realm,
     value::{
         object::{
-            internal_slots::JSObjectSlotName,
+            internal_slots::{BehaviourFn, JSObjectSlotName},
             property::{JSObjectPropDescriptor, JSObjectPropKey},
             JSObjAddr,
         },
         string::JSString,
         JSValue,
     },
-    JSAgent,
 };
+
+use crate::abstract_ops::object_operations::{define_property_or_throw, make_basic_object};
 
 /// 10.2.9 SetFunctionName ( F, name [ , prefix ] )
 /// https://262.ecma-international.org/15.0/#sec-setfunctionname
@@ -121,8 +122,6 @@ pub(crate) fn set_function_length(agent: &mut JSAgent, func: JSObjAddr, length: 
 
     // 3. Return unused.
 }
-
-pub(crate) type BehaviourFn = fn(&mut JSAgent, Vec<JSValue>) -> JSValue;
 
 /// 10.3.4 CreateBuiltinFunction ( behaviour, length, name, additionalInternalSlotsList [ , realm [ , prototype [ , prefix ] ] ] )
 /// https://262.ecma-international.org/15.0/#sec-createbuiltinfunction

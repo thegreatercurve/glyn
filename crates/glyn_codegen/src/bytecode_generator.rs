@@ -1,4 +1,7 @@
-use crate::{instruction::Instruction, runtime::CompletionError, token::Token, value::JSString};
+use glyn_execution_model::value::string::JSString;
+use glyn_lexer::Token;
+
+use crate::instruction::Instruction;
 
 pub(crate) enum LiteralType {
     Null,
@@ -11,14 +14,6 @@ pub(crate) enum BytecodeGeneratorError {
     InvalidTokenToBinaryOpConversion,
     InvalidTokenToUnaryOpConversion,
     UnboundIdentifierReference,
-
-    RuntimeCompletionError(CompletionError),
-}
-
-impl From<CompletionError> for BytecodeGeneratorError {
-    fn from(error: CompletionError) -> Self {
-        BytecodeGeneratorError::RuntimeCompletionError(error)
-    }
 }
 
 pub(crate) type BytecodeGeneratorResult = Result<(), BytecodeGeneratorError>;
@@ -146,7 +141,7 @@ impl BytecodeGenerator {
     }
 
     // Statements
-    pub(crate) fn compile_get_let_variable(&mut self, _ident: &str) -> BytecodeGeneratorResult {
+    pub(crate) fn compile_get_let_variable(&mut self) -> BytecodeGeneratorResult {
         let index = 0;
 
         self.emit_instr_one_arg(Instruction::GetLocal, index as u8);

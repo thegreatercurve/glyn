@@ -1,9 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    runtime::{environment::Environment, intrinsics::Intrinsics},
-    value::object::JSObjAddr,
-};
+use crate::{environment::Environment, intrinsics::Intrinsics, value::object::JSObjAddr};
 
 /// 9.3 Realms
 /// https://262.ecma-international.org/15.0/#sec-code-realms

@@ -1,11 +1,11 @@
-use crate::{
-    runtime::{environment::Environment, realm::Realm, script::ScriptRecord},
-    value::object::JSObjAddr,
-};
 use std::rc::Rc;
 
+use crate::{
+    environment::Environment, realm::Realm, script::ScriptRecord, value::object::JSObjAddr,
+};
+
 #[derive(Debug)]
-pub(crate) enum ScriptOrModule {
+pub enum ScriptOrModule {
     Script(Rc<ScriptRecord>),
     Module,
 }

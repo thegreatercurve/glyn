@@ -2,8 +2,6 @@ mod common;
 
 #[test]
 fn strings() {
-    use glyn_lexer::Token;
-
     assert_lexer_eq!(r#""Hello world""#, [Token::String(r#""Hello world""#)]);
     assert_lexer_eq!(r#""""#, [Token::String(r#""""#)]);
     assert_lexer_eq!(
