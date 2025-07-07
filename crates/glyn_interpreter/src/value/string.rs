@@ -1,10 +1,10 @@
 /// 6.1.4 The String Type
 /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-string-type
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub(crate)struct JSString(pub(crate)String);
+pub(crate) struct JSString(pub(crate) String);
 
 impl JSString {
-    pub(crate)fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 }

@@ -20,7 +20,7 @@ use crate::runtime::completion::CompletionRecord;
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
 /// https://262.ecma-international.org/15.0/#sec-makebasicobject
-pub(crate)fn make_basic_object(
+pub(crate) fn make_basic_object(
     agent: &mut JSAgent,
     internal_slots_list: Vec<JSObjectSlotName>,
     internal_methods: Option<&'static JSObjectInternalMethods>,

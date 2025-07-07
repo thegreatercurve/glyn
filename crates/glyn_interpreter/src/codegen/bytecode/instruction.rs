@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 #[repr(u8)]
-pub(crate)enum Instruction {
+pub(crate) enum Instruction {
     // Binary operations
     Add,
     Subtract,
