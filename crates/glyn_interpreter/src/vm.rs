@@ -7,14 +7,14 @@ use crate::{
 pub(crate) struct VM<'a> {
     agent: &'a mut JSAgent,
     stack: Vec<JSValue>,
-    program: FinalProgram,
+    program: &'a FinalProgram,
     locals: Vec<JSValue>,
     ip: usize,
     running: bool,
 }
 
 impl<'a> VM<'a> {
-    pub(crate) fn new(agent: &'a mut JSAgent, program: FinalProgram) -> Self {
+    pub(crate) fn new(agent: &'a mut JSAgent, program: &'a FinalProgram) -> Self {
         Self {
             agent,
             stack: Vec::with_capacity(32),

@@ -1,19 +1,19 @@
-use std::rc::Rc;
-
 use crate::{
     abstract_ops::{environments::new_global_environment, object::ordinary_object_create},
     intrinsics::{function_prototype::FunctionPrototype, object_prototype::JSObjectPrototype},
-    runtime::agent::JSAgent,
-    runtime::completion::CompletionRecord,
-    runtime::execution_context::ExecutionContext,
-    runtime::intrinsics::Intrinsics,
-    runtime::realm::Realm,
+    runtime::{
+        agent::JSAgent,
+        completion::CompletionRecord,
+        execution_context::ExecutionContext,
+        intrinsics::Intrinsics,
+        realm::{Realm, RealmAddr},
+    },
     value::object::JSObjAddr,
 };
 
 /// 9.3.1 CreateRealm ( )
 /// https://262.ecma-international.org/15.0/#sec-createrealm
-pub(crate) fn create_realm(agent: &mut JSAgent) -> Realm {
+pub(crate) fn create_realm(agent: &mut JSAgent) -> RealmAddr {
     // 1. Let realmRec be a new Realm Record.
     let realm_rec = Realm {
         // 2. Perform CreateIntrinsics(realmRec).
@@ -27,7 +27,7 @@ pub(crate) fn create_realm(agent: &mut JSAgent) -> Realm {
     };
 
     // 7. Return realmRec.
-    realm_rec
+    agent.allocate_realm(realm_rec)
 }
 
 /// 9.3.2 CreateIntrinsics ( realmRec )
@@ -76,7 +76,7 @@ pub(crate) fn set_realm_global_object(
     let new_global_env = new_global_environment(agent, global_obj_addr, this_value);
 
     // 6. Set realmRec.[[GlobalEnv]] to newGlobalEnv.
-    realm_record.global_env = Some(Rc::new(new_global_env));
+    realm_record.global_env = Some(new_global_env);
 
     // 7. Return unused.
 }
@@ -96,12 +96,14 @@ pub(crate) fn initialize_host_defined_realm(
         function: None,
 
         // 4. Set the Realm of newContext to realm.
-        realm: Rc::new(realm),
+        realm,
 
         // 5. Set the ScriptOrModule of newContext to null.
         script_or_module: None,
 
-        ..ExecutionContext::default()
+        lexical_environment: None,
+        variable_environment: None,
+        private_environment: None,
     };
 
     // 6. Push newContext onto the execution context stack; newContext is now the running execution context.

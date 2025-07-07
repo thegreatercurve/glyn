@@ -1,8 +1,10 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    runtime::agent::JSAgent,
-    runtime::realm::Realm,
+    runtime::{
+        agent::JSAgent,
+        realm::{Realm, RealmAddr},
+    },
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 
@@ -20,7 +22,7 @@ pub(crate) enum JSObjectSlotName {
 #[derive(Debug)]
 pub(crate) enum JSObjectSlotValue {
     BehaviourFn(BehaviourFn),
-    Realm(Rc<Realm>),
+    Realm(RealmAddr),
     Value(JSValue),
     NotSet,
 }
@@ -77,16 +79,18 @@ impl JSObjectInternalSlots {
         );
     }
 
-    pub(crate) fn realm(self) -> Option<Rc<Realm>> {
+    pub(crate) fn realm(self) -> Option<RealmAddr> {
         match self.get(&JSObjectSlotName::Realm) {
-            Some(JSObjectSlotValue::Realm(realm)) => Some(realm.clone()),
+            Some(JSObjectSlotValue::Realm(realm_addr)) => Some(*realm_addr),
             _ => None,
         }
     }
 
-    pub(crate) fn set_realm(&mut self, realm: Rc<Realm>) {
-        self.0
-            .insert(JSObjectSlotName::Realm, JSObjectSlotValue::Realm(realm));
+    pub(crate) fn set_realm(&mut self, realm_addr: RealmAddr) {
+        self.0.insert(
+            JSObjectSlotName::Realm,
+            JSObjectSlotValue::Realm(realm_addr),
+        );
     }
 
     pub(crate) fn initial_name(&self) -> Option<JSString> {

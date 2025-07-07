@@ -1,10 +1,8 @@
-use std::rc::Rc;
-
 use safe_gc::Heap;
 
-use crate::runtime::environment::Environment;
+use crate::runtime::environment::{Environment, EnvironmentAddr};
 use crate::runtime::execution_context::ExecutionContext;
-use crate::runtime::realm::Realm;
+use crate::runtime::realm::{Realm, RealmAddr};
 use crate::value::object::{JSObjAddr, JSObject};
 
 #[derive(Debug)]
@@ -29,6 +27,8 @@ pub struct JSAgent {
     execution_contexts: Vec<ExecutionContext>,
     environment_records: Vec<Environment>,
     object_heap: Heap,
+    realm_heap: Heap,
+    environment_heap: Heap,
 }
 
 impl JSAgent {
@@ -37,6 +37,8 @@ impl JSAgent {
             execution_contexts: vec![],
             environment_records: vec![],
             object_heap: Heap::new(),
+            realm_heap: Heap::new(),
+            environment_heap: Heap::new(),
         }
     }
 
@@ -49,8 +51,8 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub(crate) fn current_realm(&self) -> Rc<Realm> {
-        self.running_execution_context().realm.clone()
+    pub(crate) fn current_realm(&self) -> RealmAddr {
+        self.running_execution_context().realm
     }
 
     pub(crate) fn push_execution_context(&mut self, context: ExecutionContext) {
@@ -89,6 +91,22 @@ impl JSAgent {
 
     pub(crate) fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
         self.object_heap.get_mut(obj_addr)
+    }
+
+    pub(crate) fn allocate_realm(&mut self, realm: Realm) -> RealmAddr {
+        self.realm_heap.alloc(realm).into()
+    }
+
+    pub(crate) fn realm(&self, realm_addr: RealmAddr) -> &Realm {
+        self.realm_heap.get(realm_addr)
+    }
+
+    pub(crate) fn realm_mut(&mut self, realm_addr: RealmAddr) -> &mut Realm {
+        self.realm_heap.get_mut(realm_addr)
+    }
+
+    pub(crate) fn allocate_environment(&mut self, environment: Environment) -> EnvironmentAddr {
+        self.environment_heap.alloc(environment).into()
     }
 
     pub(crate) fn well_known_symbol(

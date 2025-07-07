@@ -7,7 +7,7 @@ use crate::{
         agent::JSAgent,
         completion::CompletionRecord,
         execution_context::{ExecutionContext, ScriptOrModule},
-        realm::Realm,
+        realm::{Realm, RealmAddr},
         script::ScriptRecord,
     },
     value::JSValue,
@@ -32,7 +32,7 @@ pub(crate) fn parse_text(source_text: &str) -> FinalProgram {
 pub(crate) fn parse_script(
     _agent: &mut JSAgent,
     source_text: &str,
-    realm: Rc<Realm>,
+    realm_addr: RealmAddr,
     host_defined: Option<()>,
 ) -> ScriptRecord {
     // 1. Let script be ParseText(sourceText, Script)
@@ -41,7 +41,7 @@ pub(crate) fn parse_script(
 
     // 3. Return Script Record { [[Realm]]: realm, [[ECMAScriptCode]]: script, [[LoadedModules]]: « », [[HostDefined]]: hostDefined }.
     ScriptRecord {
-        realm,
+        realm: realm_addr,
         ecmascript_code: script,
         host_defined,
     }
@@ -51,10 +51,10 @@ pub(crate) fn parse_script(
 /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
 pub(crate) fn script_evaluation(
     agent: &mut JSAgent,
-    script_record: Rc<ScriptRecord>,
+    script_record: &ScriptRecord,
 ) -> CompletionRecord<JSValue> {
     // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-    let global_env = &script_record.realm.global_env;
+    let global_env = &agent.realm(script_record.realm).global_env;
 
     // 2. Let scriptContext be a new ECMAScript code execution context.
     let script_context = ExecutionContext {
@@ -62,16 +62,16 @@ pub(crate) fn script_evaluation(
         function: None,
 
         // 4. Set the Realm of scriptContext to scriptRecord.[[Realm]].
-        realm: script_record.realm.clone(),
+        realm: script_record.realm,
 
         // 5. Set the ScriptOrModule of scriptContext to scriptRecord.
         script_or_module: Some(ScriptOrModule::Script(script_record.clone())),
 
         // 6. Set the VariableEnvironment of scriptContext to globalEnv.
-        variable_environment: global_env.clone(),
+        variable_environment: *global_env,
 
         // 7. Set the LexicalEnvironment of scriptContext to globalEnv.
-        lexical_environment: global_env.clone(),
+        lexical_environment: *global_env,
 
         // 8. Set the PrivateEnvironment of scriptContext to null.
         private_environment: None,
@@ -82,7 +82,7 @@ pub(crate) fn script_evaluation(
     agent.push_execution_context(script_context);
 
     // 11. Let script be scriptRecord.[[ECMAScriptCode]].
-    let script = script_record.ecmascript_code.clone();
+    let script = &script_record.ecmascript_code;
 
     // 12. Let result be Completion(GlobalDeclarationInstantiation(script, globalEnv)).
     // 13. If result is a normal completion, then

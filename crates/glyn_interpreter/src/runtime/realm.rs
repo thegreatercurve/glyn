@@ -1,8 +1,10 @@
-use std::rc::Rc;
+use safe_gc::{Collector, Gc, Trace};
 
-use crate::runtime::environment::Environment;
+use crate::runtime::environment::{Environment, EnvironmentAddr};
 use crate::runtime::intrinsics::Intrinsics;
 use crate::value::object::JSObjAddr;
+
+pub(crate) type RealmAddr = Gc<Realm>;
 
 /// 9.3 Realms
 /// https://262.ecma-international.org/15.0/#sec-code-realms
@@ -15,5 +17,17 @@ pub(crate) struct Realm {
     pub(crate) global_object: Option<JSObjAddr>,
 
     /// [[GlobalEnv]]
-    pub(crate) global_env: Option<Rc<Environment>>,
+    pub(crate) global_env: Option<EnvironmentAddr>,
+}
+
+impl Trace for Realm {
+    fn trace(&self, collector: &mut Collector) {
+        if let Some(global_object) = self.global_object {
+            collector.edge(global_object);
+        }
+
+        if let Some(global_env) = self.global_env {
+            collector.edge(global_env);
+        }
+    }
 }

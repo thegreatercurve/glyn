@@ -29,7 +29,10 @@ impl FunctionPrototype {
             vec![],
             Some(agent.current_realm()),
             // has a [[Prototype]] internal slot whose value is %Object.prototype%.
-            agent.current_realm().intrinsics.object_prototype,
+            agent
+                .realm(agent.current_realm())
+                .intrinsics
+                .object_prototype,
             None,
         )
     }

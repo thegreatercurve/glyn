@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use crate::runtime::agent::JSAgent;
-use crate::runtime::realm::Realm;
+use crate::runtime::realm::RealmAddr;
 use crate::value::{
     object::{
         internal_slots::{BehaviourFn, JSObjectSlotName},
@@ -129,15 +127,15 @@ pub(crate) fn create_builtin_function(
     length: usize,
     name: JSObjectPropKey,
     additional_internal_slots: Vec<JSObjectSlotName>,
-    realm: Option<Rc<Realm>>,
+    opt_realm_addr: Option<RealmAddr>,
     prototype: Option<JSObjAddr>,
     prefix: Option<String>,
 ) -> JSObjAddr {
     // 1. If realm is not present, set realm to the current Realm Record.
-    let realm = realm.unwrap_or_else(|| agent.current_realm());
+    let realm = opt_realm_addr.unwrap_or_else(|| agent.current_realm());
 
     // 2. If prototype is not present, set prototype to realm.[[Intrinsics]].[[%Function.prototype%]].
-    let prototype = prototype.or(realm.intrinsics.function_prototype);
+    let prototype = prototype.or(agent.realm(realm).intrinsics.function_prototype);
 
     // 3. Let internalSlotsList be a List containing the names of all the internal slots that 10.3 requires for the built-in function object that is about to be created.
     let mut internal_slots_list = vec![

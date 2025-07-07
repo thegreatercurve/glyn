@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{
     abstract_ops::{
         realm::create_realm,
@@ -15,7 +13,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     let host_defined = None;
 
     // 2. Let realm be the current Realm Record.
-    let realm = Rc::new(create_realm(agent));
+    let realm = create_realm(agent);
 
     // 3. Let s be ParseScript(sourceText, realm, hostDefined).
     let s = parse_script(agent, script_str, realm, host_defined);
@@ -24,7 +22,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     // a. Let error be the first element of s.
     // b. Return Completion{[[Type]]: throw, [[Value]]: error, [[Target]]: empty}.
     // 5. Let status be ScriptEvaluation(s).
-    let status = script_evaluation(agent, Rc::new(s));
+    let status = script_evaluation(agent, &s);
 
     // 6. Return Completion(status).
     // NOTE: We only return JSValue to avoid needing to expose additional types.
