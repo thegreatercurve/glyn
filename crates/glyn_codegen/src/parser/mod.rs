@@ -6,29 +6,14 @@ use std::iter::Peekable;
 
 use glyn_lexer::{Keyword, Lexer, Token};
 
-use crate::bytecode_generator::{BytecodeGenerator, BytecodeGeneratorError, BytecodeProgram};
-
-pub(crate) type ParseResult<T = ()> = Result<T, JSParserError>;
-
-#[derive(Debug)]
-pub(crate) enum JSParserError {
-    UnexpectedToken,
-
-    // Number parsing errors
-    InvalidInteger64Literal,
-
-    // Code generation errors
-    BytecodeGenError(BytecodeGeneratorError),
-}
-
-impl From<BytecodeGeneratorError> for JSParserError {
-    fn from(error: BytecodeGeneratorError) -> Self {
-        Self::BytecodeGenError(error)
-    }
-}
+use crate::{
+    bytecode_generator::{BytecodeGenerator, BytecodeProgram},
+    error::CodeGenError,
+    CodeGenResult,
+};
 
 pub(crate) struct Parser<'a> {
-    pub(crate) bytecode: BytecodeGenerator,
+    bytecode: BytecodeGenerator,
     lexer: Peekable<Lexer<'a>>,
     current_token: Token<'a>,
 }
@@ -46,7 +31,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn error<T>(&self, error: JSParserError) -> ParseResult<T> {
+    fn error<T>(&self, error: CodeGenError) -> CodeGenResult<T> {
         Err(error)
     }
 
@@ -60,7 +45,7 @@ impl<'a> Parser<'a> {
         self.lexer.peek()
     }
 
-    pub(crate) fn print_statement(&mut self) -> ParseResult {
+    pub(crate) fn print_statement(&mut self) -> CodeGenResult {
         self.bytecode.compile_print();
 
         Ok(())
@@ -72,9 +57,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn expect(&mut self, expected_token: Token) -> ParseResult {
+    fn expect(&mut self, expected_token: Token) -> CodeGenResult {
         if self.current_token != expected_token {
-            return self.error(JSParserError::UnexpectedToken);
+            return self.error(CodeGenError::UnexpectedToken);
         }
 
         self.advance();
@@ -82,9 +67,9 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn expect_one_of(&mut self, expected_tokens: Vec<Token>) -> ParseResult {
+    fn expect_one_of(&mut self, expected_tokens: Vec<Token>) -> CodeGenResult {
         if !expected_tokens.contains(&self.current_token) {
-            return self.error(JSParserError::UnexpectedToken);
+            return self.error(CodeGenError::UnexpectedToken);
         }
 
         self.advance();
@@ -96,7 +81,7 @@ impl<'a> Parser<'a> {
         self.current_token == Token::Eof
     }
 
-    fn js_parse_print_statement(&mut self) -> ParseResult {
+    fn js_parse_print_statement(&mut self) -> CodeGenResult {
         self.expect(Token::Keyword(Keyword::Print))?;
 
         self.expect(Token::LeftParen)?;

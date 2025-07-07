@@ -1,13 +1,16 @@
 use glyn_lexer::{Keyword, Token};
 
-use crate::parser::{JSParserError, ParseResult, Parser};
+use crate::{
+    error::CodeGenError,
+    parser::{CodeGenResult, Parser},
+};
 
 // 14 ECMAScript Language: Statements and Declarations
 // https://tc39.es/ecma262/#prod-Statement
 impl<'a> Parser<'a> {
     // 14 ECMAScript Language: Statements and Declarations
     // https://tc39.es/ecma262/#prod-Statement
-    fn js_parse_statement(&mut self) -> ParseResult {
+    fn js_parse_statement(&mut self) -> CodeGenResult {
         let current_token = self.current_token.clone();
 
         match current_token {
@@ -29,7 +32,7 @@ impl<'a> Parser<'a> {
 
     // 14.2 Block
     // https://tc39.es/ecma262/#prod-StatementList
-    pub(crate) fn js_parse_statement_list(&mut self) -> ParseResult {
+    pub(crate) fn js_parse_statement_list(&mut self) -> CodeGenResult {
         while !self.is_eof() {
             self.js_parse_statement()?;
         }
@@ -39,7 +42,7 @@ impl<'a> Parser<'a> {
 
     // 14.3.1 Let and Const Declarations
     // https://tc39.es/ecma262/#prod-LexicalDeclaration
-    fn js_parse_let_declaration(&mut self) -> ParseResult {
+    fn js_parse_let_declaration(&mut self) -> CodeGenResult {
         self.expect_one_of(vec![
             Token::Keyword(Keyword::Let),
             Token::Keyword(Keyword::Const),
@@ -54,7 +57,7 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.es/ecma262/#prod-BindingList
-    pub(crate) fn js_parse_binding_list(&mut self) -> ParseResult {
+    pub(crate) fn js_parse_binding_list(&mut self) -> CodeGenResult {
         let mut declarations = vec![self.js_parse_lexical_binding()?];
 
         // TODO Handle when in an in context.
@@ -68,12 +71,12 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.es/ecma262/#prod-LexicalBinding
-    fn js_parse_lexical_binding(&mut self) -> ParseResult {
+    fn js_parse_lexical_binding(&mut self) -> CodeGenResult {
         let binding_identifier = match self.current_token.clone() {
             token_kind if token_kind.is_binding_identifier() => self.js_parse_binding_identifier(),
             Token::LeftBrace => todo!(),
             Token::LeftBracket => todo!(),
-            _ => self.error(JSParserError::UnexpectedToken),
+            _ => self.error(CodeGenError::UnexpectedToken),
         }?;
 
         if self.current_token == Token::Assign {

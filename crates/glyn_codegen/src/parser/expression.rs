@@ -3,7 +3,7 @@ use glyn_lexer::{BinOpPrecedence, Keyword, Token};
 
 use crate::{
     bytecode_generator::LiteralType,
-    parser::{JSParserError, ParseResult, Parser},
+    parser::{CodeGenError, CodeGenResult, Parser},
 };
 
 enum Literal {
@@ -19,26 +19,26 @@ enum Literal {
 impl<'a> Parser<'a> {
     // 13.1 Identifiers
     // https://tc39.es/ecma262/#prod-IdentifierReference
-    pub(crate) fn js_parse_identifier_reference(&mut self) -> ParseResult<JSString> {
+    pub(crate) fn js_parse_identifier_reference(&mut self) -> CodeGenResult<JSString> {
         let binding_identifier = self.current_token.to_string();
 
         if self.current_token.is_identifier_reference() {
             self.advance(); // Eat binding identifier token.
         } else {
-            return self.error(JSParserError::UnexpectedToken);
+            return self.error(CodeGenError::UnexpectedToken);
         }
 
         Ok(binding_identifier.into())
     }
 
     // https://tc39.es/ecma262/#prod-BindingIdentifier
-    pub(crate) fn js_parse_binding_identifier(&mut self) -> ParseResult<JSString> {
+    pub(crate) fn js_parse_binding_identifier(&mut self) -> CodeGenResult<JSString> {
         let binding_identifier = self.current_token.to_string();
 
         if self.current_token.is_binding_identifier() {
             self.advance(); // Eat binding identifier token.
         } else {
-            return self.error(JSParserError::UnexpectedToken);
+            return self.error(CodeGenError::UnexpectedToken);
         }
 
         Ok(binding_identifier.into())
@@ -46,7 +46,7 @@ impl<'a> Parser<'a> {
 
     // 13.15 Assignment Operators
     // https://tc39.es/ecma262/#prod-AssignmentExpression
-    pub(crate) fn js_parse_assignment_expression(&mut self) -> ParseResult {
+    pub(crate) fn js_parse_assignment_expression(&mut self) -> CodeGenResult {
         self.js_parse_conditional_expression()?;
 
         let operator = if self.current_token.is_assignment_operator() {
@@ -66,20 +66,20 @@ impl<'a> Parser<'a> {
 
     // 13.16 Comma Operator ( , )
     // https://tc39.es/ecma262/#prod-Expression
-    pub(crate) fn js_parse_expression(&mut self) -> ParseResult {
+    pub(crate) fn js_parse_expression(&mut self) -> CodeGenResult {
         self.js_parse_assignment_expression()
     }
 
     // 13.2 Primary Expressions
     // https://tc39.es/ecma262/#prod-PrimaryExpression
-    fn js_parse_primary_expression(&mut self) -> ParseResult {
+    fn js_parse_primary_expression(&mut self) -> CodeGenResult {
         match &self.current_token {
             token if token.is_identifier_reference() => {
                 let _ident = self.js_parse_identifier_reference()?;
 
                 self.bytecode
                     .compile_get_let_variable()
-                    .map_err(JSParserError::from)?;
+                    .map_err(CodeGenError::from)?;
 
                 Ok(())
             }
@@ -89,7 +89,7 @@ impl<'a> Parser<'a> {
 
     // 13.2.3 Literals
     // https://tc39.es/ecma262/#prod-Literal
-    fn js_parse_literal(&mut self) -> ParseResult {
+    fn js_parse_literal(&mut self) -> CodeGenResult {
         let literal_type = match self.current_token {
             Token::Keyword(Keyword::True) => LiteralType::Boolean(true),
             Token::Keyword(Keyword::False) => LiteralType::Boolean(false),
@@ -97,11 +97,11 @@ impl<'a> Parser<'a> {
             Token::Int64(value) => {
                 let f64_value = value
                     .parse::<f64>()
-                    .map_err(|_| JSParserError::InvalidInteger64Literal)?;
+                    .map_err(|_| CodeGenError::InvalidInteger64Literal)?;
 
                 LiteralType::Int64(f64_value)
             }
-            _ => self.error(JSParserError::UnexpectedToken)?,
+            _ => self.error(CodeGenError::UnexpectedToken)?,
         };
 
         self.advance(); // Eat the literal token.
@@ -113,19 +113,19 @@ impl<'a> Parser<'a> {
 
     // 13.3 Left-Hand-Side Expressions
     // https://tc39.es/ecma262/#prod-LeftHandSideExpression
-    fn js_parse_left_hand_side_expression(&mut self) -> ParseResult {
+    fn js_parse_left_hand_side_expression(&mut self) -> CodeGenResult {
         self.js_parse_primary_expression()
     }
 
     // 13.4 Update Expressions
     // https://tc39.es/ecma262/#prod-UpdateExpression
-    fn js_parse_update_expression(&mut self) -> ParseResult {
+    fn js_parse_update_expression(&mut self) -> CodeGenResult {
         self.js_parse_left_hand_side_expression()
     }
 
     // 13.5 Unary Operators
     // https://tc39.es/ecma262/#prod-UnaryExpression
-    fn js_parse_unary_expression(&mut self) -> ParseResult {
+    fn js_parse_unary_expression(&mut self) -> CodeGenResult {
         match self.current_token {
             Token::Plus | Token::Minus => {
                 let operation = self.current_token.clone();
@@ -171,12 +171,12 @@ impl<'a> Parser<'a> {
 
     // 13.14 Conditional Operator ( ? : )
     // https://tc39.es/ecma262/#prod-ConditionalExpression
-    fn js_parse_conditional_expression(&mut self) -> ParseResult {
+    fn js_parse_conditional_expression(&mut self) -> CodeGenResult {
         self.js_parse_binary_expression(BinOpPrecedence::Lowest)
     }
 
     // WIP
-    fn js_parse_binary_expression(&mut self, precedence: BinOpPrecedence) -> ParseResult {
+    fn js_parse_binary_expression(&mut self, precedence: BinOpPrecedence) -> CodeGenResult {
         self.js_parse_unary_expression()?;
 
         if !self.current_token.is_binary_operator() {
@@ -186,7 +186,7 @@ impl<'a> Parser<'a> {
         self.js_parse_binary_expression_rest(precedence)
     }
 
-    fn js_parse_binary_expression_rest(&mut self, precedence: BinOpPrecedence) -> ParseResult {
+    fn js_parse_binary_expression_rest(&mut self, precedence: BinOpPrecedence) -> CodeGenResult {
         while !self.is_eof() {
             let operator = self.current_token.clone();
 
@@ -208,7 +208,7 @@ impl<'a> Parser<'a> {
 
             self.bytecode
                 .compile_binary_op(&operator)
-                .map_err(JSParserError::from)?;
+                .map_err(CodeGenError::from)?;
         }
 
         Ok(())

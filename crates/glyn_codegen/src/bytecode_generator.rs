@@ -1,22 +1,13 @@
 use glyn_execution_model::value::string::JSString;
 use glyn_lexer::Token;
 
-use crate::instruction::Instruction;
+use crate::{error::CodeGenError, instruction::Instruction, CodeGenResult};
 
 pub(crate) enum LiteralType {
     Null,
     Boolean(bool),
     Int64(f64),
 }
-
-#[derive(Debug)]
-pub(crate) enum BytecodeGeneratorError {
-    InvalidTokenToBinaryOpConversion,
-    InvalidTokenToUnaryOpConversion,
-    UnboundIdentifierReference,
-}
-
-pub(crate) type BytecodeGeneratorResult = Result<(), BytecodeGeneratorError>;
 
 #[derive(Debug, Default)]
 pub(crate) struct BytecodeProgram {
@@ -33,10 +24,6 @@ pub(crate) struct BytecodeGenerator {
 impl BytecodeGenerator {
     pub(crate) fn program(self) -> BytecodeProgram {
         self.program
-    }
-
-    fn error(&self, error: BytecodeGeneratorError) -> BytecodeGeneratorResult {
-        Err(error)
     }
 
     fn emit_instr(&mut self, byte: Instruction) {
@@ -69,7 +56,7 @@ impl BytecodeGenerator {
         todo!()
     }
 
-    pub(crate) fn compile_binary_op(&mut self, op_token: &Token) -> BytecodeGeneratorResult {
+    pub(crate) fn compile_binary_op(&mut self, op_token: &Token) -> CodeGenResult {
         let instruction = match op_token {
             Token::Plus => Instruction::Add,
             Token::Minus => Instruction::Subtract,
@@ -93,7 +80,7 @@ impl BytecodeGenerator {
             Token::UnsignedRightShift => Instruction::BitwiseShiftRight,
             Token::LogicalAnd => Instruction::LogicalAnd,
             Token::LogicalOr => Instruction::LogicalOr,
-            _ => return self.error(BytecodeGeneratorError::InvalidTokenToBinaryOpConversion),
+            _ => return Err(CodeGenError::UnexpectedToken),
         };
 
         self.emit_instr(instruction);
@@ -101,12 +88,12 @@ impl BytecodeGenerator {
         Ok(())
     }
 
-    pub(crate) fn compile_unary_op(&mut self, op_token: &Token) -> BytecodeGeneratorResult {
+    pub(crate) fn compile_unary_op(&mut self, op_token: &Token) -> CodeGenResult {
         let instruction = match op_token {
             Token::Plus => Instruction::Plus,
             Token::Minus => Instruction::Minus,
             Token::Not => Instruction::Not,
-            _ => return self.error(BytecodeGeneratorError::InvalidTokenToUnaryOpConversion),
+            _ => return Err(CodeGenError::UnexpectedToken),
         };
 
         self.emit_instr(instruction);
@@ -120,7 +107,7 @@ impl BytecodeGenerator {
     ///  Literal : BooleanLiteral
     ///  Literal : NumericLiteral
     ///  Literal : StringLiteral
-    pub(crate) fn compile_literal(&mut self, literal: &LiteralType) -> BytecodeGeneratorResult {
+    pub(crate) fn compile_literal(&mut self, literal: &LiteralType) -> CodeGenResult {
         match literal {
             LiteralType::Null => self.emit_instr(Instruction::Null),
             LiteralType::Boolean(value) => {
@@ -141,7 +128,7 @@ impl BytecodeGenerator {
     }
 
     // Statements
-    pub(crate) fn compile_get_let_variable(&mut self) -> BytecodeGeneratorResult {
+    pub(crate) fn compile_get_let_variable(&mut self) -> CodeGenResult {
         let index = 0;
 
         self.emit_instr_one_arg(Instruction::GetLocal, index as u8);
@@ -155,7 +142,7 @@ impl BytecodeGenerator {
     pub(crate) fn compile_let_declaration_without_initializer(
         &mut self,
         name: JSString,
-    ) -> BytecodeGeneratorResult {
+    ) -> CodeGenResult {
         // 1. Let lhs be ! ResolveBinding(StringValue of BindingIdentifier).
         let index = self.add_identifier(name);
         self.emit_instr_one_arg(Instruction::ResolveBinding, index);
@@ -172,7 +159,7 @@ impl BytecodeGenerator {
     pub(crate) fn compile_let_declaration_with_initializer(
         &mut self,
         binding_id: JSString,
-    ) -> BytecodeGeneratorResult {
+    ) -> CodeGenResult {
         // 1. Let bindingId be StringValue of BindingIdentifier.
         let index = self.add_identifier(binding_id);
 
