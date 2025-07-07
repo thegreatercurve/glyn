@@ -1,10 +1,11 @@
+mod tests;
 mod token;
 
 use core::fmt;
 
 use glyn_unicode::{is_unicode_id_continue, is_unicode_id_start};
 
-pub(crate)use token::{BinOpPrecedence, Keyword, Token};
+pub(crate) use token::{BinOpPrecedence, Keyword, Token};
 
 #[derive(Debug)]
 pub(crate) enum LexerError {
@@ -119,14 +120,14 @@ fn is_char_punctuator_start(ch: char) -> bool {
     )
 }
 
-pub(crate)struct Lexer<'a> {
+pub(crate) struct Lexer<'a> {
     source: &'a str,
     chars: Vec<(usize, char)>,
     pos: usize,
 }
 
 impl<'a> Lexer<'a> {
-    pub(crate)fn new(input: &'a str) -> Self {
+    pub(crate) fn new(input: &'a str) -> Self {
         Self {
             source: input,
             chars: input.char_indices().collect(),

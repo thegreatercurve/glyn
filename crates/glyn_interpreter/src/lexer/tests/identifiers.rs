@@ -1,4 +1,4 @@
-mod common;
+use crate::assert_lexer_eq;
 
 #[test]
 fn identifiers() {
