@@ -1,10 +1,12 @@
 use std::rc::Rc;
 
 use crate::{
-    agent::JSAgent,
-    completion::CompletionRecord,
-    execution_context::{ExecutionContext, ScriptOrModule},
-    realm::Realm,
+    runtime::{
+        agent::JSAgent,
+        completion::CompletionRecord,
+        execution_context::{ExecutionContext, ScriptOrModule},
+        realm::Realm,
+    },
     value::JSValue,
 };
 

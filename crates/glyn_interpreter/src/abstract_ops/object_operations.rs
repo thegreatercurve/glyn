@@ -1,20 +1,19 @@
-use glyn_execution_model::{
-    agent::JSAgent,
-    completion::CompletionRecord,
-    value::{
-        object::{
-            internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
-            property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr, JSObject, JSObjectInternalMethods,
-        },
-        JSValue,
+use crate::value::{
+    object::{
+        internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
+        property::{JSObjectPropDescriptor, JSObjectPropKey},
+        JSObjAddr, JSObject, JSObjectInternalMethods,
     },
+    JSValue,
 };
 
 use crate::abstract_ops::{
     object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
     type_conversion::to_object,
 };
+
+use crate::runtime::agent::JSAgent;
+use crate::runtime::completion::CompletionRecord;
 
 // 7.3 Operations on Objects
 // https://262.ecma-international.org/15.0/#sec-operations-on-objects

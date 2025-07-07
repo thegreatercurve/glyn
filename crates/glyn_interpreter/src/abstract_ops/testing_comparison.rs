@@ -1,8 +1,6 @@
-use glyn_execution_model::{
-    agent::JSAgent,
-    completion::CompletionRecord,
-    value::{number::JSNumber, object::JSObjAddr, JSValue},
-};
+use crate::runtime::agent::JSAgent;
+use crate::runtime::completion::CompletionRecord;
+use crate::value::{number::JSNumber, object::JSObjAddr, JSValue};
 
 // 7.2 Testing and Comparison Operations
 // https://262.ecma-international.org/15.0/#sec-testing-and-comparison-operations

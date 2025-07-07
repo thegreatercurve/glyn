@@ -1,8 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    agent::JSAgent,
-    realm::Realm,
+    runtime::agent::JSAgent,
+    runtime::realm::Realm,
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 

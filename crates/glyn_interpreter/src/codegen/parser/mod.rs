@@ -4,11 +4,12 @@ mod statement;
 
 use std::iter::Peekable;
 
-use glyn_lexer::{Lexer, Token};
-
 use crate::{
-    bytecode::generator::{BytecodeGenerator, FinalProgram},
-    error::{CodeGenError, CodeGenResult},
+    codegen::{
+        bytecode::generator::{BytecodeGenerator, FinalProgram},
+        error::{CodeGenError, CodeGenResult},
+    },
+    lexer::{Lexer, Token},
 };
 
 pub(crate) struct Parser<'a> {

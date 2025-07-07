@@ -1,4 +1,5 @@
-use glyn_execution_model::{agent::JSAgent, value::object::JSObjAddr};
+use crate::runtime::agent::JSAgent;
+use crate::value::object::JSObjAddr;
 
 /// 10.4.7.2 SetImmutablePrototype ( O, V )
 /// https://262.ecma-international.org/15.0/#sec-set-immutable-prototype

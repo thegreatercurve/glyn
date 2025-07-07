@@ -1,6 +1,7 @@
-use glyn_execution_model::value::JSValue;
-
-use crate::bytecode::{generator::FinalProgram, instruction::Instruction};
+use crate::{
+    codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
+    value::JSValue,
+};
 
 #[derive(Debug, Default)]
 pub(crate) struct Emitter {

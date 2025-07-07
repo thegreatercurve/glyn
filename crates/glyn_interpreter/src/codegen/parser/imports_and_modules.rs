@@ -1,4 +1,4 @@
-use crate::parser::{CodeGenResult, Parser};
+use crate::codegen::parser::{CodeGenResult, Parser};
 
 // 16 ECMAScript Language: Scripts and Modules
 // https://tc39.es/ecma262/#sec-ecmascript-language-scripts-and-modules

@@ -1,19 +1,15 @@
-use glyn_execution_model::{
-    agent::JSAgent,
-    completion::CompletionRecord,
-    value::{
-        object::{
-            internal_slots::JSObjectSlotName,
-            property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr, JSObjectInternalMethods,
-        },
-        JSValue,
+use crate::runtime::agent::JSAgent;
+use crate::runtime::completion::CompletionRecord;
+use crate::value::object::internal_slots::JSObjectSlotName;
+use crate::value::object::property::JSObjectPropKey;
+use crate::value::object::{JSObjAddr, JSObjectInternalMethods};
+use crate::value::JSValue;
+use crate::{
+    abstract_ops::{
+        object_operations::{call, create_data_property, make_basic_object},
+        testing_comparison::same_value,
     },
-};
-
-use crate::abstract_ops::{
-    object_operations::{call, create_data_property, make_basic_object},
-    testing_comparison::same_value,
+    value::object::property::JSObjectPropDescriptor,
 };
 
 /// 10.1 Ordinary Object Internal Methods and Internal Slots

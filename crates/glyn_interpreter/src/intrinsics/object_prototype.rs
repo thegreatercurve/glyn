@@ -1,11 +1,10 @@
-use glyn_execution_model::{
-    agent::JSAgent,
+use crate::{
+    abstract_ops::{
+        immutable_prototype_objects, object::ORDINARY_OBJECT_INTERNAL_METHODS,
+        object_operations::make_basic_object,
+    },
+    runtime::agent::JSAgent,
     value::object::{internal_slots::JSObjectSlotName, JSObjAddr, JSObjectInternalMethods},
-};
-
-use crate::abstract_ops::{
-    immutable_prototype_objects, object::ORDINARY_OBJECT_INTERNAL_METHODS,
-    object_operations::make_basic_object,
 };
 
 pub(crate) static IMMUTABLE_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =

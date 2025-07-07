@@ -1,9 +1,11 @@
-use glyn_execution_model::value::string::JSString;
-use glyn_lexer::{BinOpPrecedence, Keyword, Token};
-
 use crate::{
-    bytecode::generator::LiteralType,
-    parser::{CodeGenError, CodeGenResult, Parser},
+    codegen::{
+        bytecode::generator::LiteralType,
+        error::{CodeGenError, CodeGenResult},
+        parser::Parser,
+    },
+    lexer::{BinOpPrecedence, Keyword, Token},
+    value::string::JSString,
 };
 
 enum Literal {

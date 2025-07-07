@@ -4,8 +4,7 @@ pub mod property;
 use safe_gc::{Collector, Gc, Trace};
 
 use crate::{
-    agent::JSAgent,
-    completion::CompletionRecord,
+    runtime::{agent::JSAgent, completion::CompletionRecord},
     value::{
         object::{
             internal_slots::JSObjectInternalSlots,

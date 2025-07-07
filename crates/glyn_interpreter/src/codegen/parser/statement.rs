@@ -1,6 +1,7 @@
-use glyn_lexer::Token;
-
-use crate::parser::{CodeGenResult, Parser};
+use crate::{
+    codegen::parser::{CodeGenResult, Parser},
+    lexer::Token,
+};
 
 // 14 ECMAScript Language: Statements and Declarations
 // https://tc39.es/ecma262/#prod-Statement

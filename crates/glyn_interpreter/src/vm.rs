@@ -1,7 +1,8 @@
-use glyn_execution_model::{agent::JSAgent, value::JSValue};
-
-use glyn_codegen::bytecode::generator::FinalProgram;
-use glyn_codegen::bytecode::instruction::Instruction;
+use crate::{
+    codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
+    runtime::agent::JSAgent,
+    value::JSValue,
+};
 
 #[derive(Debug)]
 pub(crate) enum VMError {}

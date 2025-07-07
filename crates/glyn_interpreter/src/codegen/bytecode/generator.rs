@@ -1,9 +1,10 @@
-use glyn_execution_model::value::{string::JSString, JSValue};
-use glyn_lexer::Token;
-
 use crate::{
-    bytecode::{emitter::Emitter, instruction::Instruction},
-    error::{CodeGenError, CodeGenResult},
+    codegen::{
+        bytecode::{emitter::Emitter, instruction::Instruction},
+        error::{CodeGenError, CodeGenResult},
+    },
+    lexer::Token,
+    value::{string::JSString, JSValue},
 };
 
 pub(crate) enum LiteralType {

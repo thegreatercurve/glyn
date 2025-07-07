@@ -1,13 +1,11 @@
 use std::cmp::min;
 
-use glyn_execution_model::{
-    agent::{JSAgent, WellKnownSymbol},
-    value::{
-        number::JSNumber,
-        object::{property::JSObjectPropKey, JSObjAddr},
-        string::JSString,
-        JSValue,
-    },
+use crate::runtime::agent::{JSAgent, WellKnownSymbol};
+use crate::value::{
+    number::JSNumber,
+    object::{property::JSObjectPropKey, JSObjAddr},
+    string::JSString,
+    JSValue,
 };
 
 enum PrimitivePreferredType {

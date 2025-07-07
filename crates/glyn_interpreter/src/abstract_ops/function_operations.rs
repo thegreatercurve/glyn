@@ -1,17 +1,15 @@
 use std::rc::Rc;
 
-use glyn_execution_model::{
-    agent::JSAgent,
-    realm::Realm,
-    value::{
-        object::{
-            internal_slots::{BehaviourFn, JSObjectSlotName},
-            property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr,
-        },
-        string::JSString,
-        JSValue,
+use crate::runtime::agent::JSAgent;
+use crate::runtime::realm::Realm;
+use crate::value::{
+    object::{
+        internal_slots::{BehaviourFn, JSObjectSlotName},
+        property::{JSObjectPropDescriptor, JSObjectPropKey},
+        JSObjAddr,
     },
+    string::JSString,
+    JSValue,
 };
 
 use crate::abstract_ops::object_operations::{define_property_or_throw, make_basic_object};

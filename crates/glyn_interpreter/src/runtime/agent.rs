@@ -2,12 +2,10 @@ use std::rc::Rc;
 
 use safe_gc::Heap;
 
-use crate::{
-    environment::Environment,
-    execution_context::ExecutionContext,
-    realm::Realm,
-    value::object::{JSObjAddr, JSObject},
-};
+use crate::runtime::environment::Environment;
+use crate::runtime::execution_context::ExecutionContext;
+use crate::runtime::realm::Realm;
+use crate::value::object::{JSObjAddr, JSObject};
 
 #[derive(Debug)]
 pub enum WellKnownSymbol {

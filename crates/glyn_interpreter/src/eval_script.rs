@@ -1,8 +1,10 @@
 use std::rc::Rc;
 
-use glyn_execution_model::{agent::JSAgent, script::ScriptRecord, value::JSValue};
-
-use crate::abstract_ops::realm::create_realm;
+use crate::{
+    abstract_ops::realm::create_realm,
+    runtime::{agent::JSAgent, script::ScriptRecord},
+    value::JSValue,
+};
 
 /// https://github.com/tc39/test262/blob/main/INTERPRETING.md
 pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, String> {
