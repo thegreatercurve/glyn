@@ -2,7 +2,7 @@ use glyn_execution_model::value::string::JSString;
 use glyn_lexer::{BinOpPrecedence, Keyword, Token};
 
 use crate::{
-    bytecode_generator::LiteralType,
+    bytecode::generator::LiteralType,
     parser::{CodeGenError, CodeGenResult, Parser},
 };
 

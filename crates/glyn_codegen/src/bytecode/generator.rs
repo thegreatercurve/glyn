@@ -1,7 +1,10 @@
 use glyn_execution_model::value::string::JSString;
 use glyn_lexer::Token;
 
-use crate::{error::CodeGenError, instruction::Instruction, CodeGenResult};
+use crate::{
+    bytecode::instruction::Instruction,
+    error::{CodeGenError, CodeGenResult},
+};
 
 pub(crate) enum LiteralType {
     Null,

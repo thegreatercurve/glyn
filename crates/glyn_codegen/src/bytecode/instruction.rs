@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::bytecode_generator::BytecodeProgram;
+use crate::bytecode::generator::BytecodeProgram;
 
 pub(crate) enum Instruction {
     // Binary operations
@@ -266,57 +266,5 @@ impl Display for Instruction {
             Instruction::InitializeReferencedBinding => f.pad("INITIALIZE_REFERENCED_BINDING"),
             Instruction::ResolveBinding => f.pad("RESOLVE_BINDING"),
         }
-    }
-}
-
-// #[cfg(feature = "debug")]
-pub(crate) struct Disassembler {
-    program: BytecodeProgram,
-}
-
-// #[cfg(feature = "debug")]
-impl Disassembler {
-    pub(crate) fn new(program: BytecodeProgram) -> Self {
-        Disassembler { program }
-    }
-
-    pub(crate) fn initial_bytecode(&self) -> String {
-        let mut result = String::new();
-
-        let mut ip = 0;
-
-        let instructions = &self.program.instructions;
-
-        while ip < instructions.len() {
-            let formatted_instruction = self.disassemble_instruction(&mut ip, instructions);
-
-            result.push_str(&formatted_instruction);
-
-            result.push('\n');
-        }
-
-        result
-    }
-
-    fn disassemble_instruction(&self, ip: &mut usize, program: &[u8]) -> String {
-        let instruction = Instruction::from(program[*ip]);
-
-        let mut result = String::new();
-
-        result.push_str(&format!("\t{:04} {:<15}", ip, instruction));
-
-        *ip += 1;
-
-        let n_operands = instruction.n_operands();
-
-        for _ in 0..n_operands {
-            let operand = program[*ip];
-
-            result.push_str(&format!("{:<5}", operand));
-
-            *ip += 1;
-        }
-
-        result
     }
 }

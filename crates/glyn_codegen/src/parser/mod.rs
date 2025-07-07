@@ -7,9 +7,8 @@ use std::iter::Peekable;
 use glyn_lexer::{Keyword, Lexer, Token};
 
 use crate::{
-    bytecode_generator::{BytecodeGenerator, BytecodeProgram},
-    error::CodeGenError,
-    CodeGenResult,
+    bytecode::generator::{BytecodeGenerator, BytecodeProgram},
+    error::{CodeGenError, CodeGenResult},
 };
 
 pub(crate) struct Parser<'a> {
