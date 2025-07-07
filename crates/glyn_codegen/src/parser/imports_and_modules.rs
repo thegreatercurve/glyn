@@ -17,16 +17,4 @@ impl<'a> Parser<'a> {
 
         Ok(())
     }
-
-    // 16.2 Modules
-    // https://tc39.es/ecma262/#prod-Module
-    pub(crate) fn js_parse_module(&mut self) -> CodeGenResult {
-        // Module code is always strict mode code.
-        // https://tc39.es/ecma262/#sec-strict-mode-code
-        // self.context.strict_mode = true;
-
-        // let program_body = self.parse_module_body()?;
-
-        Ok(())
-    }
 }

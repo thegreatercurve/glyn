@@ -74,15 +74,15 @@ impl<'a> Parser<'a> {
     // https://tc39.es/ecma262/#prod-PrimaryExpression
     fn js_parse_primary_expression(&mut self) -> CodeGenResult {
         match &self.current_token {
-            token if token.is_identifier_reference() => {
-                let _ident = self.js_parse_identifier_reference()?;
+            // token if token.is_identifier_reference() => {
+            //     let _ident = self.js_parse_identifier_reference()?;
 
-                self.bytecode
-                    .compile_get_let_variable()
-                    .map_err(CodeGenError::from)?;
+            //     self.bytecode
+            //         .compile_get_let_variable()
+            //         .map_err(CodeGenError::from)?;
 
-                Ok(())
-            }
+            //     Ok(())
+            // }
             _ => self.js_parse_literal(),
         }
     }
