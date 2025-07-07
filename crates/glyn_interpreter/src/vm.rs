@@ -4,11 +4,6 @@ use crate::{
     value::JSValue,
 };
 
-#[derive(Debug)]
-pub(crate) enum VMError {}
-
-type VMResult = Result<(), VMError>;
-
 pub(crate) struct VM<'a> {
     agent: &'a mut JSAgent,
     stack: Vec<JSValue>,
@@ -30,17 +25,17 @@ impl<'a> VM<'a> {
         }
     }
 
-    pub(crate) fn run(&mut self) -> Result<(), VMError> {
+    pub(crate) fn evaluate_script(&mut self) -> Option<JSValue> {
         self.running = true;
 
         while self.running && self.ip < self.program.instructions.len() {
-            self.instruction()?;
+            self.instruction();
         }
 
-        Ok(())
+        self.pop()
     }
 
-    fn instruction(&mut self) -> VMResult {
+    fn instruction(&mut self) {
         let instruction = self.program.instructions[self.ip].into();
 
         self.ip += 1;
@@ -49,8 +44,6 @@ impl<'a> VM<'a> {
             Instruction::Halt => self.running = false,
             _ => {}
         };
-
-        Ok(())
     }
 
     fn read_byte(&mut self) -> u8 {
@@ -63,6 +56,10 @@ impl<'a> VM<'a> {
 
     fn push(&mut self, value: JSValue) {
         self.stack.push(value);
+    }
+
+    fn pop(&mut self) -> Option<JSValue> {
+        self.stack.pop()
     }
 
     fn execute_const(&mut self) {

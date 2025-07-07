@@ -13,10 +13,10 @@ pub(crate) enum LiteralType {
     Int64(f64),
 }
 
-#[derive(Debug, Default)]
-pub(crate)struct FinalProgram {
-    pub(crate)instructions: Vec<u8>,
-    pub(crate)constants: Vec<JSValue>,
+#[derive(Clone, Debug, Default)]
+pub(crate) struct FinalProgram {
+    pub(crate) instructions: Vec<u8>,
+    pub(crate) constants: Vec<JSValue>,
 }
 
 #[derive(Debug, Default)]

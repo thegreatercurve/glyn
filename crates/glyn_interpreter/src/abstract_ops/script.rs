@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
 use crate::{
+    codegen::{bytecode::generator::FinalProgram, parser::Parser},
+    lexer::Lexer,
     runtime::{
         agent::JSAgent,
         completion::CompletionRecord,
@@ -9,23 +11,38 @@ use crate::{
         script::ScriptRecord,
     },
     value::JSValue,
+    vm::VM,
 };
+
+/// 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
+/// https://262.ecma-international.org/15.0/#sec-parsetext
+pub(crate) fn parse_text(source_text: &str) -> FinalProgram {
+    // 1. Attempt to parse sourceText using goalSymbol as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
+    let lexer = Lexer::new(source_text);
+    let parser = Parser::new(lexer);
+
+    // 2. If the parse succeeded and no early errors were found, return the Parse Node (an instance of goalSymbol) at the root of the parse tree resulting from the parse.
+    parser.program()
+
+    // 3. Otherwise, return a List of one or more SyntaxError objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.
+}
 
 /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
 /// https://262.ecma-international.org/15.0/#sec-parse-script
 pub(crate) fn parse_script(
     _agent: &mut JSAgent,
-    _source_text: &str,
+    source_text: &str,
     realm: Rc<Realm>,
     host_defined: Option<()>,
 ) -> ScriptRecord {
     // 1. Let script be ParseText(sourceText, Script)
     // 2. If script is a List of errors, return script.
-    // TODO Implement parse text and error handling.
+    let script = parse_text(source_text);
 
     // 3. Return Script Record { [[Realm]]: realm, [[ECMAScriptCode]]: script, [[LoadedModules]]: « », [[HostDefined]]: hostDefined }.
     ScriptRecord {
         realm,
+        ecmascript_code: script,
         host_defined,
     }
 }
@@ -65,17 +82,23 @@ pub(crate) fn script_evaluation(
     agent.push_execution_context(script_context);
 
     // 11. Let script be scriptRecord.[[ECMAScriptCode]].
+    let script = script_record.ecmascript_code.clone();
+
     // 12. Let result be Completion(GlobalDeclarationInstantiation(script, globalEnv)).
     // 13. If result is a normal completion, then
     // a. Set result to Completion(Evaluation of script).
+    let opt_result = VM::new(agent, script).evaluate_script();
+
     // b. If result is a normal completion and result.[[Value]] is empty, then
-    // i. Set result to NormalCompletion(undefined).
-    let result = Ok(JSValue::Undefined);
+    let Some(result) = opt_result else {
+        // i. Set result to NormalCompletion(undefined).
+        return Ok(JSValue::Undefined);
+    };
 
     // 14. Suspend scriptContext and remove it from the execution context stack.
     // 15. Assert: The execution context stack is not empty.
     // 16. Resume the context that is now on the top of the execution context stack as the running execution context.
 
     // 17. Return ? result.
-    result
+    Ok(result)
 }
