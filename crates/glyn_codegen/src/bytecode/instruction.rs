@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 
-pub(crate) enum Instruction {
+#[repr(u8)]
+pub enum Instruction {
     // Binary operations
     Add,
     Subtract,
@@ -61,6 +62,13 @@ pub(crate) enum Instruction {
     // Utility operations
     Print,
     Halt,
+}
+
+impl From<u8> for Instruction {
+    fn from(value: u8) -> Self {
+        // Safety: The u8 values should be within the range of the Instruction enum.
+        unsafe { std::mem::transmute(value) }
+    }
 }
 
 impl Display for Instruction {

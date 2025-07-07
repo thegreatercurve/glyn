@@ -13,9 +13,9 @@ pub(crate) enum LiteralType {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct FinalProgram {
-    pub(crate) instructions: Vec<u8>,
-    pub(crate) constants: Vec<JSValue>,
+pub struct FinalProgram {
+    pub instructions: Vec<u8>,
+    pub constants: Vec<JSValue>,
 }
 
 #[derive(Debug, Default)]

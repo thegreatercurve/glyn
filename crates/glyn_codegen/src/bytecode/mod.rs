@@ -1,3 +1,3 @@
-pub(crate) mod emitter;
-pub(crate) mod generator;
-pub(crate) mod instruction;
+pub mod emitter;
+pub mod generator;
+pub mod instruction;
