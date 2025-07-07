@@ -1,6 +1,6 @@
 use crate::{
     abstract_ops::{
-        realm::create_realm,
+        realm::{create_realm, initialize_host_defined_realm},
         script::{parse_script, script_evaluation},
     },
     runtime::agent::JSAgent,
@@ -13,6 +13,7 @@ pub fn eval_script(agent: &mut JSAgent, script_str: &str) -> Result<JSValue, Str
     let host_defined = None;
 
     // 2. Let realm be the current Realm Record.
+    let _ = initialize_host_defined_realm(agent);
     let realm = create_realm(agent);
 
     // 3. Let s be ParseScript(sourceText, realm, hostDefined).

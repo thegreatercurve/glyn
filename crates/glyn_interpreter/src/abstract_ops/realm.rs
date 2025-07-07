@@ -16,8 +16,7 @@ use crate::{
 pub(crate) fn create_realm(agent: &mut JSAgent) -> RealmAddr {
     // 1. Let realmRec be a new Realm Record.
     let realm_rec = Realm {
-        // 2. Perform CreateIntrinsics(realmRec).
-        intrinsics: create_intrinsics(agent),
+        intrinsics: Intrinsics::default(),
 
         // 4. Set realmRec.[[GlobalObject]] to undefined.
         global_object: None,
@@ -26,13 +25,18 @@ pub(crate) fn create_realm(agent: &mut JSAgent) -> RealmAddr {
         global_env: None,
     };
 
+    let realm_addr = agent.allocate_realm(realm_rec);
+
+    // 2. Perform CreateIntrinsics(realmRec).
+    create_intrinsics(agent, realm_addr);
+
     // 7. Return realmRec.
-    agent.allocate_realm(realm_rec)
+    realm_addr
 }
 
 /// 9.3.2 CreateIntrinsics ( realmRec )
 /// https://262.ecma-international.org/15.0/#sec-createintrinsics
-pub(crate) fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
+pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> Intrinsics {
     // 1. Set realmRec.[[Intrinsics]] to a new Record.
     let mut intrinsics = Intrinsics::default();
 
@@ -40,7 +44,7 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
     intrinsics.object_prototype = Some(JSObjectPrototype::create(agent));
 
     // 2. Set fields of realmRec.[[Intrinsics]] with the values listed in Table 6. The field names are the names listed in column one of the table. The value of each field is a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 19 through 28. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(steps, length, name, slots, realmRec, prototype) where steps is the definition of that function provided by this specification, name is the initial value of the function's "name" property, length is the initial value of the function's "length" property, slots is a list of the names, if any, of the function's specified internal slots, and prototype is the specified value of the function's [[Prototype]] internal slot. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created.
-    intrinsics.function_prototype = Some(FunctionPrototype::create(agent));
+    intrinsics.function_prototype = Some(FunctionPrototype::create(agent, realm_addr));
 
     // 3. Perform AddRestrictedFunctionProperties(realmRec.[[Intrinsics]].[[%Function.prototype%]], realmRec).
     // 4. Return unused.
@@ -52,14 +56,14 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
 /// https://262.ecma-international.org/15.0/#sec-setrealmglobalobject
 pub(crate) fn set_realm_global_object(
     agent: &mut JSAgent,
-    realm_record: &mut Realm,
+    realm_record: RealmAddr,
     opt_global_obj_addr: Option<JSObjAddr>,
     this_value: Option<JSObjAddr>,
 ) {
     // 1. If globalObj is undefined, then
     let global_obj_addr = opt_global_obj_addr.unwrap_or_else(|| {
         // a. Let intrinsics be realmRec.[[Intrinsics]].
-        let intrinsics = &realm_record.intrinsics;
+        let intrinsics = &agent.realm(realm_record).intrinsics;
 
         // b. Set globalObj to OrdinaryObjectCreate(intrinsics.[[%Object.prototype%]]).
         ordinary_object_create(agent, intrinsics.object_prototype, None)
@@ -70,23 +74,20 @@ pub(crate) fn set_realm_global_object(
     let this_value = this_value.unwrap_or(global_obj_addr);
 
     // 4. Set realmRec.[[GlobalObject]] to globalObj.
-    realm_record.global_object = Some(global_obj_addr);
+    agent.realm_mut(realm_record).global_object = Some(global_obj_addr);
 
     // 5. Let newGlobalEnv be NewGlobalEnvironment(globalObj, thisValue).
     let new_global_env = new_global_environment(agent, global_obj_addr, this_value);
 
     // 6. Set realmRec.[[GlobalEnv]] to newGlobalEnv.
-    realm_record.global_env = Some(new_global_env);
+    agent.realm_mut(realm_record).global_env = Some(new_global_env);
 
     // 7. Return unused.
 }
 
 /// 9.6 InitializeHostDefinedRealm ( )
 /// https://262.ecma-international.org/15.0/#sec-initializehostdefinedrealm
-pub(crate) fn initialize_host_defined_realm(
-    agent: &mut JSAgent,
-    realm_record: &mut Realm,
-) -> CompletionRecord {
+pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRecord {
     // 1. Let realm be CreateRealm().
     let realm = create_realm(agent);
 
@@ -116,13 +117,12 @@ pub(crate) fn initialize_host_defined_realm(
     let this_value = None;
 
     // 9. Perform SetRealmGlobalObject(realm, global, thisValue).
-    set_realm_global_object(agent, realm_record, global, this_value);
+    set_realm_global_object(agent, realm, global, this_value);
 
     // 10. Let globalObj be ? SetDefaultGlobalBindings(realm).
-    let global_obj = set_default_global_bindings(agent, realm_record)?;
+    let global_obj = set_default_global_bindings(agent, &realm)?;
 
     // 11. Create any host-defined global object properties on globalObj.
-    todo!();
 
     // 12. Return unused.
     Ok(())
@@ -130,6 +130,7 @@ pub(crate) fn initialize_host_defined_realm(
 
 /// 9.3.4 SetDefaultGlobalBindings ( realm )
 /// https://262.ecma-international.org/15.0/#sec-setdefaultglobalbindings
-fn set_default_global_bindings(agent: &mut JSAgent, realm: &Realm) -> CompletionRecord<JSObjAddr> {
-    todo!()
+fn set_default_global_bindings(agent: &mut JSAgent, realm: &RealmAddr) -> CompletionRecord<()> {
+    // TODO: Implement
+    Ok(())
 }

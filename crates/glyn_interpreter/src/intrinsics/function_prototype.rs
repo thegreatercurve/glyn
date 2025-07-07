@@ -1,6 +1,6 @@
 use crate::{
     abstract_ops::function_operations::create_builtin_function,
-    runtime::agent::JSAgent,
+    runtime::{agent::JSAgent, realm::RealmAddr},
     value::{
         object::{property::JSObjectPropKey, JSObjAddr},
         JSValue,
@@ -13,7 +13,7 @@ use crate::{
 pub(crate) struct FunctionPrototype;
 
 impl FunctionPrototype {
-    pub(crate) fn create(agent: &mut JSAgent) -> JSObjAddr {
+    pub(crate) fn create(agent: &mut JSAgent, realm_addr: RealmAddr) -> JSObjAddr {
         // accepts any arguments and returns undefined when invoked.
         let behaviour_fn = |_agent: &mut JSAgent, _args: Vec<JSValue>| JSValue::Undefined;
 
@@ -27,12 +27,9 @@ impl FunctionPrototype {
             JSObjectPropKey::String("".into()),
             // does not have a [[Construct]] internal method; it cannot be used as a constructor with the new operator.
             vec![],
-            Some(agent.current_realm()),
+            Some(realm_addr),
             // has a [[Prototype]] internal slot whose value is %Object.prototype%.
-            agent
-                .realm(agent.current_realm())
-                .intrinsics
-                .object_prototype,
+            agent.realm(realm_addr).intrinsics.object_prototype,
             None,
         )
     }
