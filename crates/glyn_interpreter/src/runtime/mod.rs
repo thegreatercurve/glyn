@@ -1,7 +1,7 @@
-pub mod agent;
-pub mod completion;
-pub mod environment;
-pub mod execution_context;
-pub mod intrinsics;
-pub mod realm;
-pub mod script;
+pub(crate)mod agent;
+pub(crate)mod completion;
+pub(crate)mod environment;
+pub(crate)mod execution_context;
+pub(crate)mod intrinsics;
+pub(crate)mod realm;
+pub(crate)mod script;

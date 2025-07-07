@@ -13,18 +13,18 @@ use crate::{
 /// 16.1.4 Script Records
 /// https://262.ecma-international.org/15.0/#script-record
 #[derive(Debug)]
-pub struct ScriptRecord {
+pub(crate)struct ScriptRecord {
     /// [[Realm]]
-    pub realm: Rc<Realm>,
+    pub(crate)realm: Rc<Realm>,
 
     /// [[HostDefined]]
-    pub host_defined: Option<()>,
+    pub(crate)host_defined: Option<()>,
 }
 
 impl ScriptRecord {
     /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
     /// https://262.ecma-international.org/15.0/#sec-parse-script
-    pub fn parse_script(
+    pub(crate)fn parse_script(
         _agent: &mut JSAgent,
         _source_text: &str,
         realm: Rc<Realm>,
@@ -43,7 +43,7 @@ impl ScriptRecord {
 
     /// 16.1.6 ScriptEvaluation ( scriptRecord )
     /// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
-    pub fn script_evaluation(
+    pub(crate)fn script_evaluation(
         agent: &mut JSAgent,
         script_record: Rc<Self>,
     ) -> CompletionRecord<JSValue> {

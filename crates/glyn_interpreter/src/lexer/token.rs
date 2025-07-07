@@ -3,7 +3,7 @@ use std::fmt::{Display, Error, Formatter};
 // 12.7.2 Keywords and Reserved Words
 // https://tc39.es/ecma262/#sec-keywords-and-reserved-words
 #[derive(Clone, Debug, PartialEq)]
-pub enum Keyword {
+pub(crate)enum Keyword {
     Await,
     Break,
     Case,
@@ -192,7 +192,7 @@ impl TryFrom<&str> for Keyword {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token<'a> {
+pub(crate)enum Token<'a> {
     // Keywords or Identifiers
     Keyword(Keyword),
     Ident(&'a str),
@@ -313,7 +313,7 @@ impl<'a> Token<'a> {
 
     // 13.1 Identifiers
     // https://tc39.es/ecma262/#prod-IdentifierReference
-    pub fn is_identifier_reference(&self) -> bool {
+    pub(crate)fn is_identifier_reference(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Yield | Keyword::Await)) || self.is_identifier()
     }
 
@@ -366,7 +366,7 @@ impl<'a> Token<'a> {
 
     // 13.1 Identifiers
     // https://tc39.es/ecma262/#prod-BindingIdentifier
-    pub fn is_binding_identifier(&self) -> bool {
+    pub(crate)fn is_binding_identifier(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Yield | Keyword::Await)) || self.is_identifier()
     }
 
@@ -392,7 +392,7 @@ impl<'a> Token<'a> {
 
     //  13.5 Unary Operators
     // https://tc39.es/ecma262/#prod-UnaryExpression
-    pub fn is_unary_operator(&self) -> bool {
+    pub(crate)fn is_unary_operator(&self) -> bool {
         matches!(
             self,
             Token::Keyword(Keyword::Delete | Keyword::Void | Keyword::Typeof)
@@ -429,7 +429,7 @@ impl<'a> Token<'a> {
     // 13.13 Binary Logical Operators
     // https://tc39.es/ecma262/#prod-LogicalANDExpression
     // https://tc39.es/ecma262/#prod-LogicalORExpression
-    pub fn is_binary_operator(&self) -> bool {
+    pub(crate)fn is_binary_operator(&self) -> bool {
         matches!(self, |Token::BitwiseOr| Token::BitwiseXor
             | Token::BitwiseAnd
             | Token::Equal
@@ -463,7 +463,7 @@ impl<'a> Token<'a> {
 
     // 13.15 Assignment Operators
     // https://tc39.es/ecma262/#prod-AssignmentOperator
-    pub fn is_assignment_operator(&self) -> bool {
+    pub(crate)fn is_assignment_operator(&self) -> bool {
         matches!(self, |Token::MultiplyAssign| Token::DivideAssign
             | Token::ModuloAssign
             | Token::PlusAssign
@@ -512,7 +512,7 @@ impl<'a> Token<'a> {
 
     // 14.3.1 Let and Const Declarations
     // https://tc39.es/ecma262/#prod-LexicalBinding
-    pub fn is_lexical_binding_start(&self) -> bool {
+    pub(crate)fn is_lexical_binding_start(&self) -> bool {
         self.is_binding_identifier() || self.is_binding_pattern_start()
     }
 
@@ -628,7 +628,7 @@ impl Display for Token<'_> {
 
 /// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence#table
 #[derive(Debug, PartialEq, PartialOrd)]
-pub enum BinOpPrecedence {
+pub(crate)enum BinOpPrecedence {
     Lowest,
     Comma,
     Spread,
@@ -657,7 +657,7 @@ pub enum BinOpPrecedence {
 }
 
 impl BinOpPrecedence {
-    pub fn is_right_associative(&self) -> bool {
+    pub(crate)fn is_right_associative(&self) -> bool {
         matches!(
             self,
             BinOpPrecedence::Exponentiation | BinOpPrecedence::Assignment

@@ -1,2 +1,2 @@
 #[derive(Clone, Debug)]
-pub struct Environment;
+pub(crate)struct Environment;

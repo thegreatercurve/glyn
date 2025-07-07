@@ -1,5 +1,5 @@
-pub mod internal_slots;
-pub mod property;
+pub(crate)mod internal_slots;
+pub(crate)mod property;
 
 use safe_gc::{Collector, Gc, Trace};
 
@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-pub type JSObjAddr = Gc<JSObject>;
+pub(crate)type JSObjAddr = Gc<JSObject>;
 
 type InternalMethodsCallFn = Option<
     fn(
@@ -31,29 +31,29 @@ type InternalMethodsConstructFn =
 /// Essential Internal Methods
 /// https://262.ecma-international.org/15.0/#table-essential-internal-methods
 #[derive(Debug, PartialEq)]
-pub struct JSObjectInternalMethods {
+pub(crate)struct JSObjectInternalMethods {
     /// [[GetPrototypeOf]]
-    pub get_prototype_of: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Option<JSObjAddr>,
+    pub(crate)get_prototype_of: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Option<JSObjAddr>,
 
     /// [[SetPrototypeOf]]
-    pub set_prototype_of:
+    pub(crate)set_prototype_of:
         fn(agent: &mut JSAgent, obj_addr: JSObjAddr, prototype: Option<JSObjAddr>) -> bool,
 
     /// [[IsExtensible]]
-    pub is_extensible: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> bool,
+    pub(crate)is_extensible: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> bool,
 
     /// [[PreventExtensions]]
-    pub prevent_extensions: fn(agent: &mut JSAgent, object: JSObjAddr) -> bool,
+    pub(crate)prevent_extensions: fn(agent: &mut JSAgent, object: JSObjAddr) -> bool,
 
     /// [[GetOwnProperty]]
-    pub get_own_property: fn(
+    pub(crate)get_own_property: fn(
         agent: &JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
     ) -> Option<JSObjectPropDescriptor>,
 
     /// [[DefineOwnProperty]]
-    pub define_own_property: fn(
+    pub(crate)define_own_property: fn(
         agent: &mut JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
@@ -61,10 +61,10 @@ pub struct JSObjectInternalMethods {
     ) -> CompletionRecord<bool>,
 
     /// [[HasProperty]]
-    pub has_property: fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
+    pub(crate)has_property: fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
 
     /// [[Get]]
-    pub get: fn(
+    pub(crate)get: fn(
         agent: &JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
@@ -72,7 +72,7 @@ pub struct JSObjectInternalMethods {
     ) -> CompletionRecord<JSValue>,
 
     /// [[Set]]
-    pub set: fn(
+    pub(crate)set: fn(
         agent: &mut JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
@@ -81,28 +81,28 @@ pub struct JSObjectInternalMethods {
     ) -> CompletionRecord<bool>,
 
     /// [[Delete]]
-    pub delete: fn(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
+    pub(crate)delete: fn(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
 
     /// [[OwnPropertyKeys]]
-    pub own_property_keys: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,
+    pub(crate)own_property_keys: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,
 
     /// [[Call]]
-    pub call: InternalMethodsCallFn,
+    pub(crate)call: InternalMethodsCallFn,
 
     /// [[Construct]]
-    pub construct: InternalMethodsConstructFn,
+    pub(crate)construct: InternalMethodsConstructFn,
 }
 
-pub struct PropertyIndex(usize);
+pub(crate)struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/15.0/#sec-object-type
 #[derive(Debug)]
-pub struct JSObject {
-    pub methods: &'static JSObjectInternalMethods,
-    pub slots: JSObjectInternalSlots,
-    pub keys: Vec<JSObjectPropKey>,
-    pub values: Vec<JSObjectPropDescriptor>,
+pub(crate)struct JSObject {
+    pub(crate)methods: &'static JSObjectInternalMethods,
+    pub(crate)slots: JSObjectInternalSlots,
+    pub(crate)keys: Vec<JSObjectPropKey>,
+    pub(crate)values: Vec<JSObjectPropDescriptor>,
 }
 
 impl Trace for JSObject {
@@ -115,29 +115,29 @@ impl Trace for JSObject {
 
 impl JSObject {
     /// All ordinary objects have an internal slot called [[Prototype]].
-    pub fn prototype(&self) -> Option<JSObjAddr> {
+    pub(crate)fn prototype(&self) -> Option<JSObjAddr> {
         self.slots.prototype()
     }
 
     /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
-    pub fn extensible(&self) -> bool {
+    pub(crate)fn extensible(&self) -> bool {
         self.slots.extensible()
     }
 
     // Utility methods for getting and setting properties.
-    pub fn keys(&self) -> &[JSObjectPropKey] {
+    pub(crate)fn keys(&self) -> &[JSObjectPropKey] {
         &self.keys
     }
 
-    pub fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
+    pub(crate)fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
         self.values.get(index.0)
     }
 
-    pub fn has_property(&self, key: &JSObjectPropKey) -> bool {
+    pub(crate)fn has_property(&self, key: &JSObjectPropKey) -> bool {
         self.keys.iter().any(|k| k == key)
     }
 
-    pub fn set_property(
+    pub(crate)fn set_property(
         &mut self,
         key: &JSObjectPropKey,
         value: JSObjectPropDescriptor,
@@ -148,14 +148,14 @@ impl JSObject {
         PropertyIndex(self.keys.len() - 1)
     }
 
-    pub fn delete_property(&mut self, index: PropertyIndex) -> bool {
+    pub(crate)fn delete_property(&mut self, index: PropertyIndex) -> bool {
         self.keys.remove(index.0);
         self.values.remove(index.0);
 
         true
     }
 
-    pub fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
+    pub(crate)fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
         self.keys.iter().position(|k| k == key).map(PropertyIndex)
     }
 }

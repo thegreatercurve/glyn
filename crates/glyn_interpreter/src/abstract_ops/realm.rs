@@ -13,7 +13,7 @@ use crate::{
 
 /// 9.3.1 CreateRealm ( )
 /// https://262.ecma-international.org/15.0/#sec-createrealm
-pub fn create_realm(agent: &mut JSAgent) -> Realm {
+pub(crate)fn create_realm(agent: &mut JSAgent) -> Realm {
     // 1. Let realmRec be a new Realm Record.
     let realm_rec = Realm {
         // 2. Perform CreateIntrinsics(realmRec).
@@ -32,7 +32,7 @@ pub fn create_realm(agent: &mut JSAgent) -> Realm {
 
 /// 9.3.2 CreateIntrinsics ( realmRec )
 /// https://262.ecma-international.org/15.0/#sec-createintrinsics
-pub fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
+pub(crate)fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
     // 1. Set realmRec.[[Intrinsics]] to a new Record.
     let mut intrinsics = Intrinsics::default();
 
@@ -50,7 +50,7 @@ pub fn create_intrinsics(agent: &mut JSAgent) -> Intrinsics {
 
 /// 9.3.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
 /// https://262.ecma-international.org/15.0/#sec-setrealmglobalobject
-pub fn set_realm_global_object(
+pub(crate)fn set_realm_global_object(
     agent: &mut JSAgent,
     realm_record: &mut Realm,
     opt_global_obj_addr: Option<JSObjAddr>,

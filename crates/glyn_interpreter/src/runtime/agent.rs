@@ -8,7 +8,7 @@ use crate::runtime::realm::Realm;
 use crate::value::object::{JSObjAddr, JSObject};
 
 #[derive(Debug)]
-pub enum WellKnownSymbol {
+pub(crate) enum WellKnownSymbol {
     AsyncIterator,
     HasInstance,
     IsConcatSpreadable,
@@ -26,13 +26,13 @@ pub enum WellKnownSymbol {
 
 #[derive(Default)]
 pub struct JSAgent {
-    pub(crate) execution_contexts: Vec<ExecutionContext>,
-    pub(crate) environment_records: Vec<Environment>,
-    pub object_heap: Heap,
+    execution_contexts: Vec<ExecutionContext>,
+    environment_records: Vec<Environment>,
+    object_heap: Heap,
 }
 
 impl JSAgent {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             execution_contexts: vec![],
             environment_records: vec![],
@@ -49,11 +49,11 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub fn current_realm(&self) -> Rc<Realm> {
+    pub(crate) fn current_realm(&self) -> Rc<Realm> {
         self.running_execution_context().realm.clone()
     }
 
-    pub fn push_execution_context(&mut self, context: ExecutionContext) {
+    pub(crate) fn push_execution_context(&mut self, context: ExecutionContext) {
         self.execution_contexts.push(context);
     }
 
@@ -63,35 +63,35 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub fn type_error(&self, message: &str) -> ! {
+    pub(crate) fn type_error(&self, message: &str) -> ! {
         panic!("TypeError: {message:?}");
     }
 
-    pub fn reference_error(&self, message: &str) -> ! {
+    pub(crate) fn reference_error(&self, message: &str) -> ! {
         panic!("ReferenceError: {message:?}");
     }
 
-    pub fn syntax_error(&self, message: &str) -> ! {
+    pub(crate) fn syntax_error(&self, message: &str) -> ! {
         panic!("SyntaxError: {message:?}");
     }
 
-    pub fn range_error(&self, message: &str) -> ! {
+    pub(crate) fn range_error(&self, message: &str) -> ! {
         panic!("RangeError: {message:?}");
     }
 
-    pub fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
+    pub(crate) fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
         self.object_heap.alloc(object).into()
     }
 
-    pub fn object(&self, obj_addr: JSObjAddr) -> &JSObject {
+    pub(crate) fn object(&self, obj_addr: JSObjAddr) -> &JSObject {
         self.object_heap.get(obj_addr)
     }
 
-    pub fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
+    pub(crate) fn object_mut(&mut self, obj_addr: JSObjAddr) -> &mut JSObject {
         self.object_heap.get_mut(obj_addr)
     }
 
-    pub fn well_known_symbol(
+    pub(crate) fn well_known_symbol(
         &self,
         obj_addr: JSObjAddr,
         symbol: WellKnownSymbol,

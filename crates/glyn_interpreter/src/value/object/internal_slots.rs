@@ -6,10 +6,10 @@ use crate::{
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 
-pub type BehaviourFn = fn(&mut JSAgent, Vec<JSValue>) -> JSValue;
+pub(crate)type BehaviourFn = fn(&mut JSAgent, Vec<JSValue>) -> JSValue;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
-pub enum JSObjectSlotName {
+pub(crate)enum JSObjectSlotName {
     BehaviourFn,
     Extensible,
     InitialName,
@@ -18,7 +18,7 @@ pub enum JSObjectSlotName {
 }
 
 #[derive(Debug)]
-pub enum JSObjectSlotValue {
+pub(crate)enum JSObjectSlotValue {
     BehaviourFn(BehaviourFn),
     Realm(Rc<Realm>),
     Value(JSValue),
@@ -34,7 +34,7 @@ impl From<JSValue> for JSObjectSlotValue {
 /// 6.1.7.2 Object Internal Methods and Internal Slots
 /// https://262.ecma-international.org/15.0/#sec-object-internal-methods-and-internal-slots
 #[derive(Debug, Default)]
-pub struct JSObjectInternalSlots(HashMap<JSObjectSlotName, JSObjectSlotValue>);
+pub(crate)struct JSObjectInternalSlots(HashMap<JSObjectSlotName, JSObjectSlotValue>);
 
 impl JSObjectInternalSlots {
     fn new() -> Self {
@@ -49,66 +49,66 @@ impl JSObjectInternalSlots {
         self.0.get(name)
     }
 
-    pub fn prototype(&self) -> Option<JSObjAddr> {
+    pub(crate)fn prototype(&self) -> Option<JSObjAddr> {
         match self.get(&JSObjectSlotName::Prototype) {
             Some(JSObjectSlotValue::Value(JSValue::Object(addr))) => Some(*addr),
             _ => None,
         }
     }
 
-    pub fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
+    pub(crate)fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
         self.0.insert(
             JSObjectSlotName::Prototype,
             prototype.map_or(JSObjectSlotValue::NotSet, |p| JSValue::Object(p).into()),
         );
     }
 
-    pub fn extensible(&self) -> bool {
+    pub(crate)fn extensible(&self) -> bool {
         match self.get(&JSObjectSlotName::Extensible) {
             Some(JSObjectSlotValue::Value(JSValue::Bool(value))) => *value,
             _ => true,
         }
     }
 
-    pub fn set_extensible(&mut self, extensible: bool) {
+    pub(crate)fn set_extensible(&mut self, extensible: bool) {
         self.0.insert(
             JSObjectSlotName::Extensible,
             JSValue::Bool(extensible).into(),
         );
     }
 
-    pub fn realm(self) -> Option<Rc<Realm>> {
+    pub(crate)fn realm(self) -> Option<Rc<Realm>> {
         match self.get(&JSObjectSlotName::Realm) {
             Some(JSObjectSlotValue::Realm(realm)) => Some(realm.clone()),
             _ => None,
         }
     }
 
-    pub fn set_realm(&mut self, realm: Rc<Realm>) {
+    pub(crate)fn set_realm(&mut self, realm: Rc<Realm>) {
         self.0
             .insert(JSObjectSlotName::Realm, JSObjectSlotValue::Realm(realm));
     }
 
-    pub fn initial_name(&self) -> Option<JSString> {
+    pub(crate)fn initial_name(&self) -> Option<JSString> {
         match self.get(&JSObjectSlotName::InitialName) {
             Some(JSObjectSlotValue::Value(JSValue::String(name))) => Some(name.clone()),
             _ => None,
         }
     }
 
-    pub fn set_initial_name(&mut self, name: JSString) {
+    pub(crate)fn set_initial_name(&mut self, name: JSString) {
         self.0
             .insert(JSObjectSlotName::InitialName, JSValue::String(name).into());
     }
 
-    pub fn behaviour_fn(&self) -> Option<BehaviourFn> {
+    pub(crate)fn behaviour_fn(&self) -> Option<BehaviourFn> {
         match self.get(&JSObjectSlotName::BehaviourFn) {
             Some(JSObjectSlotValue::BehaviourFn(func)) => Some(*func),
             _ => None,
         }
     }
 
-    pub fn set_behaviour_fn(&mut self, func: BehaviourFn) {
+    pub(crate)fn set_behaviour_fn(&mut self, func: BehaviourFn) {
         self.0.insert(
             JSObjectSlotName::BehaviourFn,
             JSObjectSlotValue::BehaviourFn(func),

@@ -1,3 +1,3 @@
-pub mod bytecode;
-pub mod error;
-pub mod parser;
+pub(crate)mod bytecode;
+pub(crate)mod error;
+pub(crate)mod parser;
