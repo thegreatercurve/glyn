@@ -4,10 +4,10 @@ mod statement;
 
 use std::iter::Peekable;
 
-use glyn_lexer::{Keyword, Lexer, Token};
+use glyn_lexer::{Lexer, Token};
 
 use crate::{
-    bytecode::generator::{BytecodeGenerator, BytecodeProgram},
+    bytecode::generator::{BytecodeGenerator, FinalProgram},
     error::{CodeGenError, CodeGenResult},
 };
 
@@ -44,12 +44,6 @@ impl<'a> Parser<'a> {
         self.lexer.peek()
     }
 
-    pub(crate) fn print_statement(&mut self) -> CodeGenResult {
-        self.bytecode.compile_print();
-
-        Ok(())
-    }
-
     fn optional(&mut self, expected_token: Token) {
         if self.current_token == expected_token {
             self.advance();
@@ -79,27 +73,11 @@ impl<'a> Parser<'a> {
     fn is_eof(&self) -> bool {
         self.current_token == Token::Eof
     }
-
-    fn js_parse_print_statement(&mut self) -> CodeGenResult {
-        self.expect(Token::Keyword(Keyword::Print))?;
-
-        self.expect(Token::LeftParen)?;
-
-        self.js_parse_expression()?;
-
-        self.expect(Token::RightParen)?;
-
-        self.optional(Token::Semicolon);
-
-        self.print_statement()?;
-
-        Ok(())
-    }
 }
 
 /// 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
 /// https://262.ecma-international.org/15.0/#sec-parsetext
-pub(crate) fn parse_text(source_text: &str) -> BytecodeProgram {
+pub(crate) fn parse_text(source_text: &str) -> FinalProgram {
     // 1. Attempt to parse sourceText using goalSymbol as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     let lexer = Lexer::new(source_text);
     let parser = Parser::new(lexer);

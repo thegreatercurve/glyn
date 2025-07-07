@@ -1,7 +1,5 @@
 use std::fmt::{Display, Formatter};
 
-use crate::bytecode::generator::BytecodeProgram;
-
 pub(crate) enum Instruction {
     // Binary operations
     Add,

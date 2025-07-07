@@ -1,9 +1,6 @@
-use glyn_lexer::{Keyword, Token};
+use glyn_lexer::Token;
 
-use crate::{
-    error::CodeGenError,
-    parser::{CodeGenResult, Parser},
-};
+use crate::parser::{CodeGenResult, Parser};
 
 // 14 ECMAScript Language: Statements and Declarations
 // https://tc39.es/ecma262/#prod-Statement
@@ -21,7 +18,6 @@ impl<'a> Parser<'a> {
             // {
             //     self.js_parse_let_declaration()
             // }
-            Token::Keyword(Keyword::Print) => self.js_parse_print_statement(),
             _ => self.js_parse_expression(),
         }?;
 

@@ -59,8 +59,6 @@ impl<'a> Parser<'a> {
 
         self.js_parse_assignment_expression()?;
 
-        self.bytecode.compile_assigment_op(&operator);
-
         Ok(())
     }
 
@@ -106,7 +104,7 @@ impl<'a> Parser<'a> {
 
         self.advance(); // Eat the literal token.
 
-        self.bytecode.compile_literal(&literal_type)?;
+        self.bytecode.generate_literal(&literal_type)?;
 
         Ok(())
     }
@@ -134,9 +132,7 @@ impl<'a> Parser<'a> {
 
                 self.js_parse_unary_expression()?;
 
-                self.bytecode
-                    .compile_unary_op(&operation)
-                    .map_err(|e| e.into())
+                self.bytecode.generate_unary_exp(&operation)
             }
             _ => self.js_parse_update_expression(),
         }
@@ -206,9 +202,7 @@ impl<'a> Parser<'a> {
 
             self.js_parse_binary_expression(new_precedence)?;
 
-            self.bytecode
-                .compile_binary_op(&operator)
-                .map_err(CodeGenError::from)?;
+            self.bytecode.generate_binary_exp(&operator)?;
         }
 
         Ok(())

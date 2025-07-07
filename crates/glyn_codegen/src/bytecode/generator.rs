@@ -1,8 +1,8 @@
-use glyn_execution_model::value::string::JSString;
+use glyn_execution_model::value::{string::JSString, JSValue};
 use glyn_lexer::Token;
 
 use crate::{
-    bytecode::instruction::Instruction,
+    bytecode::{emitter::Emitter, instruction::Instruction},
     error::{CodeGenError, CodeGenResult},
 };
 
@@ -13,36 +13,20 @@ pub(crate) enum LiteralType {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct BytecodeProgram {
-    pub(crate) constants: Vec<f64>,
+pub(crate) struct FinalProgram {
     pub(crate) instructions: Vec<u8>,
+    pub(crate) constants: Vec<JSValue>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct BytecodeGenerator {
+    emit: Emitter,
     identifiers: Vec<JSString>,
-    program: BytecodeProgram,
 }
 
 impl BytecodeGenerator {
-    pub(crate) fn program(self) -> BytecodeProgram {
-        self.program
-    }
-
-    fn emit_instr(&mut self, byte: Instruction) {
-        self.program.instructions.push(byte as u8);
-    }
-
-    fn emit_instr_one_arg(&mut self, instruction: Instruction, arg: u8) {
-        self.emit_instr(instruction);
-
-        self.program.instructions.push(arg);
-    }
-
-    fn add_constant(&mut self, value: f64) -> u8 {
-        self.program.constants.push(value);
-
-        (self.program.constants.len() - 1) as u8
+    pub(crate) fn program(self) -> FinalProgram {
+        self.emit.program()
     }
 
     fn add_identifier(&mut self, identifier: JSString) -> u8 {
@@ -51,15 +35,7 @@ impl BytecodeGenerator {
         (self.identifiers.len() - 1) as u8
     }
 
-    pub(crate) fn compile_print(&mut self) {
-        self.emit_instr(Instruction::Print);
-    }
-
-    pub(crate) fn compile_assigment_op(&mut self, _ops: &Token) {
-        todo!()
-    }
-
-    pub(crate) fn compile_binary_op(&mut self, op_token: &Token) -> CodeGenResult {
+    pub(crate) fn generate_binary_exp(&mut self, op_token: &Token) -> CodeGenResult {
         let instruction = match op_token {
             Token::Plus => Instruction::Add,
             Token::Minus => Instruction::Subtract,
@@ -86,12 +62,12 @@ impl BytecodeGenerator {
             _ => return Err(CodeGenError::UnexpectedToken),
         };
 
-        self.emit_instr(instruction);
+        self.emit.binary_exp(instruction);
 
         Ok(())
     }
 
-    pub(crate) fn compile_unary_op(&mut self, op_token: &Token) -> CodeGenResult {
+    pub(crate) fn generate_unary_exp(&mut self, op_token: &Token) -> CodeGenResult {
         let instruction = match op_token {
             Token::Plus => Instruction::Plus,
             Token::Minus => Instruction::Minus,
@@ -99,7 +75,7 @@ impl BytecodeGenerator {
             _ => return Err(CodeGenError::UnexpectedToken),
         };
 
-        self.emit_instr(instruction);
+        self.emit.unary_exp(instruction);
 
         Ok(())
     }
@@ -110,21 +86,11 @@ impl BytecodeGenerator {
     ///  Literal : BooleanLiteral
     ///  Literal : NumericLiteral
     ///  Literal : StringLiteral
-    pub(crate) fn compile_literal(&mut self, literal: &LiteralType) -> CodeGenResult {
+    pub(crate) fn generate_literal(&mut self, literal: &LiteralType) -> CodeGenResult {
         match literal {
-            LiteralType::Null => self.emit_instr(Instruction::Null),
-            LiteralType::Boolean(value) => {
-                self.emit_instr(if *value {
-                    Instruction::True
-                } else {
-                    Instruction::False
-                });
-            }
-            LiteralType::Int64(value) => {
-                let index = self.add_constant(*value);
-
-                self.emit_instr_one_arg(Instruction::Const, index);
-            }
+            LiteralType::Null => self.emit.null(),
+            LiteralType::Boolean(value) => self.emit.boolean(*value),
+            LiteralType::Int64(value) => self.emit.constant(JSValue::from(*value)),
         };
 
         Ok(())
