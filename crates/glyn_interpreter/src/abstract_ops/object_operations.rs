@@ -84,7 +84,7 @@ pub(crate) fn set(
         (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
-    if success == false && throw {
+    if !success && throw {
         agent.type_error("Failed to set property on object");
     }
 

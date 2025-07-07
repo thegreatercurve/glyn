@@ -1,6 +1,6 @@
 use safe_gc::{Collector, Gc, Trace};
 
-use crate::runtime::environment::{Environment, EnvironmentAddr};
+use crate::runtime::environment::EnvironmentAddr;
 use crate::runtime::intrinsics::Intrinsics;
 use crate::value::object::JSObjAddr;
 

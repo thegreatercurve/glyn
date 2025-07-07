@@ -1,4 +1,4 @@
-use crate::assert_lexer_eq;
+use crate::{assert_lexer_eq, lexer::Keyword};
 
 #[test]
 fn keywords() {

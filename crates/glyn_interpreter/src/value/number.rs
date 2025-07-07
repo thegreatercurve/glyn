@@ -361,6 +361,7 @@ impl Mul for JSNumber {
         (self.as_f64() * other.as_f64()).into()
     }
 }
+
 /// 6.1.6.1.5 Number::divide ( x, y )
 /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-divide
 impl Div for JSNumber {

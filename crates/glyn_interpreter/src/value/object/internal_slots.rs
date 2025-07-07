@@ -1,10 +1,7 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::{
-    runtime::{
-        agent::JSAgent,
-        realm::{Realm, RealmAddr},
-    },
+    runtime::{agent::JSAgent, realm::RealmAddr},
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 
