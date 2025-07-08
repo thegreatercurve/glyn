@@ -416,11 +416,11 @@ impl<'a> Lexer<'a> {
                 if self.advance_if_2('&', '=') {
                     Token::LogicalAndAssign
                 } else if self.advance_if('=') {
-                    Token::BitwiseAndAssign
+                    Token::BitAndAssign
                 } else if self.advance_if('&') {
                     Token::LogicalAnd
                 } else {
-                    Token::BitwiseAnd
+                    Token::BitAnd
                 }
             }
             '|' => {
@@ -429,20 +429,20 @@ impl<'a> Lexer<'a> {
                 if self.advance_if_2('|', '=') {
                     Token::LogicalOrAssign
                 } else if self.advance_if('=') {
-                    Token::BitwiseOrAssign
+                    Token::BitOrAssign
                 } else if self.advance_if('|') {
                     Token::LogicalOr
                 } else {
-                    Token::BitwiseOr
+                    Token::BitOr
                 }
             }
             '^' => {
                 self.advance();
 
                 if self.advance_if('=') {
-                    Token::BitwiseXorAssign
+                    Token::BitXorAssign
                 } else {
-                    Token::BitwiseXor
+                    Token::BitXor
                 }
             }
             '~' => {

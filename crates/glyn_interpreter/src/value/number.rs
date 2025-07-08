@@ -156,7 +156,7 @@ impl JSNumber {
 impl JSNumber {
     /// 6.1.6.1.3 Number::exponentiate ( base, exponent )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-exponentiate
-    fn exponentiate(self, other: Self) -> Self {
+    pub(crate) fn exponentiate(self, other: &Self) -> Self {
         match self {
             JSNumber::Float(f) => JSNumber::Float(f.powf(other.as_f64())),
             JSNumber::Int(i) => JSNumber::Int(i.pow(other.as_u32())),
@@ -166,7 +166,7 @@ impl JSNumber {
 
     /// 6.1.6.1.11 Number::unsignedRightShift ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unsignedRightShift
-    fn ushr(self, other: Self) -> Self {
+    pub(crate) fn ushr(self, other: Self) -> Self {
         JSNumber::UInt(self.as_u32() >> other.as_u32())
     }
 

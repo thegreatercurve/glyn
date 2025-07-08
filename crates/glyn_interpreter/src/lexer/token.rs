@@ -236,9 +236,9 @@ pub(crate) enum Token<'a> {
     LeftShift,
     RightShift,
     UnsignedRightShift,
-    BitwiseAnd,
-    BitwiseOr,
-    BitwiseXor,
+    BitAnd,
+    BitOr,
+    BitXor,
     Not,
     Tilde,
     LogicalAnd,
@@ -255,9 +255,9 @@ pub(crate) enum Token<'a> {
     LeftShiftAssign,
     RightShiftAssign,
     UnsignedRightShiftAssign,
-    BitwiseAndAssign,
-    BitwiseOrAssign,
-    BitwiseXorAssign,
+    BitAndAssign,
+    BitOrAssign,
+    BitXorAssign,
     LogicalAndAssign,
     LogicalOrAssign,
     NullishCoalescingAssign,
@@ -430,8 +430,8 @@ impl<'a> Token<'a> {
     // https://tc39.es/ecma262/#prod-LogicalANDExpression
     // https://tc39.es/ecma262/#prod-LogicalORExpression
     pub(crate) fn is_binary_operator(&self) -> bool {
-        matches!(self, |Token::BitwiseOr| Token::BitwiseXor
-            | Token::BitwiseAnd
+        matches!(self, |Token::BitOr| Token::BitXor
+            | Token::BitAnd
             | Token::Equal
             | Token::NotEqual
             | Token::StrictEqual
@@ -471,9 +471,9 @@ impl<'a> Token<'a> {
             | Token::LeftShiftAssign
             | Token::RightShiftAssign
             | Token::UnsignedRightShiftAssign
-            | Token::BitwiseAndAssign
-            | Token::BitwiseOrAssign
-            | Token::BitwiseXorAssign
+            | Token::BitAndAssign
+            | Token::BitOrAssign
+            | Token::BitXorAssign
             | Token::ExponentAssign
             | Token::Assign
             // ES2021
@@ -585,9 +585,9 @@ impl Display for Token<'_> {
             Token::LeftShift => write!(f, "<<"),
             Token::RightShift => write!(f, ">>"),
             Token::UnsignedRightShift => write!(f, ">>>"),
-            Token::BitwiseAnd => write!(f, "&"),
-            Token::BitwiseOr => write!(f, "|"),
-            Token::BitwiseXor => write!(f, "^"),
+            Token::BitAnd => write!(f, "&"),
+            Token::BitOr => write!(f, "|"),
+            Token::BitXor => write!(f, "^"),
             Token::Not => write!(f, "!"),
             Token::Tilde => write!(f, "~"),
             Token::LogicalAnd => write!(f, "&&"),
@@ -604,9 +604,9 @@ impl Display for Token<'_> {
             Token::LeftShiftAssign => write!(f, "<<="),
             Token::RightShiftAssign => write!(f, ">>="),
             Token::UnsignedRightShiftAssign => write!(f, ">>>="),
-            Token::BitwiseAndAssign => write!(f, "&="),
-            Token::BitwiseOrAssign => write!(f, "|="),
-            Token::BitwiseXorAssign => write!(f, "^="),
+            Token::BitAndAssign => write!(f, "&="),
+            Token::BitOrAssign => write!(f, "|="),
+            Token::BitXorAssign => write!(f, "^="),
             Token::LogicalAndAssign => write!(f, "&&="),
             Token::LogicalOrAssign => write!(f, "||="),
             Token::NullishCoalescingAssign => write!(f, "??="),
@@ -638,9 +638,9 @@ pub(crate) enum BinOpPrecedence {
     Coalesce,
     LogicalOR,
     LogicalAND,
-    BitwiseOR,
-    BitwiseXOR,
-    BitwiseAND,
+    BitOR,
+    BitXOR,
+    BitAND,
     Equality,
     Relational,
     Shift,
@@ -671,9 +671,9 @@ impl<'a> From<Token<'a>> for BinOpPrecedence {
             Token::NullishCoalescing => BinOpPrecedence::Coalesce,
             Token::LogicalOr => BinOpPrecedence::LogicalOR,
             Token::LogicalAnd => BinOpPrecedence::LogicalAND,
-            Token::BitwiseOr => BinOpPrecedence::BitwiseOR,
-            Token::BitwiseXor => BinOpPrecedence::BitwiseXOR,
-            Token::BitwiseAnd => BinOpPrecedence::BitwiseAND,
+            Token::BitOr => BinOpPrecedence::BitOR,
+            Token::BitXor => BinOpPrecedence::BitXOR,
+            Token::BitAnd => BinOpPrecedence::BitAND,
             Token::Equal | Token::NotEqual | Token::StrictEqual | Token::StrictNotEqual => {
                 BinOpPrecedence::Equality
             }
