@@ -1,5 +1,3 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
-
 use crate::value::string::JSString;
 
 /// 6.1.6.1 The Number Type
@@ -8,41 +6,13 @@ use crate::value::string::JSString;
 pub struct JSNumber(pub f64);
 
 impl JSNumber {
-    /// 21.1.2.6 Number.MAX_SAFE_INTEGER
-    /// https://262.ecma-international.org/15.0/#sec-number.max_safe_integer
-    pub(crate) const MAX_SAFE_INTEGER: i64 = 2i64.pow(53) - 1;
+    pub(crate) const NAN: JSNumber = JSNumber(f64::NAN);
 
-    /// 21.1.2.7 Number.MAX_VALUE
-    /// https://262.ecma-international.org/15.0/#sec-number.max_value
-    pub(crate) const MAX_VALUE: f64 = f64::MAX;
+    pub(crate) const ZERO: JSNumber = JSNumber(0.0);
 
-    /// 21.1.2.8 Number.MIN_SAFE_INTEGER
-    /// https://262.ecma-international.org/15.0/#sec-number.min_safe_integer
-    pub(crate) const MIN_SAFE_INTEGER: i64 = -(2i64.pow(53) - 1);
+    pub(crate) const POS_ZERO: JSNumber = JSNumber(0.0);
 
-    /// 21.1.2.9 Number.MIN_VALUE
-    /// https://262.ecma-international.org/15.0/#sec-number.min_value
-    pub(crate) const MIN_VALUE: f64 = f64::MIN;
-
-    pub(crate) fn nan() -> Self {
-        JSNumber(f64::NAN)
-    }
-
-    pub(crate) fn zero() -> Self {
-        JSNumber(0.0)
-    }
-
-    pub(crate) fn pos_zero() -> Self {
-        JSNumber(0.0)
-    }
-
-    pub(crate) fn neg_zero() -> Self {
-        JSNumber(-0.0)
-    }
-
-    fn is_int(&self) -> bool {
-        self.0.fract() == 0.0
-    }
+    pub(crate) const NEG_ZERO: JSNumber = JSNumber(-0.0);
 
     pub(crate) fn is_zero(&self) -> bool {
         self.0 == 0.0 || self.is_pos_zero() || self.is_neg_zero()
@@ -78,16 +48,221 @@ impl JSNumber {
 }
 
 impl JSNumber {
+    /// 21.1.2.6 Number.MAX_SAFE_INTEGER
+    /// https://262.ecma-international.org/15.0/#sec-number.max_safe_integer
+    pub(crate) const MAX_SAFE_INTEGER: i64 = 2i64.pow(53) - 1;
+
+    /// 21.1.2.7 Number.MAX_VALUE
+    /// https://262.ecma-international.org/15.0/#sec-number.max_value
+    pub(crate) const MAX_VALUE: f64 = f64::MAX;
+
+    /// 21.1.2.8 Number.MIN_SAFE_INTEGER
+    /// https://262.ecma-international.org/15.0/#sec-number.min_safe_integer
+    pub(crate) const MIN_SAFE_INTEGER: i64 = -(2i64.pow(53) - 1);
+
+    /// 21.1.2.9 Number.MIN_VALUE
+    /// https://262.ecma-international.org/15.0/#sec-number.min_value
+    pub(crate) const MIN_VALUE: f64 = f64::MIN;
+
+    /// 6.1.6.1.1 Number::unaryMinus ( x )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unaryMinus
+    pub(crate) fn unary_minus(self) -> Self {
+        // 1. If x is NaN, return NaN.
+        if self.is_nan() {
+            return JSNumber::NAN;
+        }
+
+        // 2. Return the result of negating x; that is, compute a Number with the same magnitude but opposite sign.
+        JSNumber(-self.0)
+    }
+
+    /// 6.1.6.1.2 Number::bitwiseNOT ( x )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseNOT
+    pub(crate) fn bitwise_not(self) -> Self {
+        // 1. Let oldValue be ! ToInt32(x).
+        let old_value = self.0 as i32;
+
+        // 2. Return the result of applying bitwise complement to oldValue.
+        // The mathematical value of the result is exactly representable as a 32-bit two's complement bit string.
+        JSNumber(!old_value as f64)
+    }
+
     /// 6.1.6.1.3 Number::exponentiate ( base, exponent )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-exponentiate
     pub(crate) fn exponentiate(self, other: &Self) -> Self {
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in powf method.
         JSNumber(self.0.powf(other.0))
+    }
+
+    /// 6.1.6.1.4 Number::multiply ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-multiply
+    pub(crate) fn multiply(self, other: Self) -> Self {
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in mult operator.
+        JSNumber(self.0 * other.0)
+    }
+
+    /// 6.1.6.1.5 Number::divide ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-divide
+    pub(crate) fn divide(self, other: Self) -> Self {
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in div operator.
+        JSNumber(self.0 / other.0)
+    }
+
+    /// 6.1.6.1.6 Number::remainder ( n, d )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-remainder
+    /// The result of a floating-point remainder operation as computed by the % operator is not the same as the “remainder” operation defined by IEEE 754-2019.
+    pub(crate) fn remainder(self, other: Self) -> Self {
+        // 1. If n is NaN or d is NaN, return NaN.
+        if self.is_nan() || other.is_nan() {
+            return JSNumber::NAN;
+        }
+
+        // 2. If n is either +∞𝔽 or -∞𝔽, return NaN.
+        if self.is_infinite() {
+            return JSNumber::NAN;
+        }
+
+        // 3. If d is either +∞𝔽 or -∞𝔽, return n.
+        if other.is_infinite() {
+            return self;
+        }
+
+        // 4. If d is either +0𝔽 or -0𝔽, return NaN.
+        if other.is_zero() {
+            return JSNumber::NAN;
+        }
+
+        // 5. If n is either +0𝔽 or -0𝔽, return n.
+        if self.is_zero() {
+            return self;
+        }
+
+        // 6. Assert: n and d are finite and non-zero.
+        debug_assert!(self.is_finite() && other.is_finite() && !self.is_zero() && !other.is_zero());
+
+        // 7. Let quotient be ℝ(n) / ℝ(d).
+        let quotient = self.0 / other.0;
+
+        // 8. Let q be truncate(quotient).
+        let q = quotient.trunc();
+
+        // 9. Let r be ℝ(n) - (ℝ(d) × q).
+        let r = self.0 - (other.0 * q);
+
+        // 10. If r = 0 and n < -0𝔽, return -0𝔽.
+        if r == 0.0 && self.0 < 0.0 {
+            return JSNumber::NEG_ZERO;
+        }
+
+        // 11. Return 𝔽(r).
+        JSNumber(r)
+    }
+
+    /// 6.1.6.1.7 Number::add ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-add
+    pub(crate) fn add(self, other: Self) -> Self {
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in add operator.
+        JSNumber(self.0 + other.0)
+    }
+
+    /// 6.1.6.1.8 Number::subtract ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-subtract
+    pub(crate) fn subtract(self, other: Self) -> Self {
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in sub operator.
+        JSNumber(self.0 - other.0)
+    }
+
+    /// 6.1.6.1.9 Number::leftShift ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-leftShift
+    pub(crate) fn left_shift(self, other: Self) -> Self {
+        // 1. Let lnum be ! ToInt32(x).
+        let lnum = self.0 as i32;
+
+        // 2. Let rnum be ! ToUint32(y).
+        let rnum = other.0 as u32;
+
+        // 3. Let shiftCount be ℝ(rnum) modulo 32.
+        let shift_count = rnum % 32;
+
+        // 4. Return the result of left shifting lnum by shiftCount bits.
+        // The mathematical value of the result is exactly representable as a 32-bit two's complement bit string.
+        JSNumber((lnum << shift_count) as f64)
+    }
+
+    /// 6.1.6.1.10 Number::signedRightShift ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-signedRightShift
+    pub(crate) fn signed_right_shift(self, other: Self) -> Self {
+        // 1. Let lnum be ! ToInt32(x).
+        let lnum = self.0 as i32;
+
+        // 2. Let rnum be ! ToUint32(y).
+        let rnum = other.0 as u32;
+
+        // 3. Let shiftCount be ℝ(rnum) modulo 32.
+        let shift_count = rnum % 32;
+
+        // 4. Return the result of performing a sign-extending right shift of lnum by shiftCount bits.
+        // The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string.
+        JSNumber((lnum >> shift_count) as f64)
     }
 
     /// 6.1.6.1.11 Number::unsignedRightShift ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unsignedRightShift
-    pub(crate) fn ushr(self, other: Self) -> Self {
-        JSNumber((self.0 as u32 >> other.0 as u32) as f64)
+    pub(crate) fn unsigned_right_shift(self, other: Self) -> Self {
+        // 1. Let lnum be ! ToUint32(x).
+        let lnum = self.0 as u32;
+
+        // 2. Let rnum be ! ToUint32(y).
+        let rnum = other.0 as u32;
+
+        // 3. Let shiftCount be ℝ(rnum) modulo 32.
+        let shift_count = rnum % 32;
+
+        // 4. Return the result of performing a zero-filling right shift of lnum by shiftCount bits.
+        // Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string.
+        JSNumber((lnum >> shift_count) as f64)
+    }
+
+    /// 6.1.6.1.17 Number::bitwiseAND ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseAND
+    pub(crate) fn bitwise_and(self, other: Self) -> Self {
+        // 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+        // 1. Let lnum be ! ToInt32(x).
+        let lnum = self.0 as i32;
+
+        // 2. Let rnum be ! ToInt32(y).
+        let rnum = other.0 as i32;
+
+        // 1. Return NumberBitwiseOp(&, x, y).
+        JSNumber((lnum & rnum) as f64)
+    }
+
+    /// 6.1.6.1.18 Number::bitwiseXOR ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseXOR
+    pub(crate) fn bitwise_xor(self, other: Self) -> Self {
+        // 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+        // 1. Let lnum be ! ToInt32(x).
+        let lnum = self.0 as i32;
+
+        // 2. Let rnum be ! ToInt32(y).
+        let rnum = other.0 as i32;
+
+        // 1. Return NumberBitwiseOp(^, x, y).
+        JSNumber((lnum ^ rnum) as f64)
+    }
+
+    /// 6.1.6.1.19 Number::bitwiseOR ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseOR
+    pub(crate) fn bitwise_or(self, other: Self) -> Self {
+        // 6.1.6.1.16 NumberBitwiseOp ( op, x, y )
+        // 1. Let lnum be ! ToInt32(x).
+        let lnum = self.0 as i32;
+
+        // 2. Let rnum be ! ToInt32(y).
+        let rnum = other.0 as i32;
+
+        // 1. Return NumberBitwiseOp(|, x, y).
+        JSNumber((lnum | rnum) as f64)
     }
 
     /// 6.1.6.1.13 Number::equal ( x, y )
@@ -145,8 +320,8 @@ impl JSNumber {
         }
 
         // 3. If x < -0𝔽, return the string-concatenation of "-" and Number::toString(-x, radix).
-        if self.lt(&JSNumber::zero()) {
-            return format!("-{:?}", self.clone().neg().to_string(radix)).into();
+        if self.lt(&JSNumber::ZERO) {
+            return format!("-{:?}", self.clone().unary_minus().to_string(radix)).into();
         }
 
         // 4. If x is +∞𝔽, return "Infinity".
@@ -226,135 +401,5 @@ impl From<i32> for JSNumber {
 impl From<u32> for JSNumber {
     fn from(value: u32) -> Self {
         JSNumber(value as f64)
-    }
-}
-
-/// 6.1.6.1.1 Number::unaryMinus ( x )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unaryMinus
-impl Neg for JSNumber {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        // 1. If x is NaN, return NaN.
-        if self.is_nan() {
-            return self;
-        }
-
-        // 2. Return the negation of x; that is, compute a Number with the same magnitude but opposite sign.
-        JSNumber(-self.0)
-    }
-}
-
-/// 6.1.6.1.2 Number::bitwiseNOT ( x )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseNOT
-impl Not for JSNumber {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        JSNumber(!(self.0 as i32) as f64)
-    }
-}
-
-/// 6.1.6.1.4 Number::multiply ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-multiply
-impl Mul for JSNumber {
-    type Output = Self;
-
-    fn mul(self, other: Self) -> Self::Output {
-        if self.is_int() && other.is_int() {
-            return JSNumber(self.0 * other.0);
-        }
-
-        (self.0 * other.0).into()
-    }
-}
-
-/// 6.1.6.1.5 Number::divide ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-divide
-impl Div for JSNumber {
-    type Output = Self;
-
-    fn div(self, other: Self) -> Self::Output {
-        JSNumber(self.0 / other.0)
-    }
-}
-
-/// 6.1.6.1.6 Number::remainder ( n, d )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-remainder
-impl Rem for JSNumber {
-    type Output = Self;
-
-    fn rem(self, other: Self) -> Self::Output {
-        JSNumber(self.0 % other.0)
-    }
-}
-
-/// 6.1.6.1.7 Number::add ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-add
-impl Add for JSNumber {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self::Output {
-        JSNumber(self.0 + other.0)
-    }
-}
-
-/// 6.1.6.1.8 Number::subtract ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-subtract
-impl Sub for JSNumber {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self::Output {
-        JSNumber(self.0 - other.0)
-    }
-}
-
-/// 6.1.6.1.9 Number::leftShift ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-leftShift
-impl Shl for JSNumber {
-    type Output = Self;
-
-    fn shl(self, other: Self) -> Self::Output {
-        JSNumber(((self.0 as i32) << other.0 as u32) as f64)
-    }
-}
-
-/// 6.1.6.1.10 Number::signedRightShift ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-signedRightShift
-impl Shr for JSNumber {
-    type Output = Self;
-
-    fn shr(self, other: Self) -> Self::Output {
-        JSNumber((self.0 as u32 >> other.0 as u32) as f64)
-    }
-}
-
-/// 6.1.6.1.17 Number::bitwiseAND ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseAND
-impl BitAnd for JSNumber {
-    type Output = Self;
-
-    fn bitand(self, other: Self) -> Self::Output {
-        JSNumber((self.0 as i32 & other.0 as i32) as f64)
-    }
-}
-
-/// 6.1.6.1.18 Number::bitwiseXOR ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseXOR
-impl BitXor for JSNumber {
-    type Output = Self;
-
-    fn bitxor(self, other: Self) -> Self::Output {
-        JSNumber((self.0 as i32 ^ other.0 as i32) as f64)
-    }
-}
-
-/// 6.1.6.1.19 Number::bitwiseOR ( x, y )
-/// https://262.ecma-international.org/15.0/#sec-numeric-types-number-bitwiseOR
-impl BitOr for JSNumber {
-    type Output = Self;
-
-    fn bitor(self, other: Self) -> Self::Output {
-        JSNumber((self.0 as i32 | other.0 as i32) as f64)
     }
 }

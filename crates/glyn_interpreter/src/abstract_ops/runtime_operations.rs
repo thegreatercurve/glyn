@@ -103,29 +103,31 @@ pub(crate) fn apply_numeric_binary_operator(
         // **	Number	Number::exponentiate
         (Token::Exponent, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.exponentiate(&rnum),
         // *	Number	Number::multiply
-        (Token::Multiply, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum * rnum,
+        (Token::Multiply, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.multiply(rnum),
         // /	Number	Number::divide
-        (Token::Divide, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum / rnum,
+        (Token::Divide, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.divide(rnum),
         // %	Number	Number::remainder
-        (Token::Modulo, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum % rnum,
+        (Token::Modulo, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.remainder(rnum),
         // +	Number	Number::add
-        (Token::Plus, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum + rnum,
+        (Token::Plus, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.add(rnum),
         // -	Number	Number::subtract
-        (Token::Minus, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum - rnum,
+        (Token::Minus, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.subtract(rnum),
         // <<	Number	Number::leftShift
-        (Token::LeftShift, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum << rnum,
+        (Token::LeftShift, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.left_shift(rnum),
         // >>	Number	Number::signedRightShift
-        (Token::RightShift, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum >> rnum,
+        (Token::RightShift, JSValue::Number(lnum), JSValue::Number(rnum)) => {
+            lnum.signed_right_shift(rnum)
+        }
         // >>>	Number	Number::unsignedRightShift
         (Token::UnsignedRightShift, JSValue::Number(lnum), JSValue::Number(rnum)) => {
-            lnum.ushr(rnum)
+            lnum.unsigned_right_shift(rnum)
         }
         // &	Number	Number::bitwiseAND
-        (Token::BitAnd, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum & rnum,
+        (Token::BitAnd, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.bitwise_and(rnum),
         // ^	Number	Number::bitwiseXOR
-        (Token::BitXor, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum ^ rnum,
+        (Token::BitXor, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.bitwise_xor(rnum),
         // |	Number	Number::bitwiseOR
-        (Token::BitOr, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum | rnum,
+        (Token::BitOr, JSValue::Number(lnum), JSValue::Number(rnum)) => lnum.bitwise_or(rnum),
         _ => unreachable!(),
     };
 

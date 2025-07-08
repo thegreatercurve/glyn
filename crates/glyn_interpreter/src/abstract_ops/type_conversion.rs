@@ -116,9 +116,9 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
         JSValue::Symbol(_) => agent.type_error("Cannot convert Symbol to JSNumber"),
         JSValue::BigInt(_) => agent.type_error("Cannot convert BigInt to JSNumber"),
         // 3. If argument is undefined, return NaN.
-        JSValue::Undefined => return Ok(JSNumber::nan()),
+        JSValue::Undefined => return Ok(JSNumber::NAN),
         // 4. If argument is either null or false, return +0𝔽.
-        JSValue::Null | JSValue::Bool(false) => return Ok(JSNumber::zero()),
+        JSValue::Null | JSValue::Bool(false) => return Ok(JSNumber::ZERO),
         // 5. If argument is true, return +1𝔽
         JSValue::Bool(true) => return Ok(JSNumber(1.0)),
         // 6. If argument is a String, return StringToNumber(argument).
@@ -149,7 +149,7 @@ pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
 
     // 3. If literal is a List of errors, return NaN.
     let Ok(literal) = literal else {
-        return JSNumber::nan();
+        return JSNumber::NAN;
     };
 
     // 4. Return StringNumericValue of literal.
@@ -165,7 +165,7 @@ pub(crate) fn to_integer_or_infinity(
 
     // 2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.
     if number.is_nan() || number.is_zero() {
-        return Ok(JSNumber::zero());
+        return Ok(JSNumber::ZERO);
     }
 
     // 3. If number is +∞𝔽, return +∞.
@@ -317,8 +317,8 @@ pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     let len = to_integer_or_infinity(agent, argument)?;
 
     // 2. If len ≤ 0, return +0𝔽.
-    if len.lt(&JSNumber::zero()) {
-        return Ok(JSNumber::zero());
+    if len.lt(&JSNumber::ZERO) {
+        return Ok(JSNumber::ZERO);
     }
 
     // 3. Return 𝔽(min(len, 2^53 - 1)).
@@ -335,7 +335,7 @@ pub(crate) fn canonical_numeric_index_string(
 ) -> Option<JSNumber> {
     // 1. If argument is "-0", return -0𝔽.
     if argument.0 == "-0" {
-        return Some(JSNumber::neg_zero());
+        return Some(JSNumber::NEG_ZERO);
     }
 
     // 2. Let n be ! ToNumber(argument).
@@ -363,7 +363,7 @@ pub(crate) fn to_index(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSNu
     let integer = to_integer_or_infinity(agent, value)?;
 
     // 2. If integer is not in the inclusive interval from 0 to 2^53 - 1, throw a RangeError exception.
-    if integer < JSNumber::zero() || integer > JSNumber::from(JSNumber::MAX_SAFE_INTEGER as f64) {
+    if integer < JSNumber::ZERO || integer > JSNumber::from(JSNumber::MAX_SAFE_INTEGER as f64) {
         agent.range_error("Index must be in the range 0 - 2^53-1");
     }
 
