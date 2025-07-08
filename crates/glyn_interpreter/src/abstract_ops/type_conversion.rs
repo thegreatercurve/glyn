@@ -230,11 +230,8 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 /// https://262.ecma-international.org/15.0/#sec-tostring
 pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSString> {
     // 1. If argument is a String, return argument.
-    if argument.is_string() {
-        return Ok(argument
-            .as_string()
-            .unwrap_or_else(|| unreachable!())
-            .clone());
+    if let Some(string) = argument.as_string() {
+        return Ok(string.clone());
     }
 
     // 2. If argument is a Symbol, throw a TypeError exception.
