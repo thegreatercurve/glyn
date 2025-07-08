@@ -125,19 +125,19 @@ impl From<bool> for JSValue {
 
 impl From<f64> for JSValue {
     fn from(value: f64) -> Self {
-        JSValue::Number(JSNumber::Float(value))
+        JSValue::Number(JSNumber(value))
     }
 }
 
 impl From<u32> for JSValue {
     fn from(value: u32) -> Self {
-        JSValue::Number(JSNumber::UInt(value))
+        JSValue::Number(JSNumber(value as f64))
     }
 }
 
 impl From<i32> for JSValue {
     fn from(value: i32) -> Self {
-        JSValue::Number(JSNumber::Int(value))
+        JSValue::Number(JSNumber(value as f64))
     }
 }
 

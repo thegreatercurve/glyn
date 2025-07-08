@@ -5,11 +5,7 @@ use crate::value::string::JSString;
 /// 6.1.6.1 The Number Type
 /// https://262.ecma-international.org/15.0/#sec-numeric-types-number
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub(crate) enum JSNumber {
-    Float(f64),
-    Int(i32),
-    UInt(u32),
-}
+pub struct JSNumber(pub f64);
 
 impl JSNumber {
     /// 21.1.2.6 Number.MAX_SAFE_INTEGER
@@ -28,128 +24,56 @@ impl JSNumber {
     /// https://262.ecma-international.org/15.0/#sec-number.min_value
     pub(crate) const MIN_VALUE: f64 = f64::MIN;
 
-    pub(crate) fn as_f64(&self) -> f64 {
-        match self {
-            JSNumber::Float(f) => *f,
-            JSNumber::Int(i) => *i as f64,
-            JSNumber::UInt(u) => *u as f64,
-        }
-    }
-
-    pub(crate) fn as_i64(&self) -> i64 {
-        match self {
-            JSNumber::Float(f) => *f as i64,
-            JSNumber::Int(i) => *i as i64,
-            JSNumber::UInt(u) => *u as i64,
-        }
-    }
-
-    pub(crate) fn as_i32(&self) -> i32 {
-        match self {
-            JSNumber::Float(f) => *f as i32,
-            JSNumber::Int(i) => *i,
-            JSNumber::UInt(u) => *u as i32,
-        }
-    }
-
-    pub(crate) fn as_u32(&self) -> u32 {
-        match self {
-            JSNumber::Float(f) => *f as u32,
-            JSNumber::Int(i) => *i as u32,
-            JSNumber::UInt(u) => *u,
-        }
-    }
-
     pub(crate) fn nan() -> Self {
-        JSNumber::Float(f64::NAN)
+        JSNumber(f64::NAN)
     }
 
     pub(crate) fn zero() -> Self {
-        JSNumber::Int(0)
+        JSNumber(0.0)
     }
 
     pub(crate) fn pos_zero() -> Self {
-        JSNumber::Int(0)
+        JSNumber(0.0)
     }
 
     pub(crate) fn neg_zero() -> Self {
-        JSNumber::Float(-0.0)
+        JSNumber(-0.0)
     }
 
     fn is_int(&self) -> bool {
-        matches!(self, JSNumber::Int(_))
+        self.0.fract() == 0.0
     }
 
     pub(crate) fn is_zero(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => *f == 0.0 || self.is_pos_zero() || self.is_neg_zero(),
-            JSNumber::Int(i) => *i == 0,
-            JSNumber::UInt(u) => *u == 0,
-        }
+        self.0 == 0.0 || self.is_pos_zero() || self.is_neg_zero()
     }
 
     fn is_pos_zero(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => *f == 0.0 && f.is_sign_positive(),
-            JSNumber::Int(i) => *i == 0,
-            JSNumber::UInt(u) => *u == 0,
-        }
+        self.0 == 0.0 && self.0.is_sign_positive()
     }
 
     fn is_neg_zero(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => *f == 0.0 && f.is_sign_negative(),
-            JSNumber::Int(i) => *i == 0,
-            JSNumber::UInt(u) => *u == 0,
-        }
+        self.0 == 0.0 && self.0.is_sign_negative()
     }
 
     pub(crate) fn is_nan(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => f.is_nan(),
-            JSNumber::Int(_) => false,
-            JSNumber::UInt(_) => false,
-        }
+        self.0.is_nan()
     }
 
     pub(crate) fn is_finite(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => f.is_finite(),
-            JSNumber::Int(_) => true,
-            JSNumber::UInt(_) => true,
-        }
+        self.0.is_finite()
     }
 
     fn is_infinite(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => f.is_infinite(),
-            JSNumber::Int(_) => false,
-            JSNumber::UInt(_) => false,
-        }
+        self.0.is_infinite()
     }
 
     pub(crate) fn is_pos_infinite(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => f.is_infinite() && *f > 0.0,
-            JSNumber::Int(_) => false,
-            JSNumber::UInt(_) => false,
-        }
+        self.0.is_infinite() && self.0 > 0.0
     }
 
     pub(crate) fn is_neg_infinite(&self) -> bool {
-        match self {
-            JSNumber::Float(f) => f.is_infinite() && *f < 0.0,
-            JSNumber::Int(_) => false,
-            JSNumber::UInt(_) => false,
-        }
-    }
-
-    pub(crate) fn truncate(&self) -> Self {
-        match self {
-            JSNumber::Float(f) => JSNumber::Float(f.trunc()),
-            JSNumber::Int(i) => JSNumber::Int(*i as i32),
-            JSNumber::UInt(u) => JSNumber::UInt(*u as u32),
-        }
+        self.0.is_infinite() && self.0 < 0.0
     }
 }
 
@@ -157,17 +81,13 @@ impl JSNumber {
     /// 6.1.6.1.3 Number::exponentiate ( base, exponent )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-exponentiate
     pub(crate) fn exponentiate(self, other: &Self) -> Self {
-        match self {
-            JSNumber::Float(f) => JSNumber::Float(f.powf(other.as_f64())),
-            JSNumber::Int(i) => JSNumber::Int(i.pow(other.as_u32())),
-            JSNumber::UInt(u) => JSNumber::UInt(u.pow(other.as_u32())),
-        }
+        JSNumber(self.0.powf(other.0))
     }
 
     /// 6.1.6.1.11 Number::unsignedRightShift ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unsignedRightShift
     pub(crate) fn ushr(self, other: Self) -> Self {
-        JSNumber::UInt(self.as_u32() >> other.as_u32())
+        JSNumber((self.0 as u32 >> other.0 as u32) as f64)
     }
 
     /// 6.1.6.1.13 Number::equal ( x, y )
@@ -182,7 +102,7 @@ impl JSNumber {
         // 3. If x is y, return true.
         // 4. If x is +0𝔽 and y is -0𝔽, return true.
         // 5. If x is -0𝔽 and y is +0𝔽, return true.
-        if self.as_f64() == y.as_f64()
+        if self.0 == y.0
             || (self.is_pos_zero() && y.is_neg_zero())
             || (self.is_neg_zero() && y.is_pos_zero())
         {
@@ -275,7 +195,7 @@ impl JSNumber {
 
         // TODO Parse the above exactly
 
-        JSString::from(self.as_f64().to_string())
+        JSString::from(self.0.to_string())
     }
 }
 
@@ -283,12 +203,8 @@ impl TryFrom<JSString> for JSNumber {
     type Error = JSString;
 
     fn try_from(value: JSString) -> Result<Self, Self::Error> {
-        if let Ok(number) = value.0.parse::<u32>() {
-            Ok(JSNumber::UInt(number))
-        } else if let Ok(number) = value.0.parse::<i32>() {
-            Ok(JSNumber::Int(number))
-        } else if let Ok(number) = value.0.parse::<f64>() {
-            Ok(JSNumber::Float(number))
+        if let Ok(number) = value.0.parse::<f64>() {
+            Ok(JSNumber(number))
         } else {
             Err(format!("Invalid number: {}", value.0).into())
         }
@@ -297,24 +213,19 @@ impl TryFrom<JSString> for JSNumber {
 
 impl From<f64> for JSNumber {
     fn from(value: f64) -> Self {
-        // Optimize for for i32 for memory efficiency.
-        if value as i32 as f64 == value {
-            return JSNumber::Int(value as i32);
-        }
-
-        JSNumber::Float(value)
+        JSNumber(value)
     }
 }
 
 impl From<i32> for JSNumber {
     fn from(value: i32) -> Self {
-        JSNumber::Int(value)
+        JSNumber(value as f64)
     }
 }
 
 impl From<u32> for JSNumber {
     fn from(value: u32) -> Self {
-        JSNumber::UInt(value)
+        JSNumber(value as f64)
     }
 }
 
@@ -330,11 +241,7 @@ impl Neg for JSNumber {
         }
 
         // 2. Return the negation of x; that is, compute a Number with the same magnitude but opposite sign.
-        match self {
-            JSNumber::Float(f) => JSNumber::Float(-f),
-            JSNumber::Int(i) => JSNumber::Int(-i),
-            JSNumber::UInt(u) => JSNumber::Int(-(u as i32)), // Convert unsigned to signed
-        }
+        JSNumber(-self.0)
     }
 }
 
@@ -344,7 +251,7 @@ impl Not for JSNumber {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        JSNumber::Int(!self.as_i32())
+        JSNumber(!(self.0 as i32) as f64)
     }
 }
 
@@ -355,10 +262,10 @@ impl Mul for JSNumber {
 
     fn mul(self, other: Self) -> Self::Output {
         if self.is_int() && other.is_int() {
-            return JSNumber::Int(self.as_i32() * other.as_i32());
+            return JSNumber(self.0 * other.0);
         }
 
-        (self.as_f64() * other.as_f64()).into()
+        (self.0 * other.0).into()
     }
 }
 
@@ -368,11 +275,7 @@ impl Div for JSNumber {
     type Output = Self;
 
     fn div(self, other: Self) -> Self::Output {
-        if self.is_int() && other.is_int() {
-            return JSNumber::Int(self.as_i32() / other.as_i32());
-        }
-
-        (self.as_f64() / other.as_f64()).into()
+        JSNumber(self.0 / other.0)
     }
 }
 
@@ -382,11 +285,7 @@ impl Rem for JSNumber {
     type Output = Self;
 
     fn rem(self, other: Self) -> Self::Output {
-        if self.is_int() && other.is_int() {
-            return JSNumber::Int(self.as_i32() % other.as_i32());
-        }
-
-        (self.as_f64() % other.as_f64()).into()
+        JSNumber(self.0 % other.0)
     }
 }
 
@@ -396,11 +295,7 @@ impl Add for JSNumber {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
-        if self.is_int() && other.is_int() {
-            return JSNumber::Int(self.as_i32() + other.as_i32());
-        }
-
-        (self.as_f64() + other.as_f64()).into()
+        JSNumber(self.0 + other.0)
     }
 }
 
@@ -410,11 +305,7 @@ impl Sub for JSNumber {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        if self.is_int() && other.is_int() {
-            return JSNumber::Int(self.as_i32() - other.as_i32());
-        }
-
-        (self.as_f64() - other.as_f64()).into()
+        JSNumber(self.0 - other.0)
     }
 }
 
@@ -424,7 +315,7 @@ impl Shl for JSNumber {
     type Output = Self;
 
     fn shl(self, other: Self) -> Self::Output {
-        JSNumber::Int(self.as_i32() << other.as_u32())
+        JSNumber(((self.0 as i32) << other.0 as u32) as f64)
     }
 }
 
@@ -434,7 +325,7 @@ impl Shr for JSNumber {
     type Output = Self;
 
     fn shr(self, other: Self) -> Self::Output {
-        JSNumber::Int(self.as_i32() >> other.as_u32())
+        JSNumber((self.0 as u32 >> other.0 as u32) as f64)
     }
 }
 
@@ -444,7 +335,7 @@ impl BitAnd for JSNumber {
     type Output = Self;
 
     fn bitand(self, other: Self) -> Self::Output {
-        JSNumber::Int(self.as_i32() & other.as_i32())
+        JSNumber((self.0 as i32 & other.0 as i32) as f64)
     }
 }
 
@@ -454,7 +345,7 @@ impl BitXor for JSNumber {
     type Output = Self;
 
     fn bitxor(self, other: Self) -> Self::Output {
-        JSNumber::Int(self.as_i32() ^ other.as_i32())
+        JSNumber((self.0 as i32 ^ other.0 as i32) as f64)
     }
 }
 
@@ -464,6 +355,6 @@ impl BitOr for JSNumber {
     type Output = Self;
 
     fn bitor(self, other: Self) -> Self::Output {
-        JSNumber::Int(self.as_i32() | other.as_i32())
+        JSNumber((self.0 as i32 | other.0 as i32) as f64)
     }
 }

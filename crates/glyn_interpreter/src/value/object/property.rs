@@ -35,8 +35,8 @@ impl JSObjectPropKey {
     /// https://262.ecma-international.org/15.0/#sec-object-type
     pub(crate) fn as_array_index(&self) -> Option<u32> {
         if let JSObjectPropKey::String(value) = self {
-            if let Ok(JSNumber::UInt(number)) = JSNumber::try_from(value.clone()) {
-                return Some(number);
+            if let Ok(JSNumber(number)) = JSNumber::try_from(value.clone()) {
+                return Some(number as u32);
             }
         }
 

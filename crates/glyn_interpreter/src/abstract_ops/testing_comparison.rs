@@ -72,7 +72,7 @@ pub(crate) fn is_integral_number(_agent: &JSAgent, arg: JSValue) -> bool {
 
     match number {
         // 3. If truncate(ℝ(argument)) ≠ ℝ(argument), return false.
-        JSNumber::Float(value) => &value.trunc() == value,
+        JSNumber(value) => &value.trunc() == value,
         // 4. Return true.
         _ => true,
     }

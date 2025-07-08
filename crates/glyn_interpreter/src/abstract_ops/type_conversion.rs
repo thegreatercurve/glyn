@@ -120,14 +120,14 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
         // 4. If argument is either null or false, return +0𝔽.
         JSValue::Null | JSValue::Bool(false) => return Ok(JSNumber::zero()),
         // 5. If argument is true, return +1𝔽
-        JSValue::Bool(true) => return Ok(JSNumber::Int(1)),
+        JSValue::Bool(true) => return Ok(JSNumber(1.0)),
         // 6. If argument is a String, return StringToNumber(argument).
         JSValue::String(ref string) => return Ok(string_to_number(agent, string)),
         _ => {}
     };
 
     // 7. Assert: argument is an Object.
-    debug_assert!(arg.is_object(),);
+    debug_assert!(arg.is_object());
 
     // 8. Let primValue be ? ToPrimitive(argument, number).
     let prim_value = to_primitive(agent, arg, PrimitivePreferredType::Number)?;
@@ -170,16 +170,16 @@ pub(crate) fn to_integer_or_infinity(
 
     // 3. If number is +∞𝔽, return +∞.
     if number.is_pos_infinite() {
-        return Ok(JSNumber::Float(f64::INFINITY));
+        return Ok(JSNumber(f64::INFINITY));
     }
 
     // 4. If number is -∞𝔽, return -∞.
     if number.is_neg_infinite() {
-        return Ok(JSNumber::Float(f64::NEG_INFINITY));
+        return Ok(JSNumber(f64::NEG_INFINITY));
     }
 
     // 5. Return truncate(ℝ(number)).
-    Ok(number.truncate())
+    Ok(JSNumber(number.0.trunc()))
 }
 
 /// 7.1.6 ToInt32 ( argument )
@@ -189,22 +189,10 @@ pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<J
     let number = to_number(agent, argument)?;
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
-    if !number.is_finite() || number.is_zero() {
-        return Ok(JSNumber::zero());
-    }
-
     // 3. Let int be truncate(ℝ(number)).
-    let int = number.truncate();
-
     // 4. Let int32bit be int modulo 2^32.
-    let int32bit = int % JSNumber::Int(2i32.pow(32));
-
     // 5. If int32bit ≥ 2^31, return 𝔽(int32bit - 2^32); otherwise return 𝔽(int32bit).
-    if int32bit >= JSNumber::Int(2i32.pow(31)) {
-        Ok(int32bit - JSNumber::Int(2i32.pow(32)))
-    } else {
-        Ok(int32bit)
-    }
+    Ok(JSNumber(number.0 as i32 as f64))
 }
 
 /// 7.1.7 ToUint32 ( argument )
@@ -214,16 +202,10 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     let number = to_number(agent, argument)?;
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
-    if !number.is_finite() || number.is_zero() {
-        return Ok(JSNumber::zero());
-    }
-
     // 3. Let int be truncate(ℝ(number)).
-    let int = number.truncate();
-
     // 4. Let int32bit be int modulo 2^32.
     // 5. Return 𝔽(int32bit).
-    Ok(int % JSNumber::UInt(2u32.pow(32)))
+    Ok(JSNumber(number.0 as u32 as f64))
 }
 
 /// 7.1.17 ToString ( argument )
@@ -340,9 +322,9 @@ pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     }
 
     // 3. Return 𝔽(min(len, 2^53 - 1)).
-    let clamped_len = min(len.as_i64(), JSNumber::MAX_SAFE_INTEGER);
-
-    Ok(JSNumber::Float(clamped_len as f64))
+    Ok(JSNumber(
+        min(len.0 as i64, JSNumber::MAX_SAFE_INTEGER) as f64
+    ))
 }
 
 /// 7.1.21 CanonicalNumericIndexString ( argument )
