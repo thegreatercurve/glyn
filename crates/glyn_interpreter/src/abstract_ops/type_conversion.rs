@@ -24,7 +24,7 @@ pub(crate) fn to_primitive(
     agent: &JSAgent,
     input: JSValue,
     preferred_type: PrimitivePreferredType,
-) -> JSValue {
+) -> CompletionRecord<JSValue> {
     let mut preferred_type = preferred_type;
 
     // 1. If input is an Object, then
@@ -64,7 +64,7 @@ pub(crate) fn to_primitive(
     }
 
     // 2. Return input.
-    input
+    Ok(input)
 }
 
 /// 7.1.2 ToBoolean ( argument )
@@ -95,7 +95,7 @@ pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
 /// https://262.ecma-international.org/15.0/#sec-tonumeric
 pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSValue> {
     // 1. Let primValue be ? ToPrimitive(value, number).
-    let prim_value = to_primitive(agent, value, PrimitivePreferredType::Number);
+    let prim_value = to_primitive(agent, value, PrimitivePreferredType::Number)?;
 
     // 2. If primValue is a BigInt, return primValue.
     if prim_value.is_big_int() {
@@ -130,7 +130,7 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
     debug_assert!(arg.is_object(),);
 
     // 8. Let primValue be ? ToPrimitive(argument, number).
-    let prim_value = to_primitive(agent, arg, PrimitivePreferredType::Number);
+    let prim_value = to_primitive(agent, arg, PrimitivePreferredType::Number)?;
 
     // 9. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
@@ -276,7 +276,7 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     debug_assert!(argument.is_object());
 
     // 10. Let primValue be ? ToPrimitive(argument, string).
-    let prim_value = to_primitive(agent, argument, PrimitivePreferredType::String);
+    let prim_value = to_primitive(agent, argument, PrimitivePreferredType::String)?;
 
     // 11. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
@@ -319,7 +319,7 @@ pub(crate) fn to_property_key(
     argument: JSValue,
 ) -> CompletionRecord<JSObjectPropKey> {
     // 1. Let key be ? ToPrimitive(argument, string).
-    let key = to_primitive(agent, argument, PrimitivePreferredType::String);
+    let key = to_primitive(agent, argument, PrimitivePreferredType::String)?;
 
     // 2. If key is a Symbol, then
     if let Some(symbol) = key.as_symbol() {
@@ -360,12 +360,12 @@ pub(crate) fn canonical_numeric_index_string(
     }
 
     // 2. Let n be ! ToNumber(argument).
-    let Ok(n) = to_number(agent, argument.clone().into()) else {
+    let Ok(n) = to_number(agent, JSValue::from(argument.clone())) else {
         return None;
     };
 
     // 3. If ! ToString(n) is argument, return n.
-    let Ok(string) = to_string(agent, n.clone().into()) else {
+    let Ok(string) = to_string(agent, JSValue::from(n.clone())) else {
         return None;
     };
 

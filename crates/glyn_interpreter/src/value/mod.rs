@@ -69,7 +69,7 @@ impl JSValue {
         }
     }
 
-    fn as_number_mut(&mut self) -> Option<&mut JSNumber> {
+    pub(crate) fn as_number_mut(&mut self) -> Option<&mut JSNumber> {
         match self {
             JSValue::Number(value) => Some(value),
             _ => None,
@@ -141,15 +141,21 @@ impl From<i32> for JSValue {
     }
 }
 
-impl From<JSString> for JSValue {
-    fn from(value: JSString) -> Self {
-        JSValue::String(value)
-    }
-}
-
 impl From<JSNumber> for JSValue {
     fn from(value: JSNumber) -> Self {
         JSValue::Number(value)
+    }
+}
+
+impl From<String> for JSValue {
+    fn from(value: String) -> Self {
+        JSValue::String(JSString::from(value))
+    }
+}
+
+impl From<JSString> for JSValue {
+    fn from(value: JSString) -> Self {
+        JSValue::String(value)
     }
 }
 

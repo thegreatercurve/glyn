@@ -101,6 +101,7 @@ impl<'a> Parser<'a> {
 
                 LiteralType::Int64(f64_value)
             }
+            Token::String(value) => LiteralType::String(value.to_string()),
             _ => self.error(CodeGenError::UnexpectedToken)?,
         };
 

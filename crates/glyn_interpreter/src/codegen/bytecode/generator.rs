@@ -11,6 +11,7 @@ pub(crate) enum LiteralType {
     Null,
     Boolean(bool),
     Int64(f64),
+    String(String),
 }
 
 #[derive(Clone, Debug, Default)]
@@ -92,6 +93,7 @@ impl BytecodeGenerator {
             LiteralType::Null => self.emit.null(),
             LiteralType::Boolean(value) => self.emit.boolean(*value),
             LiteralType::Int64(value) => self.emit.constant(JSValue::from(*value)),
+            LiteralType::String(value) => self.emit.constant(JSValue::from(value.clone())),
         };
 
         Ok(())

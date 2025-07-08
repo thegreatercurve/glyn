@@ -89,7 +89,7 @@ pub(crate) fn script_evaluation(
     let opt_result = VM::new(agent, script).evaluate_script();
 
     // b. If result is a normal completion and result.[[Value]] is empty, then
-    let Some(result) = opt_result else {
+    let Ok(result) = opt_result else {
         // i. Set result to NormalCompletion(undefined).
         return Ok(JSValue::Undefined);
     };
