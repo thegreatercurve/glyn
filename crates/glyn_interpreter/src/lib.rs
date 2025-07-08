@@ -9,3 +9,4 @@ mod vm;
 
 pub use eval_script::eval_script;
 pub use runtime::agent::JSAgent;
+pub use value::JSValue;
