@@ -288,6 +288,23 @@ impl JSNumber {
         false
     }
 
+    /// 6.1.6.1.12 Number::lessThan ( x, y )
+    /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-lessthan
+    pub(crate) fn less_than(&self, y: &Self) -> Option<bool> {
+        // 1. If x is NaN, return undefined.
+        if self.is_nan() {
+            return None;
+        }
+
+        // 2. If y is NaN, return undefined.
+        if y.is_nan() {
+            return None;
+        }
+
+        // Rust and JavaScript follow IEEE 754 for floating point arithmetic, so we can use the built-in less than operator.
+        Some(self.0 < y.0)
+    }
+
     /// 6.1.6.1.14 Number::sameValue ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-samevalue
     pub(crate) fn same_value(&self, y: &Self) -> bool {
