@@ -1,7 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 
 // 12.7.2 Keywords and Reserved Words
-// https://tc39.es/ecma262/#sec-keywords-and-reserved-words
+// https://262.ecma-international.org/16.0/#sec-keywords-and-reserved-words
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Keyword {
     Await,
@@ -286,7 +286,7 @@ impl<'a> From<&'a str> for Token<'a> {
 
 impl<'a> Token<'a> {
     // 12.7 Names and Keywords
-    // https://tc39.es/ecma262/#prod-PrivateIdentifier
+    // https://262.ecma-international.org/16.0/#prod-PrivateIdentifier
     pub(crate) fn is_private_identifier(&self) -> bool {
         matches!(self, Token::PrivateIdentifier(_))
     }
@@ -296,7 +296,7 @@ impl<'a> Token<'a> {
     }
 
     // 12.9.6 Template Literal Lexical Components
-    // https://tc39.es/ecma262/#sec-template-literal-lexical-components
+    // https://262.ecma-international.org/16.0/#sec-template-literal-lexical-components
     pub(crate) fn is_template_start(&self) -> bool {
         matches!(self, Token::TemplateNoSubstitution | Token::TemplateHead)
     }
@@ -312,12 +312,12 @@ impl<'a> Token<'a> {
     }
 
     // 13.1 Identifiers
-    // https://tc39.es/ecma262/#prod-IdentifierReference
+    // https://262.ecma-international.org/16.0/#prod-IdentifierReference
     pub(crate) fn is_identifier_reference(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Yield | Keyword::Await)) || self.is_identifier()
     }
 
-    // https://tc39.es/ecma262/#prod-ReservedWord
+    // https://262.ecma-international.org/16.0/#prod-ReservedWord
     pub(crate) fn is_reserved_keyword(&self) -> bool {
         matches!(
             self,
@@ -365,18 +365,18 @@ impl<'a> Token<'a> {
     }
 
     // 13.1 Identifiers
-    // https://tc39.es/ecma262/#prod-BindingIdentifier
+    // https://262.ecma-international.org/16.0/#prod-BindingIdentifier
     pub(crate) fn is_binding_identifier(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Yield | Keyword::Await)) || self.is_identifier()
     }
 
-    // https://tc39.es/ecma262/#prod-Identifier
+    // https://262.ecma-international.org/16.0/#prod-Identifier
     pub(crate) fn is_identifier(&self) -> bool {
         self.is_identifier_name() && !self.is_reserved_keyword()
     }
 
     // 13.2.5 Property Accessors
-    // https://tc39.es/ecma262/#prod-PropertyName
+    // https://262.ecma-international.org/16.0/#prod-PropertyName
     pub(crate) fn is_property_name(&self) -> bool {
         matches!(
             self,
@@ -385,13 +385,13 @@ impl<'a> Token<'a> {
     }
 
     // 13.4 Update Expressions
-    // https://tc39.es/ecma262/#prod-UpdateExpression
+    // https://262.ecma-international.org/16.0/#prod-UpdateExpression
     pub(crate) fn is_update_operator(&self) -> bool {
         matches!(self, Token::Increment | Token::Decrement)
     }
 
     //  13.5 Unary Operators
-    // https://tc39.es/ecma262/#prod-UnaryExpression
+    // https://262.ecma-international.org/16.0/#prod-UnaryExpression
     pub(crate) fn is_unary_operator(&self) -> bool {
         matches!(
             self,
@@ -404,31 +404,31 @@ impl<'a> Token<'a> {
     }
 
     // 13.6 Exponentiation Operators
-    // https://tc39.es/ecma262/#prod-ExponentiationExpression
+    // https://262.ecma-international.org/16.0/#prod-ExponentiationExpression
 
     // 13.7 Multiplicative Operators
-    // https://tc39.es/ecma262/#prod-MultiplicativeExpression
+    // https://262.ecma-international.org/16.0/#prod-MultiplicativeExpression
 
     // 13.8 Additive Operators
-    // https://tc39.es/ecma262/#prod-AdditiveExpression
+    // https://262.ecma-international.org/16.0/#prod-AdditiveExpression
 
     // 13.9 Bitwise Shift Operators
-    // https://tc39.es/ecma262/#prod-ShiftExpression
+    // https://262.ecma-international.org/16.0/#prod-ShiftExpression
 
     // 13.10 Relational Operators
-    // https://tc39.es/ecma262/#prod-RelationalExpression
+    // https://262.ecma-international.org/16.0/#prod-RelationalExpression
 
     // 13.11 Equality Operators
-    // https://tc39.es/ecma262/#prod-EqualityExpression
+    // https://262.ecma-international.org/16.0/#prod-EqualityExpression
 
     // 13.12 Binary Bitwise Operators
-    // https://tc39.es/ecma262/#prod-BitwiseANDExpression
-    // https://tc39.es/ecma262/#prod-BitwiseXORExpression
-    // https://tc39.es/ecma262/#prod-BitwiseORExpression
+    // https://262.ecma-international.org/16.0/#prod-BitwiseANDExpression
+    // https://262.ecma-international.org/16.0/#prod-BitwiseXORExpression
+    // https://262.ecma-international.org/16.0/#prod-BitwiseORExpression
 
     // 13.13 Binary Logical Operators
-    // https://tc39.es/ecma262/#prod-LogicalANDExpression
-    // https://tc39.es/ecma262/#prod-LogicalORExpression
+    // https://262.ecma-international.org/16.0/#prod-LogicalANDExpression
+    // https://262.ecma-international.org/16.0/#prod-LogicalORExpression
     pub(crate) fn is_binary_operator(&self) -> bool {
         matches!(self, |Token::BitOr| Token::BitXor
             | Token::BitAnd
@@ -453,7 +453,7 @@ impl<'a> Token<'a> {
     }
 
     // 13.13 Binary Logical Operators
-    // https://tc39.es/ecma262/#prod-LogicalORExpression
+    // https://262.ecma-international.org/16.0/#prod-LogicalORExpression
     pub(crate) fn is_logical_operator(&self) -> bool {
         matches!(
             self,
@@ -462,7 +462,7 @@ impl<'a> Token<'a> {
     }
 
     // 13.15 Assignment Operators
-    // https://tc39.es/ecma262/#prod-AssignmentOperator
+    // https://262.ecma-international.org/16.0/#prod-AssignmentOperator
     pub(crate) fn is_assignment_operator(&self) -> bool {
         matches!(self, |Token::MultiplyAssign| Token::DivideAssign
             | Token::ModuloAssign
@@ -483,26 +483,26 @@ impl<'a> Token<'a> {
     }
 
     // 13.15.5 Destructuring Assignment
-    // https://tc39.es/ecma262/#prod-DestructuringAssignment
+    // https://262.ecma-international.org/16.0/#prod-DestructuringAssignment
     pub(crate) fn is_assignment_pattern_start(&self) -> bool {
         matches!(self, Token::LeftBracket | Token::LeftBrace)
     }
 
     // 14 ECMAScript Language: Statements and Declarations
-    // https://tc39.es/ecma262/#prod-Declaration
+    // https://262.ecma-international.org/16.0/#prod-Declaration
     pub(crate) fn is_declaration_start(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Function | Keyword::Class))
             | self.is_lexical_declaration_start()
     }
 
     // 14 ECMAScript Language: Statements and Declarations
-    // https://tc39.es/ecma262/#prod-HoistableDeclaration
+    // https://262.ecma-international.org/16.0/#prod-HoistableDeclaration
     pub(crate) fn is_hoistable_declaration_start(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Function | Keyword::Async))
     }
 
     // 14.3.1 Let and Const Declarations
-    // https://tc39.es/ecma262/#prod-LexicalDeclaration
+    // https://262.ecma-international.org/16.0/#prod-LexicalDeclaration
     pub(crate) fn is_lexical_declaration_start(&self) -> bool {
         matches!(
             self,
@@ -511,25 +511,25 @@ impl<'a> Token<'a> {
     }
 
     // 14.3.1 Let and Const Declarations
-    // https://tc39.es/ecma262/#prod-LexicalBinding
+    // https://262.ecma-international.org/16.0/#prod-LexicalBinding
     pub(crate) fn is_lexical_binding_start(&self) -> bool {
         self.is_binding_identifier() || self.is_binding_pattern_start()
     }
 
     // 14.3.2 Variable Statement
-    // https://tc39.es/ecma262/#prod-VariableStatement
+    // https://262.ecma-international.org/16.0/#prod-VariableStatement
     pub(crate) fn is_variable_declaration_start(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Var))
     }
 
     // 14.3.3 Destructuring Binding Patterns
-    // https://tc39.es/ecma262/#prod-BindingPattern
+    // https://262.ecma-international.org/16.0/#prod-BindingPattern
     pub(crate) fn is_binding_pattern_start(&self) -> bool {
         matches!(self, Token::LeftBracket | Token::LeftBrace)
     }
 
     // 15.7 Class Definitions
-    // https://tc39.es/ecma262/#prod-ClassElementName
+    // https://262.ecma-international.org/16.0/#prod-ClassElementName
     pub(crate) fn is_class_declaration_start(&self) -> bool {
         matches!(self, Token::Keyword(Keyword::Class))
     }

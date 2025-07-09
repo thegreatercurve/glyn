@@ -27,12 +27,12 @@ impl fmt::Display for LexerError {
 }
 
 // 12.1 Unicode Format-Control Characters
-// https://tc39.es/ecma262/#sec-unicode-format-control-characters
+// https://262.ecma-international.org/16.0/#sec-unicode-format-control-characters
 // const ZWNJ: char = '\u{200C}'; // Used in IdentifierPart
 // const ZWJ: char = '\u{200D}'; // Used in IdentifierPart
 
 // 12.2 White Space
-// https://tc39.es/ecma262/#sec-white-space
+// https://262.ecma-international.org/16.0/#sec-white-space
 fn is_char_whitespace(ch: char) -> bool {
     matches!(
         ch,
@@ -60,7 +60,7 @@ fn is_char_whitespace(ch: char) -> bool {
 }
 
 // 12.3 Line Terminators
-// https://tc39.es/ecma262/#sec-line-terminators
+// https://262.ecma-international.org/16.0/#sec-line-terminators
 fn is_char_line_terminator(ch: char) -> bool {
     matches!(
         ch,
@@ -72,7 +72,7 @@ fn is_char_line_terminator(ch: char) -> bool {
 }
 
 // 12.7 Names and Keywords
-// https://tc39.es/ecma262/#sec-names-and-keywords
+// https://262.ecma-international.org/16.0/#sec-names-and-keywords
 fn is_char_identifier_start_simple(ch: char) -> bool {
     matches!(ch, '$' | '_') || ch.is_ascii_alphabetic()
 }
@@ -90,7 +90,7 @@ fn is_char_identifier_part(ch: char) -> bool {
 }
 
 // 12.8 Punctuators
-// https://tc39.es/ecma262/#sec-punctuators
+// https://262.ecma-international.org/16.0/#sec-punctuators
 fn is_char_punctuator_start(ch: char) -> bool {
     matches!(
         ch,
@@ -205,10 +205,10 @@ impl<'a> Lexer<'a> {
     }
 
     // 12.2 White Space
-    // https://tc39.es/ecma262/#sec-white-space
+    // https://262.ecma-international.org/16.0/#sec-white-space
 
     // 12.3 Line Terminators
-    // https://tc39.es/ecma262/#sec-line-terminators
+    // https://262.ecma-international.org/16.0/#sec-line-terminators
     fn js_skip_whitespace_and_line_terminators(&mut self) {
         while !self.is_eof() {
             let ch = self.current();
@@ -222,7 +222,7 @@ impl<'a> Lexer<'a> {
     }
 
     // 12.7 Names and Keywords
-    // https://tc39.es/ecma262/#sec-names-and-keywords
+    // https://262.ecma-international.org/16.0/#sec-names-and-keywords
     fn js_lex_identifier_name_or_keyword(&mut self) -> Result<Token<'a>, LexerError> {
         let start = self.current_byte_pos();
 
@@ -249,7 +249,7 @@ impl<'a> Lexer<'a> {
     }
 
     // 12.8 Punctuators
-    // https://tc39.es/ecma262/#prod-Punctuator
+    // https://262.ecma-international.org/16.0/#prod-Punctuator
     fn js_lex_punctuator(&mut self) -> Result<Token<'a>, LexerError> {
         let ch = self.current();
 
@@ -475,7 +475,7 @@ impl<'a> Lexer<'a> {
     }
 
     // 12.9.3 Numeric Literals
-    // https://tc39.es/ecma262/#prod-NumericLiteral
+    // https://262.ecma-international.org/16.0/#prod-NumericLiteral
     fn js_lex_number(&mut self) -> Result<Token<'a>, LexerError> {
         let start = self.current_byte_pos();
 
@@ -505,7 +505,7 @@ impl<'a> Lexer<'a> {
     }
 
     // 12.9.4 String Literals
-    // https://tc39.es/ecma262/#prod-StringLiteral
+    // https://262.ecma-international.org/16.0/#prod-StringLiteral
     fn js_lex_string(&mut self) -> Result<Token<'a>, LexerError> {
         let start = self.current_byte_pos();
 

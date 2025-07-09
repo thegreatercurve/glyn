@@ -4,10 +4,10 @@ use crate::{
 };
 
 // 14 ECMAScript Language: Statements and Declarations
-// https://tc39.es/ecma262/#prod-Statement
+// https://262.ecma-international.org/16.0/#prod-Statement
 impl<'a> Parser<'a> {
     // 14 ECMAScript Language: Statements and Declarations
-    // https://tc39.es/ecma262/#prod-Statement
+    // https://262.ecma-international.org/16.0/#prod-Statement
     fn js_parse_statement(&mut self) -> CodeGenResult {
         let current_token = self.current_token.clone();
 
@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
     }
 
     // 14.2 Block
-    // https://tc39.es/ecma262/#prod-StatementList
+    // https://262.ecma-international.org/16.0/#prod-StatementList
     pub(crate) fn js_parse_statement_list(&mut self) -> CodeGenResult {
         while !self.is_eof() {
             self.js_parse_statement()?;

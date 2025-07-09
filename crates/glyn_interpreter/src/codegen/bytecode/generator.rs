@@ -83,7 +83,7 @@ impl BytecodeGenerator {
     }
 
     /// 13.2.3 Literals
-    /// https://tc39.es/ecma262/#prod-Literal
+    /// https://262.ecma-international.org/16.0/#prod-Literal
     ///  Literal : Null
     ///  Literal : BooleanLiteral
     ///  Literal : NumericLiteral
