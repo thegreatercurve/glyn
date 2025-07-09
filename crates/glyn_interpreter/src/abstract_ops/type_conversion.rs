@@ -12,7 +12,7 @@ use crate::value::{
 // 7.1 Type Conversion
 // https://262.ecma-international.org/16.0/#sec-type-conversion
 
-pub(crate) enum PrimitivePreferredType {
+pub(crate) enum PreferredPrimType {
     Default,
     String,
     Number,
@@ -23,7 +23,7 @@ pub(crate) enum PrimitivePreferredType {
 pub(crate) fn to_primitive(
     agent: &JSAgent,
     input: JSValue,
-    preferred_type: PrimitivePreferredType,
+    preferred_type: PreferredPrimType,
 ) -> CompletionRecord<JSValue> {
     let mut preferred_type = preferred_type;
 
@@ -37,14 +37,14 @@ pub(crate) fn to_primitive(
             preferred_type = match preferred_type {
                 // i. If preferredType is not present, then
                 // 1. Let hint be "default".
-                PrimitivePreferredType::Default => PrimitivePreferredType::Default,
+                PreferredPrimType::Default => PreferredPrimType::Default,
                 // ii. Else if preferredType is string, then
                 // 1. Let hint be "string".
-                PrimitivePreferredType::String => PrimitivePreferredType::String,
+                PreferredPrimType::String => PreferredPrimType::String,
                 // iii. Else,
                 // 1. Assert: preferredType is number.
                 // 2. Let hint be "number".
-                PrimitivePreferredType::Number => PrimitivePreferredType::Number,
+                PreferredPrimType::Number => PreferredPrimType::Number,
             };
 
             todo!();
@@ -55,8 +55,8 @@ pub(crate) fn to_primitive(
         }
 
         // c. If preferredType is not present, let preferredType be number.
-        if matches!(preferred_type, PrimitivePreferredType::Default) {
-            preferred_type = PrimitivePreferredType::Number;
+        if matches!(preferred_type, PreferredPrimType::Default) {
+            preferred_type = PreferredPrimType::Number;
         }
 
         // d. Return ? OrdinaryToPrimitive(input, preferredType).
@@ -95,7 +95,7 @@ pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
 /// https://262.ecma-international.org/16.0/#sec-tonumeric
 pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSValue> {
     // 1. Let primValue be ? ToPrimitive(value, number).
-    let prim_value = to_primitive(agent, value, PrimitivePreferredType::Number)?;
+    let prim_value = to_primitive(agent, value, PreferredPrimType::Number)?;
 
     // 2. If primValue is a BigInt, return primValue.
     if prim_value.is_big_int() {
@@ -130,7 +130,7 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
     debug_assert!(arg.is_object());
 
     // 8. Let primValue be ? ToPrimitive(argument, number).
-    let prim_value = to_primitive(agent, arg, PrimitivePreferredType::Number)?;
+    let prim_value = to_primitive(agent, arg, PreferredPrimType::Number)?;
 
     // 9. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
@@ -255,7 +255,7 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     debug_assert!(argument.is_object());
 
     // 10. Let primValue be ? ToPrimitive(argument, string).
-    let prim_value = to_primitive(agent, argument, PrimitivePreferredType::String)?;
+    let prim_value = to_primitive(agent, argument, PreferredPrimType::String)?;
 
     // 11. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
@@ -298,7 +298,7 @@ pub(crate) fn to_property_key(
     argument: JSValue,
 ) -> CompletionRecord<JSObjectPropKey> {
     // 1. Let key be ? ToPrimitive(argument, string).
-    let key = to_primitive(agent, argument, PrimitivePreferredType::String)?;
+    let key = to_primitive(agent, argument, PreferredPrimType::String)?;
 
     // 2. If key is a Symbol, then
     if let Some(symbol) = key.as_symbol() {

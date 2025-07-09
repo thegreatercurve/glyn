@@ -1,4 +1,6 @@
-use crate::abstract_ops::type_conversion::{to_numeric, to_primitive, PrimitivePreferredType};
+use crate::abstract_ops::type_conversion::{
+    to_number, to_numeric, to_primitive, PreferredPrimType,
+};
 use crate::runtime::agent::JSAgent;
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{number::JSNumber, object::JSObjAddr, JSValue};
@@ -137,19 +139,19 @@ pub(crate) fn is_less_than(
     // 1. If LeftFirst is true, then
     if left_first {
         // a. Let px be ? ToPrimitive(x, number).
-        px = to_primitive(agent, x, PrimitivePreferredType::Number)?;
+        px = to_primitive(agent, x, PreferredPrimType::Number)?;
 
         // b. Let py be ? ToPrimitive(y, number).
-        py = to_primitive(agent, y, PrimitivePreferredType::Number)?;
+        py = to_primitive(agent, y, PreferredPrimType::Number)?;
     }
     // 2. Else,
     else {
         // a. NOTE: The order of evaluation needs to be reversed to preserve left to right evaluation.
         // b. Let py be ? ToPrimitive(y, number).
-        py = to_primitive(agent, y, PrimitivePreferredType::Number)?;
+        py = to_primitive(agent, y, PreferredPrimType::Number)?;
 
         // c. Let px be ? ToPrimitive(x, number).
-        px = to_primitive(agent, x, PrimitivePreferredType::Number)?;
+        px = to_primitive(agent, x, PreferredPrimType::Number)?;
     }
 
     // 3. If px is a String and py is a String, then
@@ -249,6 +251,101 @@ pub(crate) fn is_less_than(
                 < ny.as_number().unwrap_or_else(|| unreachable!()).0,
         ))
     }
+}
+
+/// 7.2.13 IsLooselyEqual ( x, y )
+/// https://262.ecma-international.org/16.0/#sec-islooselyequal
+pub(crate) fn is_loosely_equal(agent: &JSAgent, x: JSValue, y: JSValue) -> CompletionRecord<bool> {
+    // 1. If SameType(x, y) is true, then
+    if same_type(&x, &y) {
+        // a. Return IsStrictlyEqual(x, y).
+        return Ok(is_strictly_equal(&x, &y));
+    }
+
+    // 2. If x is null and y is undefined, return true.
+    if x.is_null() && y.is_undefined() {
+        return Ok(true);
+    }
+
+    // 3. If x is undefined and y is null, return true.
+    if x.is_undefined() && y.is_null() {
+        return Ok(true);
+    }
+
+    // 4. NOTE: This step is replaced in section B.3.6.2.
+    // 4. Perform the following steps:
+    // a. If x is an Object, x has an [[IsHTMLDDA]] internal slot, and y is either undefined or null, return true.
+    // b. If x is either undefined or null, y is an Object, and y has an [[IsHTMLDDA]] internal slot, return true.
+    // TODO: Implement or decide to implement annex B.
+
+    // 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
+    if x.is_number() && y.is_string() {
+        let y_num = to_number(agent, y)?.into();
+
+        return is_loosely_equal(agent, x, y_num);
+    }
+
+    // 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
+    if x.is_string() && y.is_number() {
+        let x_num = to_number(agent, x)?.into();
+
+        return is_loosely_equal(agent, x_num, y);
+    }
+
+    // 7. If x is a BigInt and y is a String, then
+    if x.is_big_int() && y.is_string() {
+        // a. Let n be StringToBigInt(y).
+        // b. If n is undefined, return false.
+        // c. Return ! IsLooselyEqual(x, n).
+        todo!();
+    }
+
+    // 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
+    if x.is_string() && y.is_big_int() {
+        return is_loosely_equal(agent, y, x);
+    }
+
+    // 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
+    if x.is_boolean() {
+        let x_num = to_number(agent, x)?.into();
+
+        return is_loosely_equal(agent, x_num, y);
+    }
+
+    // 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
+    if y.is_boolean() {
+        let y_num = to_number(agent, y)?.into();
+
+        return is_loosely_equal(agent, x, y_num);
+    }
+
+    // 11. If x is either a String, a Number, a BigInt, or a Symbol and y is an Object, return ! IsLooselyEqual(x, ? ToPrimitive(y)).
+    if (x.is_string() || x.is_number() || x.is_big_int() || x.is_symbol()) && y.is_object() {
+        let y_prim = to_primitive(agent, y, PreferredPrimType::Default)?;
+
+        return is_loosely_equal(agent, x, y_prim);
+    }
+
+    // 12. If x is an Object and y is either a String, a Number, a BigInt, or a Symbol, return ! IsLooselyEqual(? ToPrimitive(x), y).
+    if x.is_object() && (y.is_string() || y.is_number() || y.is_big_int() || y.is_symbol()) {
+        let x_prim = to_primitive(agent, x, PreferredPrimType::Default)?;
+
+        return is_loosely_equal(agent, x_prim, y);
+    }
+
+    // 13. If x is a BigInt and y is a Number, or if x is a Number and y is a BigInt, then
+    if (x.is_big_int() && y.is_number()) || (x.is_number() && y.is_big_int()) {
+        // a. If x is not finite or y is not finite, return false.
+        if (x.is_number() && !x.is_finite()) || (y.is_number() && !y.is_finite()) {
+            return Ok(false);
+        }
+
+        // b. If ℝ(x) = ℝ(y), return true; otherwise return false.
+        return Ok(x == y);
+    }
+
+    // 14. Return false.
+    Ok(false)
 }
 
 /// 7.2.14 IsStrictlyEqual ( x, y )

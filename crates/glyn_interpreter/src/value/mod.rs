@@ -137,6 +137,10 @@ impl JSValue {
     pub(crate) fn is_neg_infinite(&self) -> bool {
         JSNumber::try_from(self).is_ok_and(|n| n.is_neg_infinite())
     }
+
+    pub(crate) fn is_finite(&self) -> bool {
+        JSNumber::try_from(self).is_ok_and(|n| n.is_finite())
+    }
 }
 
 impl From<bool> for JSValue {

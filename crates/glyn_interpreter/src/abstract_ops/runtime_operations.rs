@@ -1,7 +1,7 @@
 use crate::{
     abstract_ops::{
         testing_comparison::same_type,
-        type_conversion::{to_numeric, to_primitive, to_string, PrimitivePreferredType},
+        type_conversion::{to_numeric, to_primitive, to_string, PreferredPrimType},
     },
     lexer::Token,
     runtime::completion::CompletionRecord,
@@ -20,10 +20,10 @@ pub(crate) fn apply_string_or_numeric_binary_operator(
     // NOTE: Implemented in the VM.
 
     // a. Let lprim be ? ToPrimitive(lval).
-    let lprim = to_primitive(agent, lval, PrimitivePreferredType::Default)?;
+    let lprim = to_primitive(agent, lval, PreferredPrimType::Default)?;
 
     // b. Let rprim be ? ToPrimitive(rval).
-    let rprim = to_primitive(agent, rval, PrimitivePreferredType::Default)?;
+    let rprim = to_primitive(agent, rval, PreferredPrimType::Default)?;
 
     // c. If lprim is a String or rprim is a String, then
     if lprim.is_string() || rprim.is_string() {
