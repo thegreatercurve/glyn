@@ -213,7 +213,7 @@ pub(crate) fn get_method(
     let func = getv(agent, value, key)?;
 
     // 2. If func is either undefined or null, return undefined.
-    if matches!(func, JSValue::Undefined | JSValue::Null) {
+    if func.is_undefined() || func.is_null() {
         return Ok(None);
     };
 

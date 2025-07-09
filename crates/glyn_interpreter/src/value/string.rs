@@ -4,6 +4,16 @@
 pub(crate) struct JSString(pub(crate) String);
 
 impl JSString {
+    pub(crate) fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub(crate) fn utf16_len(&self) -> usize {
+        self.0.chars().count()
+    }
+}
+
+impl JSString {
     pub(crate) fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

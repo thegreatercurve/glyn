@@ -1,4 +1,4 @@
-use crate::value::string::JSString;
+use crate::{value::string::JSString, JSValue};
 
 /// 6.1.6.1 The Number Type
 /// https://262.ecma-international.org/15.0/#sec-numeric-types-number
@@ -399,6 +399,18 @@ impl TryFrom<JSString> for JSNumber {
             Ok(JSNumber(number))
         } else {
             Err(format!("Invalid number: {}", value.0).into())
+        }
+    }
+}
+
+impl TryFrom<&JSValue> for JSNumber {
+    type Error = JSValue;
+
+    fn try_from(value: &JSValue) -> Result<Self, Self::Error> {
+        if let JSValue::Number(number) = value {
+            Ok(number.clone())
+        } else {
+            Err(value.clone())
         }
     }
 }

@@ -29,6 +29,14 @@ pub enum JSValue {
 }
 
 impl JSValue {
+    pub(crate) fn is_undefined(&self) -> bool {
+        self == &JSValue::Undefined
+    }
+
+    pub(crate) fn is_null(&self) -> bool {
+        self == &JSValue::Null
+    }
+
     pub(crate) fn is_boolean(&self) -> bool {
         matches!(self, JSValue::Bool(_))
     }
@@ -114,6 +122,20 @@ impl JSValue {
             JSValue::Symbol(value) => Some(value),
             _ => None,
         }
+    }
+}
+
+impl JSValue {
+    pub(crate) fn is_nan(&self) -> bool {
+        JSNumber::try_from(self).is_ok_and(|n| n.is_nan())
+    }
+
+    pub(crate) fn is_pos_infinite(&self) -> bool {
+        JSNumber::try_from(self).is_ok_and(|n| n.is_pos_infinite())
+    }
+
+    pub(crate) fn is_neg_infinite(&self) -> bool {
+        JSNumber::try_from(self).is_ok_and(|n| n.is_neg_infinite())
     }
 }
 
