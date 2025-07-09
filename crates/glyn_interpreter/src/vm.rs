@@ -3,7 +3,7 @@ use crate::{
         runtime_operations::{
             apply_numeric_binary_operator, apply_string_or_numeric_binary_operator,
         },
-        testing_comparison::{is_less_than, is_strictly_equal},
+        testing_comparison::{is_less_than, is_loosely_equal, is_strictly_equal},
     },
     codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
     lexer::Token,
@@ -24,6 +24,7 @@ pub(crate) enum VMError {
     StackUnderflow,
     BinOperationError,
     UnaryOperationError,
+    LooselyEqualComparisonError,
     LessThanComparisonError,
     UnexpectedInstruction,
 }
@@ -65,8 +66,10 @@ impl<'a> VM<'a> {
             Instruction::Divide => self.exec_numeric_bin_op(Token::Divide),
             Instruction::Modulo => self.exec_numeric_bin_op(Token::Modulo),
             Instruction::Exponent => self.exec_numeric_bin_op(Token::Exponent),
-            Instruction::StrictEqual => self.exec_strictly_equal(),
-            Instruction::StrictNotEqual => self.exec_strictly_not_equal(),
+            Instruction::StrictEqual => self.exec_strictly_equal(true),
+            Instruction::StrictNotEqual => self.exec_strictly_equal(false),
+            Instruction::Equal => self.exec_loosely_equal(true),
+            Instruction::NotEqual => self.exec_loosely_equal(false),
             Instruction::LessThan => self.exec_less_than(),
             Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
             Instruction::GreaterThan => self.exec_greater_than(),
@@ -237,29 +240,30 @@ impl<'a> VM<'a> {
 
     /// 13.11.1 Runtime Semantics: Evaluation
     /// https://262.ecma-international.org/16.0/#sec-equality-operators-runtime-semantics-evaluation
-    /// EqualityExpression : EqualityExpression === RelationalExpression
-    fn exec_strictly_equal(&mut self) -> VMResult {
+    /// EqualityExpression : EqualityExpression == RelationalExpression
+    /// EqualityExpression : EqualityExpression != RelationalExpression
+    fn exec_loosely_equal(&mut self, check_equal: bool) -> VMResult {
         let (a, b) = self.pop_two()?;
 
-        // 5. Return IsStrictlyEqual(rval, lval).
-        let result = is_strictly_equal(&a, &b);
+        let result =
+            is_loosely_equal(self.agent, a, b).map_err(|_| VMError::LooselyEqualComparisonError)?;
 
-        self.push(JSValue::from(result));
+        self.push(JSValue::from(if check_equal { result } else { !result }));
 
         Ok(())
     }
 
     /// 13.11.1 Runtime Semantics: Evaluation
     /// https://262.ecma-international.org/16.0/#sec-equality-operators-runtime-semantics-evaluation
+    /// EqualityExpression : EqualityExpression === RelationalExpression
     /// EqualityExpression : EqualityExpression !== RelationalExpression
-    fn exec_strictly_not_equal(&mut self) -> VMResult {
+    fn exec_strictly_equal(&mut self, check_equal: bool) -> VMResult {
         let (a, b) = self.pop_two()?;
 
         // 5. Return IsStrictlyEqual(rval, lval).
         let result = is_strictly_equal(&a, &b);
 
-        // 6. If r is true, return false. Otherwise, return true.
-        self.push(JSValue::from(!result));
+        self.push(JSValue::from(if check_equal { result } else { !result }));
 
         Ok(())
     }
