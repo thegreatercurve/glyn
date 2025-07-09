@@ -267,7 +267,7 @@ impl JSNumber {
 
     /// 6.1.6.1.13 Number::equal ( x, y )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-equal
-    fn equal(self, y: Self) -> bool {
+    pub(crate) fn equal(&self, y: &Self) -> bool {
         // 1. If x is NaN, return false.
         // 2. If y is NaN, return false.
         if self.is_nan() || y.is_nan() {

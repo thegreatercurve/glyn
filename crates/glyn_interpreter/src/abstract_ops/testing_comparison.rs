@@ -136,8 +136,8 @@ fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
     }
 }
 
-// 7.2.13 IsLessThan ( x, y, LeftFirst )
-// https://262.ecma-international.org/15.0/#sec-islessthan
+/// 7.2.13 IsLessThan ( x, y, LeftFirst )
+/// https://262.ecma-international.org/15.0/#sec-islessthan
 pub(crate) fn is_less_than(
     agent: &JSAgent,
     x: JSValue,
@@ -262,4 +262,22 @@ pub(crate) fn is_less_than(
                 < ny.as_number().unwrap_or_else(|| unreachable!()).0,
         ))
     }
+}
+
+/// 7.2.15 IsStrictlyEqual ( x, y )
+/// https://262.ecma-international.org/15.0/#sec-isstrictlyequal
+pub(crate) fn is_strictly_equal(x: &JSValue, y: &JSValue) -> bool {
+    // 1. If Type(x) is different from Type(y), return false.
+    if std::mem::discriminant(x) != std::mem::discriminant(y) {
+        return false;
+    }
+
+    // 2. If x is a Number, then
+    if let (Some(x_num), Some(y_num)) = (x.as_number(), y.as_number()) {
+        // a. Return Number::equal(x, y).
+        return x_num.equal(y_num);
+    }
+
+    // 3. Return SameValueNonNumber(x, y).
+    same_value_non_number(x, y)
 }

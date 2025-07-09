@@ -3,7 +3,7 @@ use crate::{
         runtime_operations::{
             apply_numeric_binary_operator, apply_string_or_numeric_binary_operator,
         },
-        testing_comparison::is_less_than,
+        testing_comparison::{is_less_than, is_strictly_equal},
     },
     codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
     lexer::Token,
@@ -64,6 +64,8 @@ impl<'a> VM<'a> {
             Instruction::Divide => self.exec_numeric_bin_op(Token::Divide),
             Instruction::Modulo => self.exec_numeric_bin_op(Token::Modulo),
             Instruction::Exponent => self.exec_numeric_bin_op(Token::Exponent),
+            Instruction::StrictEqual => self.exec_strictly_equal(),
+            Instruction::StrictNotEqual => self.exec_strictly_not_equal(),
             Instruction::LessThan => self.exec_less_than(),
             Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
             Instruction::GreaterThan => self.exec_greater_than(),
@@ -107,6 +109,13 @@ impl<'a> VM<'a> {
         self.stack.pop().ok_or(VMError::StackUnderflow)
     }
 
+    fn pop_two(&mut self) -> VMResult<(JSValue, JSValue)> {
+        let b = self.pop()?;
+        let a = self.pop()?;
+
+        Ok((a, b))
+    }
+
     fn exec_const(&mut self) -> VMResult {
         let index = self.read_byte();
 
@@ -118,8 +127,7 @@ impl<'a> VM<'a> {
     }
 
     fn exec_bin_add(&mut self) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         let result = apply_string_or_numeric_binary_operator(self.agent, a, b)
             .map_err(|_| VMError::BinOperationError)?;
@@ -130,8 +138,7 @@ impl<'a> VM<'a> {
     }
 
     fn exec_numeric_bin_op(&mut self, operator: Token) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         let result = apply_numeric_binary_operator(self.agent, a, operator, b)
             .map_err(|_| VMError::BinOperationError)?;
@@ -145,8 +152,7 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression < ShiftExpression
     fn exec_less_than(&mut self) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
         let result = is_less_than(self.agent, a, b, true)
@@ -163,8 +169,7 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression > ShiftExpression
     fn exec_greater_than(&mut self) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
         let result = is_less_than(self.agent, b, a, false)
@@ -181,8 +186,7 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression <= ShiftExpression
     fn exec_less_than_or_equal(&mut self) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
         let result = !is_less_than(self.agent, b, a, false)
@@ -199,8 +203,7 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression >= ShiftExpression
     fn exec_greater_than_or_equal(&mut self) -> VMResult {
-        let b = self.pop()?;
-        let a = self.pop()?;
+        let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
         let result = !is_less_than(self.agent, a, b, true)
@@ -209,6 +212,35 @@ impl<'a> VM<'a> {
             .unwrap_or(true);
 
         self.push(JSValue::from(result));
+
+        Ok(())
+    }
+
+    /// 13.11.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/#sec-equality-operators-runtime-semantics-evaluation
+    /// EqualityExpression : EqualityExpression === RelationalExpression
+    fn exec_strictly_equal(&mut self) -> VMResult {
+        let (a, b) = self.pop_two()?;
+
+        // 5. Return IsStrictlyEqual(rval, lval).
+        let result = is_strictly_equal(&a, &b);
+
+        self.push(JSValue::from(result));
+
+        Ok(())
+    }
+
+    /// 13.11.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/#sec-equality-operators-runtime-semantics-evaluation
+    /// EqualityExpression : EqualityExpression !== RelationalExpression
+    fn exec_strictly_not_equal(&mut self) -> VMResult {
+        let (a, b) = self.pop_two()?;
+
+        // 5. Return IsStrictlyEqual(rval, lval).
+        let result = is_strictly_equal(&a, &b);
+
+        // 6. If r is true, return false. Otherwise, return true.
+        self.push(JSValue::from(!result));
 
         Ok(())
     }

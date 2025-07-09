@@ -174,7 +174,6 @@ impl<'a> Parser<'a> {
         self.js_parse_binary_expression(BinOpPrecedence::Lowest)
     }
 
-    // WIP
     fn js_parse_binary_expression(&mut self, precedence: BinOpPrecedence) -> CodeGenResult {
         self.js_parse_unary_expression()?;
 
