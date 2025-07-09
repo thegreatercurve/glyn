@@ -25,22 +25,26 @@ pub(crate) fn make_basic_object(
     internal_slots_list: Vec<JSObjectSlotName>,
     internal_methods: Option<&'static JSObjectInternalMethods>,
 ) -> JSObjAddr {
-    // 1. Let obj be a newly created object with an internal slot for each name in internalSlotsList.
+    // 1. Set internalSlotsList to the list-concatenation of internalSlotsList and « [[PrivateElements]] ».
+    // 2. Let obj be a newly created object with an internal slot for each name in internalSlotsList.
     let mut obj = JSObject {
-        // 2. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
+        // 4. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
         methods: internal_methods.unwrap_or(&ORDINARY_OBJECT_INTERNAL_METHODS),
         slots: JSObjectInternalSlots::from(internal_slots_list),
         keys: vec![],
         values: vec![],
     };
 
-    // 3. Assert: If the caller will not be overriding both obj's [[GetPrototypeOf]] and [[SetPrototypeOf]] essential internal methods, then internalSlotsList contains [[Prototype]].
-    // 4. Assert: If the caller will not be overriding all of obj's [[SetPrototypeOf]], [[IsExtensible]], and [[PreventExtensions]] essential internal methods, then internalSlotsList contains [[Extensible]].
+    // 3. NOTE: As described in Object Internal Methods and Internal Slots, the initial value of each such internal slot is undefined unless specified otherwise.
+    // 4. Set obj.[[PrivateElements]] to a new empty List.
+    // 5. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
+    // 6. Assert: If the caller will not be overriding both obj's [[GetPrototypeOf]] and [[SetPrototypeOf]] essential internal methods, then internalSlotsList contains [[Prototype]].
+    // 7. Assert: If the caller will not be overriding all of obj's [[SetPrototypeOf]], [[IsExtensible]], and [[PreventExtensions]] essential internal methods, then internalSlotsList contains [[Extensible]].
 
-    // 5. If internalSlotsList contains [[Extensible]], set obj.[[Extensible]] to true.
+    // 8. If internalSlotsList contains [[Extensible]], set obj.[[Extensible]] to true.
     obj.slots.set_extensible(true);
 
-    // 6. Return obj.
+    // 9. Return obj.
     agent.allocate_object(obj)
 }
 
