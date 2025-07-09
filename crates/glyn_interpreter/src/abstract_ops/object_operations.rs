@@ -16,10 +16,10 @@ use crate::runtime::agent::JSAgent;
 use crate::runtime::completion::CompletionRecord;
 
 // 7.3 Operations on Objects
-// https://262.ecma-international.org/15.0/#sec-operations-on-objects
+// https://262.ecma-international.org/16.0/#sec-operations-on-objects
 
 /// 7.3.1 MakeBasicObject ( internalSlotsList )
-/// https://262.ecma-international.org/15.0/#sec-makebasicobject
+/// https://262.ecma-international.org/16.0/#sec-makebasicobject
 pub(crate) fn make_basic_object(
     agent: &mut JSAgent,
     internal_slots_list: Vec<JSObjectSlotName>,
@@ -45,7 +45,7 @@ pub(crate) fn make_basic_object(
 }
 
 /// 7.3.2 Get ( O, P )
-/// https://262.ecma-international.org/15.0/#sec-get-o-p
+/// https://262.ecma-international.org/16.0/#sec-get-o-p
 pub(crate) fn get(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -57,7 +57,7 @@ pub(crate) fn get(
 }
 
 /// 7.3.3 GetV ( V, P )
-/// https://262.ecma-international.org/15.0/#sec-getv
+/// https://262.ecma-international.org/16.0/#sec-getv
 pub(crate) fn getv(
     agent: &JSAgent,
     value: &JSValue,
@@ -71,7 +71,7 @@ pub(crate) fn getv(
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
-/// https://262.ecma-international.org/15.0/#sec-set-o-p-v-throw
+/// https://262.ecma-international.org/16.0/#sec-set-o-p-v-throw
 pub(crate) fn set(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -93,7 +93,7 @@ pub(crate) fn set(
 }
 
 /// 7.3.5 CreateDataProperty ( O, P, V )
-/// https://262.ecma-international.org/15.0/#sec-createdataproperty
+/// https://262.ecma-international.org/16.0/#sec-createdataproperty
 pub(crate) fn create_data_property(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -114,7 +114,7 @@ pub(crate) fn create_data_property(
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
-/// https://262.ecma-international.org/15.0/#sec-createdatapropertyorthrow
+/// https://262.ecma-international.org/16.0/#sec-createdatapropertyorthrow
 pub(crate) fn create_data_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -134,7 +134,7 @@ pub(crate) fn create_data_property_or_throw(
 }
 
 /// 7.3.7 CreateNonEnumerableDataPropertyOrThrow ( O, P, V )
-/// https://262.ecma-international.org/15.0/#sec-createnonenumerabledatapropertyorthrow
+/// https://262.ecma-international.org/16.0/#sec-createnonenumerabledatapropertyorthrow
 pub(crate) fn create_non_enumerable_data_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -164,7 +164,7 @@ pub(crate) fn create_non_enumerable_data_property_or_throw(
 }
 
 /// 7.3.8 DefinePropertyOrThrow ( O, P, desc )
-/// https://262.ecma-international.org/15.0/#sec-definepropertyorthrow
+/// https://262.ecma-international.org/16.0/#sec-definepropertyorthrow
 pub(crate) fn define_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -184,7 +184,7 @@ pub(crate) fn define_property_or_throw(
 }
 
 /// 7.3.9 DeletePropertyOrThrow ( O, P )
-/// https://262.ecma-international.org/15.0/#sec-deletepropertyorthrow
+/// https://262.ecma-international.org/16.0/#sec-deletepropertyorthrow
 pub(crate) fn delete_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -203,7 +203,7 @@ pub(crate) fn delete_property_or_throw(
 }
 
 /// 7.3.10 GetMethod ( V, P )
-/// https://262.ecma-international.org/15.0/#sec-getmethod
+/// https://262.ecma-international.org/16.0/#sec-getmethod
 pub(crate) fn get_method(
     agent: &JSAgent,
     value: &JSValue,
@@ -227,14 +227,14 @@ pub(crate) fn get_method(
 }
 
 /// 7.3.11 HasProperty ( O, P )
-/// https://262.ecma-international.org/15.0/#sec-hasproperty
+/// https://262.ecma-international.org/16.0/#sec-hasproperty
 pub(crate) fn has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
     // 1. Return ? O.[[HasProperty]](P).
     (agent.object(obj_addr).methods.has_property)(agent, obj_addr, key)
 }
 
 /// 7.3.12 HasOwnProperty ( O, P )
-/// https://262.ecma-international.org/15.0/#sec-hasownproperty
+/// https://262.ecma-international.org/16.0/#sec-hasownproperty
 pub(crate) fn has_own_property(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
@@ -249,7 +249,7 @@ pub(crate) fn has_own_property(
 }
 
 /// 7.3.13 Call ( F, V [ , argumentsList ] )
-/// https://262.ecma-international.org/15.0/#sec-call
+/// https://262.ecma-international.org/16.0/#sec-call
 pub(crate) fn call(
     agent: &JSAgent,
     function_value: JSValue,
@@ -273,7 +273,7 @@ pub(crate) fn call(
 }
 
 /// 7.3.14 Construct ( F [ , argumentsList [ , newTarget ] ] )
-/// https://262.ecma-international.org/15.0/#sec-construct
+/// https://262.ecma-international.org/16.0/#sec-construct
 pub(crate) fn construct(
     agent: &mut JSAgent,
     constructor: JSObjAddr,
@@ -302,7 +302,7 @@ pub(crate) enum IntegrityLevel {
 }
 
 /// 7.3.15 SetIntegrityLevel ( O, level )
-/// https://262.ecma-international.org/15.0/#sec-setintegritylevel
+/// https://262.ecma-international.org/16.0/#sec-setintegritylevel
 pub(crate) fn set_integrity_level(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
@@ -380,7 +380,7 @@ pub(crate) fn set_integrity_level(
 }
 
 /// 7.3.16 TestIntegrityLevel ( O, level )
-/// https://262.ecma-international.org/15.0/#sec-testintegritylevel
+/// https://262.ecma-international.org/16.0/#sec-testintegritylevel
 pub(crate) fn test_integrity_level(
     agent: &JSAgent,
     obj_addr: JSObjAddr,

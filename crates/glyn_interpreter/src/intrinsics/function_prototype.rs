@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// 20.2.3 Properties of the Function Prototype Object
-/// https://262.ecma-international.org/15.0/#sec-properties-of-the-function-prototype-object
+/// https://262.ecma-international.org/16.0/#sec-properties-of-the-function-prototype-object
 #[derive(Debug)]
 pub(crate) struct FunctionPrototype;
 

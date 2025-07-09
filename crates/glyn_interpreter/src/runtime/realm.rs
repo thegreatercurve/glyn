@@ -7,7 +7,7 @@ use crate::value::object::JSObjAddr;
 pub(crate) type RealmAddr = Gc<Realm>;
 
 /// 9.3 Realms
-/// https://262.ecma-international.org/15.0/#sec-code-realms
+/// https://262.ecma-international.org/16.0/#sec-code-realms
 #[derive(Debug, Default)]
 pub(crate) struct Realm {
     /// [[Intrinsics]]

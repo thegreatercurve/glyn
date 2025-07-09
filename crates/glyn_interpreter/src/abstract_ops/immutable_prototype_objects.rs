@@ -2,7 +2,7 @@ use crate::runtime::agent::JSAgent;
 use crate::value::object::JSObjAddr;
 
 /// 10.4.7.2 SetImmutablePrototype ( O, V )
-/// https://262.ecma-international.org/15.0/#sec-set-immutable-prototype
+/// https://262.ecma-international.org/16.0/#sec-set-immutable-prototype
 pub(crate) fn set_immutable_prototype(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,

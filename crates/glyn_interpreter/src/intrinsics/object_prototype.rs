@@ -14,7 +14,7 @@ pub(crate) static IMMUTABLE_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
     };
 
 /// 20.1.3 Properties of the Object Prototype Object
-/// https://262.ecma-international.org/15.0/#sec-properties-of-the-object-prototype-object
+/// https://262.ecma-international.org/16.0/#sec-properties-of-the-object-prototype-object
 #[derive(Debug)]
 pub(crate) struct JSObjectPrototype;
 

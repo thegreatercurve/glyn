@@ -10,7 +10,7 @@ use crate::value::{
 };
 
 // 7.1 Type Conversion
-// https://262.ecma-international.org/15.0/#sec-type-conversion
+// https://262.ecma-international.org/16.0/#sec-type-conversion
 
 pub(crate) enum PrimitivePreferredType {
     Default,
@@ -19,7 +19,7 @@ pub(crate) enum PrimitivePreferredType {
 }
 
 /// 7.1.1 ToPrimitive ( input [ , preferredType ] )
-/// https://262.ecma-international.org/15.0/#sec-toprimitive
+/// https://262.ecma-international.org/16.0/#sec-toprimitive
 pub(crate) fn to_primitive(
     agent: &JSAgent,
     input: JSValue,
@@ -68,7 +68,7 @@ pub(crate) fn to_primitive(
 }
 
 /// 7.1.2 ToBoolean ( argument )
-/// https://262.ecma-international.org/15.0/#sec-toboolean
+/// https://262.ecma-international.org/16.0/#sec-toboolean
 pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
     // 1. If argument is a Boolean, return argument.
     if let Some(value) = arg.as_boolean() {
@@ -92,7 +92,7 @@ pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
 }
 
 /// 7.1.3 ToNumeric ( value )
-/// https://262.ecma-international.org/15.0/#sec-tonumeric
+/// https://262.ecma-international.org/16.0/#sec-tonumeric
 pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSValue> {
     // 1. Let primValue be ? ToPrimitive(value, number).
     let prim_value = to_primitive(agent, value, PrimitivePreferredType::Number)?;
@@ -107,7 +107,7 @@ pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JS
 }
 
 /// 7.1.4 ToNumber ( argument )
-/// https://262.ecma-international.org/15.0/#sec-tonumber
+/// https://262.ecma-international.org/16.0/#sec-tonumber
 pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNumber> {
     match arg {
         // 1. If argument is a Number, return argument.
@@ -140,7 +140,7 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
 }
 
 /// 7.1.4.1.1 StringToNumber ( str )
-/// https://262.ecma-international.org/15.0/#sec-stringtonumber
+/// https://262.ecma-international.org/16.0/#sec-stringtonumber
 pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
     // 1. Let text be StringToCodePoints(str).
     // 2. Let literal be ParseText(text, StringNumericLiteral).
@@ -155,7 +155,7 @@ pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
     // 4. Return StringNumericValue of literal.
     JSNumber::from(literal)
 }
-/// https://262.ecma-international.org/15.0/#sec-tointegerorinfinity
+/// https://262.ecma-international.org/16.0/#sec-tointegerorinfinity
 pub(crate) fn to_integer_or_infinity(
     agent: &JSAgent,
     argument: JSValue,
@@ -183,7 +183,7 @@ pub(crate) fn to_integer_or_infinity(
 }
 
 /// 7.1.6 ToInt32 ( argument )
-/// https://262.ecma-international.org/15.0/#sec-toint32
+/// https://262.ecma-international.org/16.0/#sec-toint32
 pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let number be ? ToNumber(argument).
     let number = to_number(agent, argument)?;
@@ -196,7 +196,7 @@ pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<J
 }
 
 /// 7.1.7 ToUint32 ( argument )
-/// https://262.ecma-international.org/15.0/#sec-touint32
+/// https://262.ecma-international.org/16.0/#sec-touint32
 pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let number be ? ToNumber(argument).
     let number = to_number(agent, argument)?;
@@ -209,7 +209,7 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 }
 
 /// 7.1.17 ToString ( argument )
-/// https://262.ecma-international.org/15.0/#sec-tostring
+/// https://262.ecma-international.org/16.0/#sec-tostring
 pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSString> {
     // 1. If argument is a String, return argument.
     if let Some(string) = argument.as_string() {
@@ -265,7 +265,7 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 }
 
 /// 7.1.18 ToObject ( argument )
-/// https://262.ecma-international.org/15.0/#sec-toobject
+/// https://262.ecma-international.org/16.0/#sec-toobject
 pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
     match arg {
         JSValue::Undefined => {
@@ -292,7 +292,7 @@ pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
 }
 
 /// 7.1.19 ToPropertyKey ( argument )
-/// https://262.ecma-international.org/15.0/#sec-topropertykey
+/// https://262.ecma-international.org/16.0/#sec-topropertykey
 pub(crate) fn to_property_key(
     agent: &JSAgent,
     argument: JSValue,
@@ -311,7 +311,7 @@ pub(crate) fn to_property_key(
 }
 
 /// 7.1.20 ToLength ( argument )
-/// https://262.ecma-international.org/15.0/#sec-tolength
+/// https://262.ecma-international.org/16.0/#sec-tolength
 pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let len be ? ToIntegerOrInfinity(argument).
     let len = to_integer_or_infinity(agent, argument)?;
@@ -328,7 +328,7 @@ pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 }
 
 /// 7.1.21 CanonicalNumericIndexString ( argument )
-/// https://262.ecma-international.org/15.0/#sec-canonicalnumericindexstring
+/// https://262.ecma-international.org/16.0/#sec-canonicalnumericindexstring
 pub(crate) fn canonical_numeric_index_string(
     agent: &JSAgent,
     argument: &JSString,
@@ -357,7 +357,7 @@ pub(crate) fn canonical_numeric_index_string(
 }
 
 /// 7.1.22 ToIndex ( value )
-/// https://262.ecma-international.org/15.0/#sec-toindex
+/// https://262.ecma-international.org/16.0/#sec-toindex
 pub(crate) fn to_index(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let integer be ? ToIntegerOrInfinity(value).
     let integer = to_integer_or_infinity(agent, value)?;

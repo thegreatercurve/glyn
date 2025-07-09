@@ -1,7 +1,7 @@
 use crate::value::string::JSString;
 
 /// 6.1.8 The BigInt Type
-/// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-bigint-type
+/// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-bigint-type
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub(crate) struct JSBigInt;
 

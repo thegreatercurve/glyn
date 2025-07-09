@@ -10,7 +10,7 @@ pub(crate) enum ScriptOrModule {
 }
 
 /// 9.4 Execution Contexts
-/// https://262.ecma-international.org/15.0/#sec-execution-contexts
+/// https://262.ecma-international.org/16.0/#sec-execution-contexts
 #[derive(Debug)]
 pub(crate) struct ExecutionContext {
     /// Function

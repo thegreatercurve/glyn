@@ -29,7 +29,7 @@ type InternalMethodsConstructFn =
     Option<fn(agent: &mut JSAgent, args: &[JSValue], obj_addr: JSObjAddr) -> JSObjAddr>;
 
 /// Essential Internal Methods
-/// https://262.ecma-international.org/15.0/#table-essential-internal-methods
+/// https://262.ecma-international.org/16.0/#table-essential-internal-methods
 #[derive(Debug, PartialEq)]
 pub(crate) struct JSObjectInternalMethods {
     /// [[GetPrototypeOf]]
@@ -61,7 +61,8 @@ pub(crate) struct JSObjectInternalMethods {
     ) -> CompletionRecord<bool>,
 
     /// [[HasProperty]]
-    pub(crate) has_property: fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
+    pub(crate) has_property:
+        fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
 
     /// [[Get]]
     pub(crate) get: fn(
@@ -96,7 +97,7 @@ pub(crate) struct JSObjectInternalMethods {
 pub(crate) struct PropertyIndex(usize);
 
 /// 6.1.7 The Object Type
-/// https://262.ecma-international.org/15.0/#sec-object-type
+/// https://262.ecma-international.org/16.0/#sec-object-type
 #[derive(Debug)]
 pub(crate) struct JSObject {
     pub(crate) methods: &'static JSObjectInternalMethods,

@@ -11,31 +11,81 @@ use crate::{
     value::object::JSObjAddr,
 };
 
-/// 9.3.1 CreateRealm ( )
-/// https://262.ecma-international.org/15.0/#sec-createrealm
-pub(crate) fn create_realm(agent: &mut JSAgent) -> RealmAddr {
-    // 1. Let realmRec be a new Realm Record.
-    let realm_rec = Realm {
-        intrinsics: Intrinsics::default(),
+/// 9.3.1 InitializeHostDefinedRealm ( )
+/// https://262.ecma-international.org/16.0/#sec-initializehostdefinedrealm
+pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRecord<()> {
+    // 1. Let realm be a new Realm Record.
+    let realm = Realm::default();
 
-        // 4. Set realmRec.[[GlobalObject]] to undefined.
-        global_object: None,
+    let realm_addr = agent.allocate_realm(realm);
 
-        // 5. Set realmRec.[[GlobalEnv]] to undefined.
-        global_env: None,
-    };
-
-    let realm_addr = agent.allocate_realm(realm_rec);
-
-    // 2. Perform CreateIntrinsics(realmRec).
+    // 2. Perform CreateIntrinsics(realm).
     create_intrinsics(agent, realm_addr);
 
-    // 7. Return realmRec.
-    realm_addr
+    // 3. Set realm.[[AgentSignifier]] to AgentSignifier().
+    // Note: AgentSignifier is not implemented in this codebase, so we skip this step.
+
+    // 4. Set realm.[[TemplateMap]] to a new empty List.
+    // Note: TemplateMap is not implemented in this codebase, so we skip this step.
+
+    // 5. Let newContext be a new execution context.
+    let new_context = ExecutionContext {
+        // 6. Set the Function of newContext to null.
+        function: None,
+
+        // 7. Set the Realm of newContext to realm.
+        realm: realm_addr,
+
+        // 8. Set the ScriptOrModule of newContext to null.
+        script_or_module: None,
+
+        lexical_environment: None,
+        variable_environment: None,
+        private_environment: None,
+    };
+
+    // 9. Push newContext onto the execution context stack; newContext is now the running execution context.
+    agent.push_execution_context(new_context);
+
+    // 10. If the host requires use of an exotic object to serve as realm's global object, then
+    // a. Let global be such an object created in a host-defined manner.
+    // Note: We don't require exotic objects, so global remains None.
+
+    // 11. Else,
+    // a. Let global be OrdinaryObjectCreate(realm.[[Intrinsics]].[[%Object.prototype%]]).
+    let global = ordinary_object_create(
+        agent,
+        agent.realm(realm_addr).intrinsics.object_prototype,
+        None,
+    );
+
+    // 12. If the host requires that the this binding in realm's global scope return an object other than the global object, then
+    // a. Let thisValue be such an object created in a host-defined manner.
+    // Note: We don't require special this binding, so thisValue will be global.
+
+    // 13. Else,
+    // a. Let thisValue be global.
+    let this_value = global;
+
+    // 14. Set realm.[[GlobalObject]] to global.
+    agent.realm_mut(realm_addr).global_object = Some(global);
+
+    // 15. Set realm.[[GlobalEnv]] to NewGlobalEnvironment(global, thisValue).
+    agent.realm_mut(realm_addr).global_env =
+        Some(new_global_environment(agent, global, this_value));
+
+    // 16. Perform ? SetDefaultGlobalBindings(realm).
+    set_default_global_bindings(agent, &realm_addr)?;
+
+    // 17. Create any host-defined global object properties on global.
+    // TODO: Implement this step.
+
+    // 18. Return unused.
+    Ok(())
 }
 
 /// 9.3.2 CreateIntrinsics ( realmRec )
-/// https://262.ecma-international.org/15.0/#sec-createintrinsics
+/// https://262.ecma-international.org/16.0/#sec-createintrinsics
 pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> Intrinsics {
     // 1. Set realmRec.[[Intrinsics]] to a new Record.
     let mut intrinsics = Intrinsics::default();
@@ -52,84 +102,8 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> I
     intrinsics
 }
 
-/// 9.3.3 SetRealmGlobalObject ( realmRec, globalObj, thisValue )
-/// https://262.ecma-international.org/15.0/#sec-setrealmglobalobject
-pub(crate) fn set_realm_global_object(
-    agent: &mut JSAgent,
-    realm_record: RealmAddr,
-    opt_global_obj_addr: Option<JSObjAddr>,
-    this_value: Option<JSObjAddr>,
-) {
-    // 1. If globalObj is undefined, then
-    let global_obj_addr = opt_global_obj_addr.unwrap_or_else(|| {
-        // a. Let intrinsics be realmRec.[[Intrinsics]].
-        let intrinsics = &agent.realm(realm_record).intrinsics;
-
-        // b. Set globalObj to OrdinaryObjectCreate(intrinsics.[[%Object.prototype%]]).
-        ordinary_object_create(agent, intrinsics.object_prototype, None)
-    });
-
-    // 2. Assert: globalObj is an Object.
-    // 3. If thisValue is undefined, set thisValue to globalObj.
-    let this_value = this_value.unwrap_or(global_obj_addr);
-
-    // 4. Set realmRec.[[GlobalObject]] to globalObj.
-    agent.realm_mut(realm_record).global_object = Some(global_obj_addr);
-
-    // 5. Let newGlobalEnv be NewGlobalEnvironment(globalObj, thisValue).
-    let new_global_env = new_global_environment(agent, global_obj_addr, this_value);
-
-    // 6. Set realmRec.[[GlobalEnv]] to newGlobalEnv.
-    agent.realm_mut(realm_record).global_env = Some(new_global_env);
-
-    // 7. Return unused.
-}
-
-/// 9.6 InitializeHostDefinedRealm ( )
-/// https://262.ecma-international.org/15.0/#sec-initializehostdefinedrealm
-pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRecord {
-    // 1. Let realm be CreateRealm().
-    let realm = create_realm(agent);
-
-    // 2. Let newContext be a new execution context.
-    let new_context = ExecutionContext {
-        // 3. Set the Function of newContext to null.
-        function: None,
-
-        // 4. Set the Realm of newContext to realm.
-        realm,
-
-        // 5. Set the ScriptOrModule of newContext to null.
-        script_or_module: None,
-
-        lexical_environment: None,
-        variable_environment: None,
-        private_environment: None,
-    };
-
-    // 6. Push newContext onto the execution context stack; newContext is now the running execution context.
-    agent.push_execution_context(new_context);
-
-    // 7. If the host requires use of an exotic object to serve as realm's global object, let global be such an object created in a host-defined manner. Otherwise, let global be undefined, indicating that an ordinary object should be created as the global object.
-    let global = None;
-
-    // 8. If the host requires that the this binding in realm's global scope return an object other than the global object, let thisValue be such an object created in a host-defined manner. Otherwise, let thisValue be undefined, indicating that realm's global this binding should be the global object.
-    let this_value = None;
-
-    // 9. Perform SetRealmGlobalObject(realm, global, thisValue).
-    set_realm_global_object(agent, realm, global, this_value);
-
-    // 10. Let globalObj be ? SetDefaultGlobalBindings(realm).
-    let global_obj = set_default_global_bindings(agent, &realm)?;
-
-    // 11. Create any host-defined global object properties on globalObj.
-
-    // 12. Return unused.
-    Ok(())
-}
-
-/// 9.3.4 SetDefaultGlobalBindings ( realm )
-/// https://262.ecma-international.org/15.0/#sec-setdefaultglobalbindings
+/// 9.3.3 SetDefaultGlobalBindings ( realm )
+/// https://262.ecma-international.org/16.0/#sec-setdefaultglobalbindings
 fn set_default_global_bindings(agent: &mut JSAgent, realm: &RealmAddr) -> CompletionRecord<()> {
     // TODO: Implement
     Ok(())

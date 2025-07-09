@@ -13,13 +13,13 @@ pub(crate) mod symbol;
 #[derive(Clone, Debug, PartialEq)]
 pub enum JSValue {
     /// 6.1.1 The Undefined Type
-    /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-undefined-type
+    /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-undefined-type
     Undefined,
     /// 6.1.2 The Null Type
-    /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-null-type
+    /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-null-type
     Null,
     /// 6.1.3 The Boolean Type
-    /// https://262.ecma-international.org/15.0/#sec-ecmascript-language-types-boolean-type
+    /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-boolean-type
     Bool(bool),
     String(JSString),
     Number(JSNumber),

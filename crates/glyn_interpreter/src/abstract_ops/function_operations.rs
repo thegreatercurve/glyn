@@ -13,7 +13,7 @@ use crate::value::{
 use crate::abstract_ops::object_operations::{define_property_or_throw, make_basic_object};
 
 /// 10.2.9 SetFunctionName ( F, name [ , prefix ] )
-/// https://262.ecma-international.org/15.0/#sec-setfunctionname
+/// https://262.ecma-international.org/16.0/#sec-setfunctionname
 pub(crate) fn set_function_name(
     agent: &mut JSAgent,
     func: JSObjAddr,
@@ -93,7 +93,7 @@ pub(crate) fn set_function_name(
 }
 
 /// 10.2.10 SetFunctionLength ( F, length )
-/// https://262.ecma-international.org/15.0/#sec-setfunctionlength
+/// https://262.ecma-international.org/16.0/#sec-setfunctionlength
 pub(crate) fn set_function_length(agent: &mut JSAgent, func: JSObjAddr, length: usize) {
     let length_prop_key = JSObjectPropKey::String("length".into());
 
@@ -120,7 +120,7 @@ pub(crate) fn set_function_length(agent: &mut JSAgent, func: JSObjAddr, length: 
 }
 
 /// 10.3.4 CreateBuiltinFunction ( behaviour, length, name, additionalInternalSlotsList [ , realm [ , prototype [ , prefix ] ] ] )
-/// https://262.ecma-international.org/15.0/#sec-createbuiltinfunction
+/// https://262.ecma-international.org/16.0/#sec-createbuiltinfunction
 pub(crate) fn create_builtin_function(
     agent: &mut JSAgent,
     behaviour: BehaviourFn,

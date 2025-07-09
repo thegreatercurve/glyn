@@ -152,7 +152,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.5.5.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/#sec-unary-minus-operator-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-unary-minus-operator-runtime-semantics-evaluation
     /// UnaryExpression : - UnaryExpression
     fn exec_unary_minus(&mut self) -> VMResult {
         let value = self.pop()?;
@@ -168,7 +168,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.10.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression < ShiftExpression
     fn exec_less_than(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
@@ -185,7 +185,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.10.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression > ShiftExpression
     fn exec_greater_than(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
@@ -202,7 +202,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.10.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression <= ShiftExpression
     fn exec_less_than_or_equal(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
@@ -219,7 +219,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.10.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression >= ShiftExpression
     fn exec_greater_than_or_equal(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
@@ -236,7 +236,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.11.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/#sec-equality-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-equality-operators-runtime-semantics-evaluation
     /// EqualityExpression : EqualityExpression === RelationalExpression
     fn exec_strictly_equal(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
@@ -250,7 +250,7 @@ impl<'a> VM<'a> {
     }
 
     /// 13.11.1 Runtime Semantics: Evaluation
-    /// https://262.ecma-international.org/15.0/#sec-equality-operators-runtime-semantics-evaluation
+    /// https://262.ecma-international.org/16.0/#sec-equality-operators-runtime-semantics-evaluation
     /// EqualityExpression : EqualityExpression !== RelationalExpression
     fn exec_strictly_not_equal(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;

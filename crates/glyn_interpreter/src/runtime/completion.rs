@@ -1,11 +1,11 @@
 use crate::value::JSValue;
 
 /// 6.2.4 The Completion Record Specification Type
-/// https://262.ecma-international.org/15.0/#sec-completion-record-specification-type
+/// https://262.ecma-international.org/16.0/#sec-completion-record-specification-type
 pub(crate) type CompletionRecord<T = ()> = Result<T, ThrowCompletion>;
 
 /// 6.2.4.1 NormalCompletion ( value )
-/// https://262.ecma-international.org/15.0/#sec-normalcompletion
+/// https://262.ecma-international.org/16.0/#sec-normalcompletion
 #[derive(Debug, PartialEq)]
 pub(crate) enum NormalCompletion {
     Bool(bool),
@@ -29,7 +29,7 @@ impl From<JSValue> for NormalCompletion {
 }
 
 /// 6.2.4.2 ThrowCompletion ( value )
-/// https://262.ecma-international.org/15.0/#sec-throwcompletion    
+/// https://262.ecma-international.org/16.0/#sec-throwcompletion    
 #[derive(Debug)]
 pub(crate) enum ThrowCompletion {
     Throw(JSValue),

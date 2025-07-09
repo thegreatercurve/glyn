@@ -13,7 +13,7 @@ use crate::{
 };
 
 /// 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
-/// https://262.ecma-international.org/15.0/#sec-parsetext
+/// https://262.ecma-international.org/16.0/#sec-parsetext
 pub(crate) fn parse_text(source_text: &str) -> Result<FinalProgram, String> {
     // 1. Attempt to parse sourceText using goalSymbol as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     let lexer = Lexer::new(source_text);
@@ -27,7 +27,7 @@ pub(crate) fn parse_text(source_text: &str) -> Result<FinalProgram, String> {
 }
 
 /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
-/// https://262.ecma-international.org/15.0/#sec-parse-script
+/// https://262.ecma-international.org/16.0/#sec-parse-script
 pub(crate) fn parse_script(
     _agent: &mut JSAgent,
     source_text: &str,
@@ -47,7 +47,7 @@ pub(crate) fn parse_script(
 }
 
 /// 16.1.6 ScriptEvaluation ( scriptRecord )
-/// https://262.ecma-international.org/15.0/#sec-runtime-semantics-scriptevaluation
+/// https://262.ecma-international.org/16.0/#sec-runtime-semantics-scriptevaluation
 pub(crate) fn script_evaluation(
     agent: &mut JSAgent,
     script_record: &ScriptRecord,
