@@ -33,3 +33,15 @@ fn operator_precedence() {
     assert_script_eq!("2 ** 2 ** 3", JSValue::Number(256.into()));
     assert_script_eq!("2 << 7 >> 1 ** 5 / 2", JSValue::Number(256.into()));
 }
+
+#[test]
+fn relational() {
+    assert_script_eq!("3 > 2", JSValue::Bool(true));
+    assert_script_eq!("3 > 3", JSValue::Bool(false));
+    assert_script_eq!("3 >= 2", JSValue::Bool(true));
+    assert_script_eq!("3 >= 3", JSValue::Bool(true));
+    assert_script_eq!("3 < 4", JSValue::Bool(true));
+    assert_script_eq!("4 < 4", JSValue::Bool(false));
+    assert_script_eq!("4 <= 5", JSValue::Bool(true));
+    assert_script_eq!("4 <= 4", JSValue::Bool(true));
+}

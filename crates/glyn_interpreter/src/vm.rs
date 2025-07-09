@@ -1,6 +1,9 @@
 use crate::{
-    abstract_ops::runtime_operations::{
-        apply_numeric_binary_operator, apply_string_or_numeric_binary_operator,
+    abstract_ops::{
+        runtime_operations::{
+            apply_numeric_binary_operator, apply_string_or_numeric_binary_operator,
+        },
+        testing_comparison::is_less_than,
     },
     codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
     lexer::Token,
@@ -19,7 +22,8 @@ pub(crate) struct VM<'a> {
 
 pub(crate) enum VMError {
     StackUnderflow,
-    UnexpectedBinOpValues,
+    BinOperationError,
+    LessThanComparisonError,
     UnexpectedInstruction,
 }
 
@@ -60,10 +64,10 @@ impl<'a> VM<'a> {
             Instruction::Divide => self.exec_numeric_bin_op(Token::Divide),
             Instruction::Modulo => self.exec_numeric_bin_op(Token::Modulo),
             Instruction::Exponent => self.exec_numeric_bin_op(Token::Exponent),
-            Instruction::LessThan => self.exec_numeric_bin_op(Token::LessThan),
-            Instruction::LessThanOrEqual => self.exec_numeric_bin_op(Token::LessThanEqual),
-            Instruction::GreaterThan => self.exec_numeric_bin_op(Token::GreaterThan),
-            Instruction::GreaterThanOrEqual => self.exec_numeric_bin_op(Token::GreaterThanEqual),
+            Instruction::LessThan => self.exec_less_than(),
+            Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
+            Instruction::GreaterThan => self.exec_greater_than(),
+            Instruction::GreaterThanOrEqual => self.exec_greater_than_or_equal(),
             Instruction::BitAnd => self.exec_numeric_bin_op(Token::BitAnd),
             Instruction::BitOr => self.exec_numeric_bin_op(Token::BitOr),
             Instruction::BitXor => self.exec_numeric_bin_op(Token::BitXor),
@@ -118,7 +122,7 @@ impl<'a> VM<'a> {
         let a = self.pop()?;
 
         let result = apply_string_or_numeric_binary_operator(self.agent, a, b)
-            .map_err(|_| VMError::UnexpectedBinOpValues)?;
+            .map_err(|_| VMError::BinOperationError)?;
 
         self.push(result);
 
@@ -130,9 +134,81 @@ impl<'a> VM<'a> {
         let a = self.pop()?;
 
         let result = apply_numeric_binary_operator(self.agent, a, operator, b)
-            .map_err(|_| VMError::UnexpectedBinOpValues)?;
+            .map_err(|_| VMError::BinOperationError)?;
 
         self.push(result);
+
+        Ok(())
+    }
+
+    /// 13.10.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// RelationalExpression : RelationalExpression < ShiftExpression
+    fn exec_less_than(&mut self) -> VMResult {
+        let b = self.pop()?;
+        let a = self.pop()?;
+
+        // 5. Let r be ? IsLessThan(lval, rval, true).
+        let result = is_less_than(self.agent, a, b, true)
+            .map_err(|_| VMError::LessThanComparisonError)?
+            // 6. If r is undefined, return false. Otherwise, return r.
+            .unwrap_or(false);
+
+        self.push(JSValue::from(result));
+
+        Ok(())
+    }
+
+    /// 13.10.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// RelationalExpression : RelationalExpression > ShiftExpression
+    fn exec_greater_than(&mut self) -> VMResult {
+        let b = self.pop()?;
+        let a = self.pop()?;
+
+        // 5. Let r be ? IsLessThan(rval, lval, false).
+        let result = is_less_than(self.agent, b, a, false)
+            .map_err(|_| VMError::LessThanComparisonError)?
+            // 6. If r is undefined, return false. Otherwise, return r.
+            .unwrap_or(false);
+
+        self.push(JSValue::from(result));
+
+        Ok(())
+    }
+
+    /// 13.10.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// RelationalExpression : RelationalExpression <= ShiftExpression
+    fn exec_less_than_or_equal(&mut self) -> VMResult {
+        let b = self.pop()?;
+        let a = self.pop()?;
+
+        // 5. Let r be ? IsLessThan(rval, lval, false).
+        let result = !is_less_than(self.agent, b, a, false)
+            .map_err(|_| VMError::LessThanComparisonError)?
+            // 6. If r is either true or undefined, return false. Otherwise, return true.
+            .unwrap_or(true);
+
+        self.push(JSValue::from(result));
+
+        Ok(())
+    }
+
+    /// 13.10.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/index.html#sec-relational-operators-runtime-semantics-evaluation
+    /// RelationalExpression : RelationalExpression >= ShiftExpression
+    fn exec_greater_than_or_equal(&mut self) -> VMResult {
+        let b = self.pop()?;
+        let a = self.pop()?;
+
+        // 5. Let r be ? IsLessThan(lval, rval, true).
+        let result = !is_less_than(self.agent, a, b, true)
+            .map_err(|_| VMError::LessThanComparisonError)?
+            // 6. If r is either true or undefined, return false. Otherwise, return true.
+            .unwrap_or(true);
+
+        self.push(JSValue::from(result));
 
         Ok(())
     }

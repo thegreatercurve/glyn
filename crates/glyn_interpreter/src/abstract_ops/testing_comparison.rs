@@ -136,8 +136,8 @@ fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
     }
 }
 
-// 7.2.15 IsLessThan ( x, y, LeftFirst )
-// https://tc39.es/ecma262/#sec-islessthan
+// 7.2.13 IsLessThan ( x, y, LeftFirst )
+// https://262.ecma-international.org/15.0/#sec-islessthan
 pub(crate) fn is_less_than(
     agent: &JSAgent,
     x: JSValue,
@@ -196,7 +196,7 @@ pub(crate) fn is_less_than(
         }
 
         // d. If lx < ly, return true. Otherwise, return false.
-        return Ok(Some(lx < ly));
+        Ok(Some(lx < ly))
     }
     // 4. Else,
     else {
@@ -205,7 +205,7 @@ pub(crate) fn is_less_than(
             // i. Let ny be StringToBigInt(py).
             // ii. If ny is undefined, return undefined.
             // iii. Return BigInt::lessThan(px, ny).
-            todo!("BigInt and String comparison")
+            todo!()
         }
 
         // b. If px is a String and py is a BigInt, then
