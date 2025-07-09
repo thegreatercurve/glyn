@@ -66,7 +66,7 @@ impl JSNumber {
 
     /// 6.1.6.1.1 Number::unaryMinus ( x )
     /// https://262.ecma-international.org/15.0/#sec-numeric-types-number-unaryMinus
-    pub(crate) fn unary_minus(self) -> Self {
+    pub(crate) fn unary_minus(&self) -> Self {
         // 1. If x is NaN, return NaN.
         if self.is_nan() {
             return JSNumber::NAN;

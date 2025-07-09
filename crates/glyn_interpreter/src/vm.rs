@@ -23,6 +23,7 @@ pub(crate) struct VM<'a> {
 pub(crate) enum VMError {
     StackUnderflow,
     BinOperationError,
+    UnaryOperationError,
     LessThanComparisonError,
     UnexpectedInstruction,
 }
@@ -70,6 +71,8 @@ impl<'a> VM<'a> {
             Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
             Instruction::GreaterThan => self.exec_greater_than(),
             Instruction::GreaterThanOrEqual => self.exec_greater_than_or_equal(),
+            Instruction::Plus => Ok(()), // No-op,
+            Instruction::Minus => self.exec_unary_minus(),
             Instruction::BitAnd => self.exec_numeric_bin_op(Token::BitAnd),
             Instruction::BitOr => self.exec_numeric_bin_op(Token::BitOr),
             Instruction::BitXor => self.exec_numeric_bin_op(Token::BitXor),
@@ -144,6 +147,22 @@ impl<'a> VM<'a> {
             .map_err(|_| VMError::BinOperationError)?;
 
         self.push(result);
+
+        Ok(())
+    }
+
+    /// 13.5.5.1 Runtime Semantics: Evaluation
+    /// https://262.ecma-international.org/15.0/#sec-unary-minus-operator-runtime-semantics-evaluation
+    /// UnaryExpression : - UnaryExpression
+    fn exec_unary_minus(&mut self) -> VMResult {
+        let value = self.pop()?;
+
+        let number = value
+            .as_number()
+            .ok_or(VMError::UnaryOperationError)?
+            .unary_minus();
+
+        self.push(JSValue::Number(number));
 
         Ok(())
     }
