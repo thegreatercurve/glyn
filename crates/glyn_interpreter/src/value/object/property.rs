@@ -44,6 +44,30 @@ impl JSObjectPropKey {
     }
 }
 
+impl From<&str> for JSObjectPropKey {
+    fn from(value: &str) -> Self {
+        JSObjectPropKey::String(JSString::from(value))
+    }
+}
+
+impl From<&JSString> for JSObjectPropKey {
+    fn from(value: &JSString) -> Self {
+        JSObjectPropKey::String(value.clone())
+    }
+}
+
+impl From<&JSSymbol> for JSObjectPropKey {
+    fn from(value: &JSSymbol) -> Self {
+        JSObjectPropKey::Symbol(value.clone())
+    }
+}
+
+impl From<JSSymbol> for JSObjectPropKey {
+    fn from(value: JSSymbol) -> Self {
+        JSObjectPropKey::Symbol(value)
+    }
+}
+
 /// 6.2.6 The Property Descriptor Specification Type
 /// https://262.ecma-international.org/16.0/#sec-property-descriptor-specification-type
 #[derive(Clone, Debug, Default, PartialEq)]

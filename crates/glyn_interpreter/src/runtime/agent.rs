@@ -4,22 +4,15 @@ use crate::runtime::environment::{Environment, EnvironmentAddr};
 use crate::runtime::execution_context::ExecutionContext;
 use crate::runtime::realm::{Realm, RealmAddr};
 use crate::value::object::{JSObjAddr, JSObject};
+use crate::value::symbol::JSSymbol;
 
-#[derive(Debug)]
-pub(crate) enum WellKnownSymbol {
-    AsyncIterator,
-    HasInstance,
-    IsConcatSpreadable,
-    Iterator,
-    Match,
-    MatchAll,
-    Replace,
-    Search,
-    Species,
-    Split,
-    ToPrimitive,
-    ToStringTag,
-    Unscopables,
+/// 6.1.5.1 Well-Known Symbols
+/// https://262.ecma-international.org/16.0/#sec-well-known-symbols
+
+#[derive(Default)]
+pub(crate) struct WellKnownSymbols {
+    pub(crate) to_primitive: JSSymbol,
+    pub(crate) unscopables: JSSymbol,
 }
 
 #[derive(Default)]
@@ -29,6 +22,7 @@ pub struct JSAgent {
     object_heap: Heap,
     realm_heap: Heap,
     environment_heap: Heap,
+    well_known_symbols: WellKnownSymbols,
 }
 
 impl JSAgent {
@@ -39,6 +33,7 @@ impl JSAgent {
             object_heap: Heap::new(),
             realm_heap: Heap::new(),
             environment_heap: Heap::new(),
+            well_known_symbols: WellKnownSymbols::default(),
         }
     }
 
@@ -109,13 +104,7 @@ impl JSAgent {
         self.environment_heap.alloc(environment).into()
     }
 
-    pub(crate) fn well_known_symbol(
-        &self,
-        obj_addr: JSObjAddr,
-        symbol: WellKnownSymbol,
-    ) -> Option<fn(agent: &JSAgent) -> Self> {
-        let object = self.object(obj_addr);
-        // Add a v-table look-up to check if object type has a well-known symbol.
-        todo!()
+    pub(crate) fn well_known_symbols(&self) -> &WellKnownSymbols {
+        &self.well_known_symbols
     }
 }
