@@ -13,7 +13,7 @@ use crate::{
 
 /// 9.3.1 InitializeHostDefinedRealm ( )
 /// https://262.ecma-international.org/16.0/#sec-initializehostdefinedrealm
-pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRecord<()> {
+pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRecord {
     // 1. Let realm be a new Realm Record.
     let realm = Realm::default();
 
@@ -104,7 +104,7 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> I
 
 /// 9.3.3 SetDefaultGlobalBindings ( realm )
 /// https://262.ecma-international.org/16.0/#sec-setdefaultglobalbindings
-fn set_default_global_bindings(agent: &mut JSAgent, realm: &RealmAddr) -> CompletionRecord<()> {
+fn set_default_global_bindings(agent: &mut JSAgent, realm: &RealmAddr) -> CompletionRecord {
     // TODO: Implement
     Ok(())
 }

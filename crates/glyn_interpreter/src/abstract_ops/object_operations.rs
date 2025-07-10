@@ -124,7 +124,7 @@ pub(crate) fn create_data_property_or_throw(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
-) -> CompletionRecord<()> {
+) -> CompletionRecord {
     // 1. Let success be ? CreateDataProperty(O, P, V).
     let success = create_data_property(agent, obj_addr, key, value)?;
 
@@ -174,7 +174,7 @@ pub(crate) fn define_property_or_throw(
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     desc: JSObjectPropDescriptor,
-) -> CompletionRecord<()> {
+) -> CompletionRecord {
     // 1. Let success be ? O.[[DefineOwnProperty]](P, desc).
     let success = (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
 
@@ -193,7 +193,7 @@ pub(crate) fn delete_property_or_throw(
     agent: &mut JSAgent,
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
-) -> CompletionRecord<()> {
+) -> CompletionRecord {
     // 1. Let success be ? O.[[Delete]](P).
     let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key);
 
