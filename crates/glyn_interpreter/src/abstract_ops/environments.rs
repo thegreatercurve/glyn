@@ -1,5 +1,5 @@
 use crate::runtime::agent::JSAgent;
-use crate::runtime::environment::{Environment, EnvironmentAddr};
+use crate::runtime::environment::{Environment, EnvironmentAddr, EnvironmentKind};
 use crate::value::object::JSObjAddr;
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
@@ -10,5 +10,5 @@ pub(crate) fn new_global_environment(
     _this_value: JSObjAddr,
 ) -> EnvironmentAddr {
     // TODO: Implement proper global environment creation
-    agent.allocate_environment(Environment)
+    agent.allocate_environment(Environment::new(EnvironmentKind::Global))
 }

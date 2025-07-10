@@ -8,7 +8,6 @@ use crate::{
         intrinsics::Intrinsics,
         realm::{Realm, RealmAddr},
     },
-    value::object::JSObjAddr,
 };
 
 /// 9.3.1 InitializeHostDefinedRealm ( )

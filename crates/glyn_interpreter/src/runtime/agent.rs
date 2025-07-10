@@ -104,6 +104,17 @@ impl JSAgent {
         self.environment_heap.alloc(environment).into()
     }
 
+    pub(crate) fn environment(&self, environment_addr: EnvironmentAddr) -> &Environment {
+        self.environment_heap.get(environment_addr)
+    }
+
+    pub(crate) fn environment_mut(
+        &mut self,
+        environment_addr: EnvironmentAddr,
+    ) -> &mut Environment {
+        self.environment_heap.get_mut(environment_addr)
+    }
+
     pub(crate) fn well_known_symbols(&self) -> &WellKnownSymbols {
         &self.well_known_symbols
     }

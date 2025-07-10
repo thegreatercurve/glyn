@@ -44,9 +44,9 @@ impl JSObjectPropKey {
     }
 }
 
-impl From<&str> for JSObjectPropKey {
-    fn from(value: &str) -> Self {
-        JSObjectPropKey::String(JSString::from(value))
+impl From<JSString> for JSObjectPropKey {
+    fn from(value: JSString) -> Self {
+        JSObjectPropKey::String(value)
     }
 }
 
@@ -56,15 +56,15 @@ impl From<&JSString> for JSObjectPropKey {
     }
 }
 
-impl From<&JSSymbol> for JSObjectPropKey {
-    fn from(value: &JSSymbol) -> Self {
-        JSObjectPropKey::Symbol(value.clone())
-    }
-}
-
 impl From<JSSymbol> for JSObjectPropKey {
     fn from(value: JSSymbol) -> Self {
         JSObjectPropKey::Symbol(value)
+    }
+}
+
+impl From<&JSSymbol> for JSObjectPropKey {
+    fn from(value: &JSSymbol) -> Self {
+        JSObjectPropKey::Symbol(value.clone())
     }
 }
 

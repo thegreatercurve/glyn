@@ -328,7 +328,7 @@ pub(crate) fn set_integrity_level(
         // a. For each element k of keys, do
         for key in keys {
             // i. Perform ? DefinePropertyOrThrow(O, k, PropertyDescriptor { [[Configurable]]: false }).
-            let _ = define_property_or_throw(
+            define_property_or_throw(
                 agent,
                 obj_addr,
                 &key,

@@ -1,6 +1,6 @@
 /// 6.1.4 The String Type
 /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-string-type
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash)]
 pub(crate) struct JSString(pub(crate) String);
 
 impl JSString {
