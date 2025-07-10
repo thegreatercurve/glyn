@@ -4,4 +4,5 @@ pub(crate) mod environment;
 pub(crate) mod execution_context;
 pub(crate) mod intrinsics;
 pub(crate) mod realm;
+pub(crate) mod reference;
 pub(crate) mod script;
