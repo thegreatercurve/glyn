@@ -31,12 +31,12 @@ pub(crate) enum EnvironmentKind {
 pub(crate) struct EnvironmentMethods {
     /// HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    has_binding:
+    pub(crate) has_binding:
         fn(agent: &JSAgent, env_addr: EnvironmentAddr, name: &JSString) -> CompletionRecord<bool>,
 
     /// CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    create_mutable_binding: fn(
+    pub(crate) create_mutable_binding: fn(
         agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
@@ -45,7 +45,7 @@ pub(crate) struct EnvironmentMethods {
 
     /// CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    create_immutable_binding: fn(
+    pub(crate) create_immutable_binding: fn(
         agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
@@ -60,8 +60,8 @@ pub(crate) type EnvironmentAddr = Gc<Environment>;
 #[derive(Debug)]
 pub(crate) struct Environment {
     /// [[OuterEnv]]
-    outer: Option<EnvironmentAddr>,
-    methods: &'static EnvironmentMethods,
+    pub(crate) outer: Option<EnvironmentAddr>,
+    pub(crate) methods: &'static EnvironmentMethods,
 
     decl_env: Option<DeclEnvironment>,
     func_env: Option<FuncEnvironment>,
