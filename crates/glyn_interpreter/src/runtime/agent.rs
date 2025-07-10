@@ -28,7 +28,7 @@ pub(crate) struct WellKnownSymbols {
 
 #[derive(Default)]
 pub struct JSAgent {
-    execution_contexts: Vec<ExecutionContext>,
+    pub(crate) execution_contexts: Vec<ExecutionContext>,
     environment_records: Vec<Environment>,
     object_heap: Heap,
     realm_heap: Heap,
