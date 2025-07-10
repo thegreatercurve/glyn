@@ -4,7 +4,7 @@ use crate::{
         object_operations::make_basic_object,
     },
     runtime::agent::JSAgent,
-    value::object::{internal_slots::JSObjectSlotName, JSObjAddr, JSObjectInternalMethods},
+    value::object::{internal_slots::InternalSlotName, JSObjAddr, JSObjectInternalMethods},
 };
 
 pub(crate) static IMMUTABLE_OBJECT_INTERNAL_METHODS: JSObjectInternalMethods =
@@ -25,7 +25,7 @@ impl JSObjectPrototype {
         // has an internal slot named [[Prototype]] whose value is null.
         make_basic_object(
             agent,
-            vec![JSObjectSlotName::Prototype, JSObjectSlotName::Extensible],
+            vec![InternalSlotName::Prototype, InternalSlotName::Extensible],
             Some(&IMMUTABLE_OBJECT_INTERNAL_METHODS),
         )
     }

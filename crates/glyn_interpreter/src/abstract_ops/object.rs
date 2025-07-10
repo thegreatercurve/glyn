@@ -1,6 +1,6 @@
 use crate::runtime::agent::JSAgent;
 use crate::runtime::completion::CompletionRecord;
-use crate::value::object::internal_slots::JSObjectSlotName;
+use crate::value::object::internal_slots::InternalSlotName;
 use crate::value::object::property::JSObjectPropKey;
 use crate::value::object::{JSObjAddr, JSObjectInternalMethods};
 use crate::value::JSValue;
@@ -781,10 +781,10 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObj
 pub(crate) fn ordinary_object_create(
     agent: &mut JSAgent,
     proto_addr: Option<JSObjAddr>,
-    additional_internal_slots: Option<Vec<JSObjectSlotName>>,
+    additional_internal_slots: Option<Vec<InternalSlotName>>,
 ) -> JSObjAddr {
     // 1. Let internalSlotsList be « [[Prototype]], [[Extensible]] ».
-    let mut internal_slots_list = vec![JSObjectSlotName::Prototype, JSObjectSlotName::Extensible];
+    let mut internal_slots_list = vec![InternalSlotName::Prototype, InternalSlotName::Extensible];
 
     // 2. If additionalInternalSlotsList is present, set internalSlotsList to the list-concatenation of internalSlotsList and additionalInternalSlotsList.
     if let Some(additional_internal_slots) = additional_internal_slots {

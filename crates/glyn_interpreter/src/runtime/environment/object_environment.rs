@@ -19,13 +19,13 @@ use crate::{
 
 /// 9.1.1.2 Object Environment Records
 /// https://262.ecma-international.org/16.0/#sec-object-environment-records
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct ObjEnvironment {
     /// [[BindingObject]]
-    binding_object: JSObjAddr,
+    pub(crate) binding_object: Option<JSObjAddr>,
 
     /// [[IsWithEnvironment]]
-    is_with_environment: bool,
+    pub(crate) is_with_environment: bool,
 }
 
 impl ObjEnvironment {
@@ -39,7 +39,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env.as_ref().unwrap();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object_addr = obj_env.binding_object;
+        let binding_object_addr = obj_env.binding_object.unwrap();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
         let found_binding = has_property(agent, binding_object_addr, &JSObjectPropKey::from(name));
@@ -96,7 +96,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env.as_ref().unwrap();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object;
+        let binding_object = obj_env.binding_object.unwrap();
 
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
@@ -124,7 +124,8 @@ impl ObjEnvironment {
         _name: JSString,
         _strict: bool,
     ) -> CompletionRecord {
-        unreachable!("The CreateImmutableBinding concrete method of an Object Environment Record is never used within this specification.")
+        // The CreateImmutableBinding concrete method of an Object Environment Record is never used within this specification.
+        unreachable!()
     }
 }
 

@@ -1,7 +1,7 @@
-mod declarative_environment;
-mod function_environment;
-mod global_environment;
-mod object_environment;
+pub(crate) mod declarative_environment;
+pub(crate) mod function_environment;
+pub(crate) mod global_environment;
+pub(crate) mod object_environment;
 
 use safe_gc::{Collector, Gc, Trace};
 
@@ -21,9 +21,20 @@ use crate::{
 
 #[derive(Debug)]
 pub(crate) enum EnvironmentKind {
+    /// 9.1.1.1 Declarative Environment Records
+    /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
     Declarative,
+
+    /// 9.1.1.2 Object Environment Records
+    /// https://262.ecma-international.org/16.0/#sec-object-environment-records
     Object,
+
+    /// 9.1.1.3 Function Environment Records
+    /// https://262.ecma-international.org/16.0/#sec-function-environment-records
     Function,
+
+    /// 9.1.1.4 Global Environment Records
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records
     Global,
 }
 
@@ -63,10 +74,10 @@ pub(crate) struct Environment {
     pub(crate) outer: Option<EnvironmentAddr>,
     pub(crate) methods: &'static EnvironmentMethods,
 
-    decl_env: Option<DeclEnvironment>,
-    func_env: Option<FuncEnvironment>,
-    obj_env: Option<ObjEnvironment>,
-    global_env: Option<GlobalEnvironment>,
+    pub(crate) decl_env: Option<DeclEnvironment>,
+    pub(crate) func_env: Option<FuncEnvironment>,
+    pub(crate) obj_env: Option<ObjEnvironment>,
+    pub(crate) global_env: Option<GlobalEnvironment>,
 }
 
 impl Trace for Environment {
@@ -75,18 +86,39 @@ impl Trace for Environment {
 
 impl Environment {
     pub(crate) fn new(kind: EnvironmentKind) -> Self {
-        Self {
-            outer: None,
-            methods: match kind {
-                EnvironmentKind::Declarative => &DECLARATIVE_ENVIRONMENT_METHODS,
-                EnvironmentKind::Object => &OBJECT_ENVIRONMENT_METHODS,
-                EnvironmentKind::Function => &FUNCTION_ENVIRONMENT_METHODS,
-                EnvironmentKind::Global => &GLOBAL_ENVIRONMENT_METHODS,
+        match kind {
+            EnvironmentKind::Declarative => Self {
+                outer: None,
+                methods: &DECLARATIVE_ENVIRONMENT_METHODS,
+                decl_env: Some(DeclEnvironment::default()),
+                func_env: None,
+                obj_env: None,
+                global_env: None,
             },
-            decl_env: None,
-            func_env: None,
-            obj_env: None,
-            global_env: None,
+            EnvironmentKind::Object => Self {
+                outer: None,
+                methods: &OBJECT_ENVIRONMENT_METHODS,
+                decl_env: None,
+                func_env: None,
+                obj_env: Some(ObjEnvironment::default()),
+                global_env: None,
+            },
+            EnvironmentKind::Function => Self {
+                outer: None,
+                methods: &FUNCTION_ENVIRONMENT_METHODS,
+                decl_env: Some(DeclEnvironment::default()),
+                func_env: Some(FuncEnvironment::default()),
+                obj_env: None,
+                global_env: None,
+            },
+            EnvironmentKind::Global => Self {
+                outer: None,
+                methods: &GLOBAL_ENVIRONMENT_METHODS,
+                decl_env: Some(DeclEnvironment::default()),
+                func_env: None,
+                obj_env: Some(ObjEnvironment::default()),
+                global_env: Some(GlobalEnvironment::default()),
+            },
         }
     }
 }

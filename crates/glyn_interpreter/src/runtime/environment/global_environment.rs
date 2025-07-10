@@ -24,7 +24,7 @@ pub(crate) struct Binding {
 pub(crate) struct GlobalEnvironment {
     /// [[GlobalThisValue]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-global-environment-records
-    global_this_value: Option<JSObjAddr>,
+    pub(crate) global_this_value: Option<JSObjAddr>,
 }
 
 impl GlobalEnvironment {

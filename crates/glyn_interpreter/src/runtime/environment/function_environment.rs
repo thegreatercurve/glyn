@@ -5,7 +5,7 @@ use crate::{
 };
 
 #[derive(Debug, Default)]
-pub(crate) enum ThisBindingStatus {
+pub enum ThisBindingStatus {
     Lexical,
     Initialized,
     #[default]
@@ -18,19 +18,19 @@ pub(crate) enum ThisBindingStatus {
 pub(crate) struct FuncEnvironment {
     /// [[ThisValue]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    this_value: Option<JSValue>,
+    pub(crate) this_value: Option<JSValue>,
 
     /// [[ThisBindingStatus]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    this_binding_status: ThisBindingStatus,
+    pub(crate) this_binding_status: ThisBindingStatus,
 
     /// [[FunctionObject]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    function_object: Option<JSObjAddr>,
+    pub(crate) function_object: Option<JSObjAddr>,
 
     /// [[NewTarget]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    new_target: Option<JSValue>,
+    pub(crate) new_target: Option<JSObjAddr>,
 }
 
 pub(crate) static FUNCTION_ENVIRONMENT_METHODS: EnvironmentMethods = EnvironmentMethods {

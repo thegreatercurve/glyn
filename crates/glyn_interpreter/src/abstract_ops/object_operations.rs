@@ -1,6 +1,6 @@
 use crate::value::{
     object::{
-        internal_slots::{JSObjectInternalSlots, JSObjectSlotName},
+        internal_slots::{InternalSlotName, JSObjectInternalSlots},
         property::{JSObjectPropDescriptor, JSObjectPropKey},
         JSObjAddr, JSObject, JSObjectInternalMethods,
     },
@@ -22,7 +22,7 @@ use crate::runtime::completion::CompletionRecord;
 /// https://262.ecma-international.org/16.0/#sec-makebasicobject
 pub(crate) fn make_basic_object(
     agent: &mut JSAgent,
-    internal_slots_list: Vec<JSObjectSlotName>,
+    internal_slots_list: Vec<InternalSlotName>,
     internal_methods: Option<&'static JSObjectInternalMethods>,
 ) -> JSObjAddr {
     // 1. Set internalSlotsList to the list-concatenation of internalSlotsList and « [[PrivateElements]] ».
