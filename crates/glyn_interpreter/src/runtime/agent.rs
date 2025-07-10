@@ -11,7 +11,18 @@ use crate::value::symbol::JSSymbol;
 
 #[derive(Default)]
 pub(crate) struct WellKnownSymbols {
+    pub(crate) async_iterator: JSSymbol,
+    pub(crate) has_instance: JSSymbol,
+    pub(crate) is_concat_spreadable: JSSymbol,
+    pub(crate) iterator: JSSymbol,
+    pub(crate) match_: JSSymbol,
+    pub(crate) match_all: JSSymbol,
+    pub(crate) replace: JSSymbol,
+    pub(crate) search: JSSymbol,
+    pub(crate) species: JSSymbol,
+    pub(crate) split: JSSymbol,
     pub(crate) to_primitive: JSSymbol,
+    pub(crate) to_string_tag: JSSymbol,
     pub(crate) unscopables: JSSymbol,
 }
 
