@@ -15,7 +15,7 @@ use crate::{
             object_environment::{ObjEnvironment, OBJECT_ENVIRONMENT_METHODS},
         },
     },
-    value::string::JSString,
+    value::{object::JSObjAddr, string::JSString, JSValue},
     JSAgent,
 };
 
@@ -62,6 +62,55 @@ pub(crate) struct EnvironmentMethods {
         name: JSString,
         strict: bool,
     ) -> CompletionRecord,
+
+    /// InitializeBinding ( N, V )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) initialize_binding: fn(
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
+    ) -> CompletionRecord,
+
+    /// SetMutableBinding ( N, V, S )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) set_mutable_binding: fn(
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
+        strict: bool,
+    ) -> CompletionRecord,
+
+    /// GetBindingValue ( N, S )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) get_binding_value: fn(
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
+        strict: bool,
+    ) -> CompletionRecord<JSValue>,
+
+    /// DeleteBinding ( N )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) delete_binding: fn(
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
+    ) -> CompletionRecord<bool>,
+
+    /// HasThisBinding ( )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) has_this_binding: fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> bool,
+
+    /// HasSuperBinding ( )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) has_super_binding: fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> bool,
+
+    /// WithBaseObject ( )
+    /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
+    pub(crate) with_base_object:
+        fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> Option<JSObjAddr>,
 }
 
 pub(crate) type EnvironmentAddr = Gc<Environment>;

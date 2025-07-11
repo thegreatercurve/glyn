@@ -81,10 +81,82 @@ impl GlobalEnvironment {
         // 3. Return ! DclRec.CreateImmutableBinding(N, S).
         DeclEnvironment::create_immutable_binding(agent, env_addr, name, strict)
     }
+
+    /// 9.1.1.4.4 InitializeBinding ( N, V )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-initializebinding-n-v
+    pub(crate) fn initialize_binding(
+        _agent: &mut JSAgent,
+        _env_addr: EnvironmentAddr,
+        _name: JSString,
+        _value: JSValue,
+    ) -> CompletionRecord {
+        todo!()
+    }
+
+    /// 9.1.1.4.5 SetMutableBinding ( N, V, S )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-setmutablebinding-n-v-s
+    pub(crate) fn set_mutable_binding(
+        _agent: &mut JSAgent,
+        _env_addr: EnvironmentAddr,
+        _name: JSString,
+        _value: JSValue,
+        _strict: bool,
+    ) -> CompletionRecord {
+        todo!()
+    }
+
+    /// 9.1.1.4.6 GetBindingValue ( N, S )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-getbindingvalue-n-s
+    pub(crate) fn get_binding_value(
+        _agent: &JSAgent,
+        _env_addr: EnvironmentAddr,
+        _name: &JSString,
+        _strict: bool,
+    ) -> CompletionRecord<JSValue> {
+        todo!()
+    }
+
+    /// 9.1.1.4.7 DeleteBinding ( N )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-deletebinding-n
+    pub(crate) fn delete_binding(
+        _agent: &mut JSAgent,
+        _env_addr: EnvironmentAddr,
+        _name: &JSString,
+    ) -> CompletionRecord<bool> {
+        todo!()
+    }
+
+    /// 9.1.1.4.8 HasThisBinding ( )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-hasthisbinding
+    pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+        todo!()
+    }
+
+    /// 9.1.1.4.9 HasSuperBinding ( )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-hassuperbinding
+    pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+        todo!()
+    }
+
+    /// 9.1.1.4.10 WithBaseObject ( )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-withbaseobject
+    pub(crate) fn with_base_object(
+        _agent: &JSAgent,
+        _env_addr: EnvironmentAddr,
+    ) -> Option<JSObjAddr> {
+        todo!()
+    }
 }
 
 pub(crate) static GLOBAL_ENVIRONMENT_METHODS: EnvironmentMethods = EnvironmentMethods {
     has_binding: GlobalEnvironment::has_binding,
     create_mutable_binding: GlobalEnvironment::create_mutable_binding,
     create_immutable_binding: GlobalEnvironment::create_immutable_binding,
+    initialize_binding: GlobalEnvironment::initialize_binding,
+    set_mutable_binding: GlobalEnvironment::set_mutable_binding,
+    get_binding_value: GlobalEnvironment::get_binding_value,
+    delete_binding: GlobalEnvironment::delete_binding,
+    has_this_binding: GlobalEnvironment::has_this_binding,
+    has_super_binding: GlobalEnvironment::has_super_binding,
+    with_base_object: GlobalEnvironment::with_base_object,
 };

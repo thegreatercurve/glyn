@@ -37,4 +37,11 @@ pub(crate) static FUNCTION_ENVIRONMENT_METHODS: EnvironmentMethods = Environment
     has_binding: DeclEnvironment::has_binding,
     create_mutable_binding: DeclEnvironment::create_mutable_binding,
     create_immutable_binding: DeclEnvironment::create_immutable_binding,
+    initialize_binding: DeclEnvironment::initialize_binding,
+    set_mutable_binding: DeclEnvironment::set_mutable_binding,
+    get_binding_value: DeclEnvironment::get_binding_value,
+    delete_binding: DeclEnvironment::delete_binding,
+    has_this_binding: DeclEnvironment::has_this_binding,
+    has_super_binding: DeclEnvironment::has_super_binding,
+    with_base_object: DeclEnvironment::with_base_object,
 };
