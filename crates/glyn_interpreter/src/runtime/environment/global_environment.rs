@@ -108,13 +108,22 @@ impl GlobalEnvironment {
     /// 9.1.1.4.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-setmutablebinding-n-v-s
     pub(crate) fn set_mutable_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
-        _strict: bool,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
+        strict: bool,
     ) -> CompletionRecord {
-        todo!()
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        // 2. If ! DclRec.HasBinding(N) is true, then
+        if DeclEnvironment::has_binding(agent, env_addr, &name)? {
+            // a. Return ? DclRec.SetMutableBinding(N, V, S).
+            return DeclEnvironment::set_mutable_binding(agent, env_addr, name, value, strict);
+        }
+
+        // 3. Let ObjRec be envRec.[[ObjectRecord]].
+        // 4. Return ? ObjRec.SetMutableBinding(N, V, S).
+        ObjEnvironment::set_mutable_binding(agent, env_addr, name, value, strict)
     }
 
     /// 9.1.1.4.6 GetBindingValue ( N, S )

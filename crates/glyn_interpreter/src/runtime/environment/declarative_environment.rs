@@ -124,11 +124,12 @@ impl DeclEnvironment {
         name: JSString,
         value: JSValue,
     ) -> CompletionRecord {
-        let decl_env = agent.environment_mut(env_addr).decl_env_mut();
-
         // 1. Assert: envRec must have an uninitialized binding for N.
         // 2. Set the bound value for N in envRec to V.
-        decl_env.initialize_binding_impl(name, value);
+        agent
+            .environment_mut(env_addr)
+            .decl_env_mut()
+            .initialize_binding_impl(name, value);
 
         // 3. Record that the binding for N in envRec has been initialized.
         // Note: This is implicit in setting the value to Some(value)
@@ -140,13 +141,61 @@ impl DeclEnvironment {
     /// 9.1.1.1.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-setmutablebinding-n-v-s
     pub(crate) fn set_mutable_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
-        _strict: bool,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
+        mut strict: bool,
     ) -> CompletionRecord {
-        todo!()
+        let decl_env = agent.environment_mut(env_addr).decl_env_mut();
+
+        // 1. If envRec does not have a binding for N, then
+        if !decl_env.has_binding_impl(&name) {
+            // a. If S is true, throw a ReferenceError exception.
+            if strict {
+                agent.reference_error(&format!("Property {name:?} is not defined"));
+            }
+
+            // b. Perform ! envRec.CreateMutableBinding(N, true).
+            decl_env.add_binding_impl(name.clone(), true, true, true);
+
+            // c. Perform ! envRec.InitializeBinding(N, V).
+            decl_env.initialize_binding_impl(name, value);
+
+            // d. Return unused.
+            return Ok(());
+        }
+
+        let binding = decl_env.binding_mut(&name).unwrap();
+
+        // 2. If the binding for N in envRec is a strict binding, set S to true.
+        if binding.strict {
+            strict = true;
+        }
+
+        // 3. If the binding for N in envRec has not yet been initialized, then
+        if binding.value.is_none() {
+            // a. Throw a ReferenceError exception.
+            agent.reference_error(&format!("Property {name:?} is not defined"));
+        }
+        // 4. Else if the binding for N in envRec is a mutable binding, then
+        else if binding.mutable {
+            // a. Change its bound value to V.
+            binding.value = Some(value);
+        }
+        // 5. Else,
+        else {
+            // a. Assert: This is an attempt to change the value of an immutable binding.
+            // b. If S is true, throw a TypeError exception.
+            if strict {
+                agent.type_error(&format!(
+                    "Cannot change the value of an immutable property: {name:?}"
+                ));
+            }
+        }
+
+        // 6. Return unused.
+        Ok(())
     }
 
     /// 9.1.1.1.6 GetBindingValue ( N, S )

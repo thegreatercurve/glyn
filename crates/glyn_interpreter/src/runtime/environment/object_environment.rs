@@ -1,6 +1,6 @@
 use crate::{
     abstract_ops::{
-        object_operations::{define_property_or_throw, get, has_property},
+        object_operations::{define_property_or_throw, get, has_property, set},
         type_conversion::to_boolean,
     },
     runtime::{
@@ -146,13 +146,36 @@ impl ObjEnvironment {
     /// 9.1.1.2.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-setmutablebinding-n-v-s
     pub(crate) fn set_mutable_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
-        _strict: bool,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
+        strict: bool,
     ) -> CompletionRecord {
-        todo!()
+        let obj_env = agent.environment(env_addr).obj_env();
+
+        // 1. Let bindingObject be envRec.[[BindingObject]].
+        let binding_object = obj_env.binding_object.unwrap();
+
+        // 2. Let stillExists be ? HasProperty(bindingObject, N).
+        let still_exists = has_property(agent, binding_object, &JSObjectPropKey::from(&name));
+
+        // 3. If stillExists is false and S is true, throw a ReferenceError exception.
+        if !still_exists && strict {
+            agent.reference_error(&format!("Property {name:?} is not defined"));
+        }
+
+        // 4. Perform ? Set(bindingObject, N, V, S).
+        set(
+            agent,
+            binding_object,
+            &JSObjectPropKey::from(name),
+            value,
+            strict,
+        )?;
+
+        // 5. Return unused.
+        Ok(())
     }
 
     /// 9.1.1.2.6 GetBindingValue ( N, S )
