@@ -25,12 +25,12 @@ pub(crate) struct DeclEnvironment {
 }
 
 impl DeclEnvironment {
-    fn binding(&self, name: &JSString) -> Option<&Binding> {
-        self.bindings.get(name)
+    fn binding(&self, name: &JSString) -> &Binding {
+        self.bindings.get(name).unwrap()
     }
 
-    fn binding_mut(&mut self, name: &JSString) -> Option<&mut Binding> {
-        self.bindings.get_mut(name)
+    fn binding_mut(&mut self, name: &JSString) -> &mut Binding {
+        self.bindings.get_mut(name).unwrap()
     }
 
     fn has_binding_impl(&self, name: &JSString) -> bool {
@@ -52,9 +52,9 @@ impl DeclEnvironment {
     }
 
     fn initialize_binding_impl(&mut self, name: JSString, value: JSValue) {
-        debug_assert!(self.binding(&name).unwrap().value.is_none());
+        debug_assert!(self.binding(&name).value.is_none());
 
-        self.binding_mut(&name).unwrap().value = Some(value);
+        self.binding_mut(&name).value = Some(value);
     }
 
     fn remove_binding_impl(&mut self, name: &JSString) {
@@ -166,7 +166,7 @@ impl DeclEnvironment {
             return Ok(());
         }
 
-        let binding = decl_env.binding_mut(&name).unwrap();
+        let binding = decl_env.binding_mut(&name);
 
         // 2. If the binding for N in envRec is a strict binding, set S to true.
         if binding.strict {
@@ -213,7 +213,7 @@ impl DeclEnvironment {
 
         // 2. If the binding for N in envRec is an uninitialized binding, throw a ReferenceError exception.
         // 3. Return the value currently bound to N in envRec.
-        if let Some(value) = &decl_env.binding(name).unwrap().value {
+        if let Some(value) = &decl_env.binding(name).value {
             Ok(value.clone())
         } else {
             agent.reference_error(&format!("Property {name:?} is not initialized"));
@@ -223,11 +223,25 @@ impl DeclEnvironment {
     /// 9.1.1.1.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-deletebinding-n
     pub(crate) fn delete_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
     ) -> CompletionRecord<bool> {
-        todo!()
+        let decl_env = agent.environment_mut(env_addr).decl_env_mut();
+
+        // 1. Assert: envRec has a binding for N.
+        debug_assert!(decl_env.has_binding_impl(name));
+
+        // 2. If the binding for N in envRec cannot be deleted, return false.
+        if !decl_env.binding(name).deletable {
+            return Ok(false);
+        }
+
+        // 3. Remove the binding for N from envRec.
+        decl_env.remove_binding_impl(name);
+
+        // 4. Return true.
+        Ok(true)
     }
 
     /// 9.1.1.1.8 HasThisBinding ( )

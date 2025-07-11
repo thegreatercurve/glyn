@@ -1,4 +1,5 @@
 use crate::{
+    abstract_ops::object_operations::has_property,
     runtime::{
         completion::CompletionRecord,
         environment::{
@@ -6,7 +7,10 @@ use crate::{
             EnvironmentAddr, EnvironmentMethods,
         },
     },
-    value::{object::JSObjAddr, string::JSString},
+    value::{
+        object::{property::JSObjectPropKey, JSObjAddr},
+        string::JSString,
+    },
     JSAgent, JSValue,
 };
 
@@ -149,11 +153,34 @@ impl GlobalEnvironment {
     /// 9.1.1.4.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-deletebinding-n
     pub(crate) fn delete_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
     ) -> CompletionRecord<bool> {
-        todo!()
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        // 2. If ! DclRec.HasBinding(N) is true, then
+        if DeclEnvironment::has_binding(agent, env_addr, name)? {
+            // a. Return ! DclRec.DeleteBinding(N).
+            return DeclEnvironment::delete_binding(agent, env_addr, name);
+        }
+
+        // 3. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_env = agent.environment(env_addr).obj_env();
+
+        // 4. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_env.binding_object();
+
+        // 5. Let existingProp be ? HasOwnProperty(globalObject, N).
+        let existing_prop = has_property(agent, global_object, &JSObjectPropKey::from(name))?;
+
+        // 6. If existingProp is true, then
+        if existing_prop {
+            // a. Return ? ObjRec.DeleteBinding(N).
+            return ObjEnvironment::delete_binding(agent, env_addr, name);
+        }
+
+        // 7. Return true.
+        Ok(true)
     }
 
     /// 9.1.1.4.8 HasThisBinding ( )

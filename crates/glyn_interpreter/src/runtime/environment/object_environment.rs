@@ -1,5 +1,6 @@
 use crate::{
     abstract_ops::{
+        object::delete,
         object_operations::{define_property_or_throw, get, has_property, set},
         type_conversion::to_boolean,
     },
@@ -29,6 +30,12 @@ pub(crate) struct ObjEnvironment {
 }
 
 impl ObjEnvironment {
+    pub(crate) fn binding_object(&self) -> JSObjAddr {
+        self.binding_object.unwrap()
+    }
+}
+
+impl ObjEnvironment {
     /// 9.1.1.2.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasbinding-n
     pub(crate) fn has_binding(
@@ -39,7 +46,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object_addr = obj_env.binding_object.unwrap();
+        let binding_object_addr = obj_env.binding_object();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
         let found_binding = has_property(agent, binding_object_addr, &JSObjectPropKey::from(name))?;
@@ -96,7 +103,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object.unwrap();
+        let binding_object = obj_env.binding_object();
 
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
@@ -155,7 +162,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object.unwrap();
+        let binding_object = obj_env.binding_object();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
         let still_exists = has_property(agent, binding_object, &JSObjectPropKey::from(&name))?;
@@ -189,7 +196,7 @@ impl ObjEnvironment {
         let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object.unwrap();
+        let binding_object = obj_env.binding_object();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
         let value = has_property(agent, binding_object, &JSObjectPropKey::from(name))?;
@@ -216,11 +223,17 @@ impl ObjEnvironment {
     /// 9.1.1.2.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-deletebinding-n
     pub(crate) fn delete_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
     ) -> CompletionRecord<bool> {
-        todo!()
+        let obj_env = agent.environment(env_addr).obj_env();
+
+        // 1. Let bindingObject be envRec.[[BindingObject]].
+        let binding_object = obj_env.binding_object();
+
+        // 2. Return ? bindingObject.[[Delete]](N).
+        delete(agent, binding_object, &JSObjectPropKey::from(name))
     }
 
     /// 9.1.1.2.8 HasThisBinding ( )
