@@ -15,7 +15,7 @@ use crate::{
 pub(crate) fn get_identifier_reference(
     agent: &JSAgent,
     env: Option<EnvironmentAddr>,
-    name: JSString,
+    name: &JSString,
     strict: bool,
 ) -> CompletionRecord<Reference> {
     // 1. If env is null, then

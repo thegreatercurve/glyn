@@ -22,6 +22,12 @@ impl From<JSString> for ReferenceName {
     }
 }
 
+impl From<&JSString> for ReferenceName {
+    fn from(value: &JSString) -> Self {
+        ReferenceName::Value(JSValue::String(value.clone()))
+    }
+}
+
 /// 6.2.5 The Reference Record Specification Type
 /// https://262.ecma-international.org/16.0/#sec-reference-record-specification-type
 #[derive(Clone, Debug, PartialEq)]
