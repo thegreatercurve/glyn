@@ -50,7 +50,7 @@ pub(crate) struct JSObjectInternalMethods {
         agent: &JSAgent,
         obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
-    ) -> Option<JSObjectPropDescriptor>,
+    ) -> CompletionRecord<Option<JSObjectPropDescriptor>>,
 
     /// [[DefineOwnProperty]]
     pub(crate) define_own_property: fn(
@@ -62,7 +62,7 @@ pub(crate) struct JSObjectInternalMethods {
 
     /// [[HasProperty]]
     pub(crate) has_property:
-        fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
+        fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
 
     /// [[Get]]
     pub(crate) get: fn(
@@ -82,7 +82,11 @@ pub(crate) struct JSObjectInternalMethods {
     ) -> CompletionRecord<bool>,
 
     /// [[Delete]]
-    pub(crate) delete: fn(agent: &mut JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool,
+    pub(crate) delete: fn(
+        agent: &mut JSAgent,
+        obj_addr: JSObjAddr,
+        key: &JSObjectPropKey,
+    ) -> CompletionRecord<bool>,
 
     /// [[OwnPropertyKeys]]
     pub(crate) own_property_keys: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,

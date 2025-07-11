@@ -195,7 +195,7 @@ pub(crate) fn delete_property_or_throw(
     key: &JSObjectPropKey,
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[Delete]](P).
-    let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key);
+    let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key)?;
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
@@ -232,7 +232,11 @@ pub(crate) fn get_method(
 
 /// 7.3.11 HasProperty ( O, P )
 /// https://262.ecma-international.org/16.0/#sec-hasproperty
-pub(crate) fn has_property(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> bool {
+pub(crate) fn has_property(
+    agent: &JSAgent,
+    obj_addr: JSObjAddr,
+    key: &JSObjectPropKey,
+) -> CompletionRecord<bool> {
     // 1. Return ? O.[[HasProperty]](P).
     (agent.object(obj_addr).methods.has_property)(agent, obj_addr, key)
 }
@@ -243,13 +247,13 @@ pub(crate) fn has_own_property(
     agent: &JSAgent,
     obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
-) -> bool {
+) -> CompletionRecord<bool> {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
-    let desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key);
+    let desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key)?;
 
     // 2. If desc is undefined, return false.
     // 3. Return true.
-    desc.is_some()
+    Ok(desc.is_some())
 }
 
 /// 7.3.13 Call ( F, V [ , argumentsList ] )
@@ -348,7 +352,7 @@ pub(crate) fn set_integrity_level(
         for key in keys {
             // i. Let currentDesc be ? O.[[GetOwnProperty]](k).
             let current_desc =
-                (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key);
+                (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
 
             // ii. If currentDesc is not undefined, then
             if let Some(current_desc) = current_desc {
@@ -405,7 +409,8 @@ pub(crate) fn test_integrity_level(
     // 5. For each element k of keys, do
     for key in keys {
         // a. Let currentDesc be ? O.[[GetOwnProperty]](k).
-        let current_desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key);
+        let current_desc =
+            (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
 
         // b. If currentDesc is not undefined, then
         if let Some(current_desc) = current_desc {

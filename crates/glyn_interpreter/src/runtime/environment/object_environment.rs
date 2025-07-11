@@ -42,7 +42,7 @@ impl ObjEnvironment {
         let binding_object_addr = obj_env.binding_object.unwrap();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
-        let found_binding = has_property(agent, binding_object_addr, &JSObjectPropKey::from(name));
+        let found_binding = has_property(agent, binding_object_addr, &JSObjectPropKey::from(name))?;
 
         // 3. If foundBinding is false, return false.
         if !found_binding {
@@ -158,7 +158,7 @@ impl ObjEnvironment {
         let binding_object = obj_env.binding_object.unwrap();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
-        let still_exists = has_property(agent, binding_object, &JSObjectPropKey::from(&name));
+        let still_exists = has_property(agent, binding_object, &JSObjectPropKey::from(&name))?;
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {
@@ -192,7 +192,7 @@ impl ObjEnvironment {
         let binding_object = obj_env.binding_object.unwrap();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
-        let value = has_property(agent, binding_object, &JSObjectPropKey::from(name));
+        let value = has_property(agent, binding_object, &JSObjectPropKey::from(name))?;
 
         // 3. If value is false, then
         if !value {
