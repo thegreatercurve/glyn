@@ -129,12 +129,21 @@ impl GlobalEnvironment {
     /// 9.1.1.4.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-getbindingvalue-n-s
     pub(crate) fn get_binding_value(
-        _agent: &JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
-        _strict: bool,
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
+        strict: bool,
     ) -> CompletionRecord<JSValue> {
-        todo!()
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        // 2. If ! DclRec.HasBinding(N) is true, then
+        if DeclEnvironment::has_binding(agent, env_addr, name)? {
+            // a. Return ? DclRec.GetBindingValue(N, S).
+            return DeclEnvironment::get_binding_value(agent, env_addr, name, strict);
+        }
+
+        // 3. Let ObjRec be envRec.[[ObjectRecord]].
+        // 4. Return ? ObjRec.GetBindingValue(N, S).
+        ObjEnvironment::get_binding_value(agent, env_addr, name, strict)
     }
 
     /// 9.1.1.4.7 DeleteBinding ( N )

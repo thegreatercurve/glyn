@@ -201,12 +201,23 @@ impl DeclEnvironment {
     /// 9.1.1.1.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-getbindingvalue-n-s
     pub(crate) fn get_binding_value(
-        _agent: &JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
         _strict: bool,
     ) -> CompletionRecord<JSValue> {
-        todo!()
+        let decl_env = agent.environment(env_addr).decl_env();
+
+        // 1. Assert: envRec has a binding for N.
+        debug_assert!(decl_env.has_binding_impl(name));
+
+        // 2. If the binding for N in envRec is an uninitialized binding, throw a ReferenceError exception.
+        // 3. Return the value currently bound to N in envRec.
+        if let Some(value) = &decl_env.binding(name).unwrap().value {
+            Ok(value.clone())
+        } else {
+            agent.reference_error(&format!("Property {name:?} is not initialized"));
+        }
     }
 
     /// 9.1.1.1.7 DeleteBinding ( N )

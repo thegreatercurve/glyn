@@ -181,12 +181,36 @@ impl ObjEnvironment {
     /// 9.1.1.2.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-getbindingvalue-n-s
     pub(crate) fn get_binding_value(
-        _agent: &JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: &JSString,
-        _strict: bool,
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
+        strict: bool,
     ) -> CompletionRecord<JSValue> {
-        todo!()
+        let obj_env = agent.environment(env_addr).obj_env();
+
+        // 1. Let bindingObject be envRec.[[BindingObject]].
+        let binding_object = obj_env.binding_object.unwrap();
+
+        // 2. Let value be ? HasProperty(bindingObject, N).
+        let value = has_property(agent, binding_object, &JSObjectPropKey::from(name));
+
+        // 3. If value is false, then
+        if !value {
+            // a. If S is false, return undefined; otherwise throw a ReferenceError exception.
+            if strict {
+                agent.reference_error(&format!("Property {name:?} is not defined"));
+            }
+
+            return Ok(JSValue::Undefined);
+        }
+
+        // 4. Return ? Get(bindingObject, N).
+        get(
+            agent,
+            binding_object,
+            &JSObjectPropKey::from(name),
+            &JSValue::from(binding_object),
+        )
     }
 
     /// 9.1.1.2.7 DeleteBinding ( N )
