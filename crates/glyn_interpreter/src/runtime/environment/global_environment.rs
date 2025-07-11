@@ -85,12 +85,24 @@ impl GlobalEnvironment {
     /// 9.1.1.4.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-initializebinding-n-v
     pub(crate) fn initialize_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
     ) -> CompletionRecord {
-        todo!()
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        // 2. If ! DclRec.HasBinding(N) is true, then
+        if DeclEnvironment::has_binding(agent, env_addr, &name)? {
+            // a. Return ! DclRec.InitializeBinding(N, V).
+            return DeclEnvironment::initialize_binding(agent, env_addr, name, value);
+        }
+
+        // 3. Assert: If the binding exists, it must be in the Object Environment Record.
+        debug_assert!(ObjEnvironment::has_binding(agent, env_addr, &name)?);
+
+        // 4. Let ObjRec be envRec.[[ObjectRecord]].
+        // 5. Return ? ObjRec.InitializeBinding(N, V).
+        ObjEnvironment::initialize_binding(agent, env_addr, name, value)
     }
 
     /// 9.1.1.4.5 SetMutableBinding ( N, V, S )

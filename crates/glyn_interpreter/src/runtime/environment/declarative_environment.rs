@@ -25,17 +25,21 @@ pub(crate) struct DeclEnvironment {
 }
 
 impl DeclEnvironment {
-    fn has_binding_internal(&self, name: &JSString) -> bool {
+    fn binding(&self, name: &JSString) -> Option<&Binding> {
+        self.bindings.get(name)
+    }
+
+    fn binding_mut(&mut self, name: &JSString) -> Option<&mut Binding> {
+        self.bindings.get_mut(name)
+    }
+
+    fn has_binding_impl(&self, name: &JSString) -> bool {
         self.bindings.contains_key(name)
     }
 
-    fn add_binding_internal(
-        &mut self,
-        name: JSString,
-        mutable: bool,
-        deletable: bool,
-        strict: bool,
-    ) {
+    fn add_binding_impl(&mut self, name: JSString, mutable: bool, deletable: bool, strict: bool) {
+        debug_assert!(!self.has_binding_impl(&name));
+
         self.bindings.insert(
             name,
             Binding {
@@ -47,7 +51,13 @@ impl DeclEnvironment {
         );
     }
 
-    fn remove_binding_internal(&mut self, name: &JSString) {
+    fn initialize_binding_impl(&mut self, name: JSString, value: JSValue) {
+        debug_assert!(self.binding(&name).unwrap().value.is_none());
+
+        self.binding_mut(&name).unwrap().value = Some(value);
+    }
+
+    fn remove_binding_impl(&mut self, name: &JSString) {
         self.bindings.remove(name);
     }
 }
@@ -64,10 +74,8 @@ impl DeclEnvironment {
         // 2. Return false.
         Ok(agent
             .environment(env_addr)
-            .decl_env
-            .as_ref()
-            .unwrap()
-            .has_binding_internal(name))
+            .decl_env()
+            .has_binding_impl(name))
     }
 
     /// 9.1.1.1.2 CreateMutableBinding ( N, D )
@@ -78,13 +86,12 @@ impl DeclEnvironment {
         name: JSString,
         deletable: bool,
     ) -> CompletionRecord {
-        let decl_env = agent.environment_mut(env_addr).decl_env.as_mut().unwrap();
-
         // 1. Assert: envRec does not already have a binding for N.
-        debug_assert!(!decl_env.has_binding_internal(&name));
-
         // 2. Create a mutable binding in envRec for N and record that it is uninitialized. If D is true, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
-        decl_env.add_binding_internal(name, true, deletable, true);
+        agent
+            .environment_mut(env_addr)
+            .decl_env_mut()
+            .add_binding_impl(name, true, deletable, true);
 
         // 3. Return unused.
         Ok(())
@@ -98,13 +105,12 @@ impl DeclEnvironment {
         name: JSString,
         strict: bool,
     ) -> CompletionRecord {
-        let decl_env = agent.environment_mut(env_addr).decl_env.as_mut().unwrap();
-
         // 1. Assert: envRec does not already have a binding for N.
-        debug_assert!(!decl_env.has_binding_internal(&name));
-
         // Create an immutable binding in envRec for N and record that it is uninitialized. If S is true, record that the newly created binding is a strict binding.
-        decl_env.add_binding_internal(name, false, false, strict);
+        agent
+            .environment_mut(env_addr)
+            .decl_env_mut()
+            .add_binding_impl(name, false, false, strict);
 
         // 3. Return unused.
         Ok(())
@@ -113,12 +119,22 @@ impl DeclEnvironment {
     /// 9.1.1.1.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-initializebinding-n-v
     pub(crate) fn initialize_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
     ) -> CompletionRecord {
-        todo!()
+        let decl_env = agent.environment_mut(env_addr).decl_env_mut();
+
+        // 1. Assert: envRec must have an uninitialized binding for N.
+        // 2. Set the bound value for N in envRec to V.
+        decl_env.initialize_binding_impl(name, value);
+
+        // 3. Record that the binding for N in envRec has been initialized.
+        // Note: This is implicit in setting the value to Some(value)
+
+        // 4. Return unused.
+        Ok(())
     }
 
     /// 9.1.1.1.5 SetMutableBinding ( N, V, S )

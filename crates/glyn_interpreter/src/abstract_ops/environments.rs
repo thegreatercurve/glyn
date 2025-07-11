@@ -78,7 +78,7 @@ pub(crate) fn new_object_environment(
     // 1. Let env be a new Object Environment Record.
     let mut env = Environment::new(EnvironmentKind::Object);
 
-    let obj_env = env.obj_env.as_mut().unwrap();
+    let obj_env = env.obj_env_mut();
 
     // 2. Set env.[[BindingObject]] to O.
     obj_env.binding_object = Some(binding_object);
@@ -103,7 +103,7 @@ pub(crate) fn new_function_environment(
     // 1. Let env be a new Function Environment Record containing no bindings.
     let mut env = Environment::new(EnvironmentKind::Function);
 
-    let func_env = env.func_env.as_mut().unwrap();
+    let func_env = env.func_env_mut();
 
     // 2. Set env.[[FunctionObject]] to F.
     func_env.function_object = Some(function_object_addr);
@@ -138,9 +138,9 @@ pub(crate) fn new_global_environment(
 
     // 1. Let objRec be NewObjectEnvironment(G, false, null).
     // Note: Overwrite default binding object with provided global object.
-    env.obj_env.as_mut().unwrap().binding_object = Some(global_object);
+    env.obj_env_mut().binding_object = Some(global_object);
 
-    let global_env = env.global_env.as_mut().unwrap();
+    let global_env = env.global_env_mut();
 
     // 4. Set env.[[ObjectRecord]] to objRec.
     // 5. Set env.[[GlobalThisValue]] to thisValue.

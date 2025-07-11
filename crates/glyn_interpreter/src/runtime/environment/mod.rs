@@ -123,10 +123,10 @@ pub(crate) struct Environment {
     pub(crate) outer: Option<EnvironmentAddr>,
     pub(crate) methods: &'static EnvironmentMethods,
 
-    pub(crate) decl_env: Option<DeclEnvironment>,
-    pub(crate) func_env: Option<FuncEnvironment>,
-    pub(crate) obj_env: Option<ObjEnvironment>,
-    pub(crate) global_env: Option<GlobalEnvironment>,
+    decl_env: Option<DeclEnvironment>,
+    func_env: Option<FuncEnvironment>,
+    obj_env: Option<ObjEnvironment>,
+    global_env: Option<GlobalEnvironment>,
 }
 
 impl Trace for Environment {
@@ -169,5 +169,37 @@ impl Environment {
                 global_env: Some(GlobalEnvironment::default()),
             },
         }
+    }
+
+    pub(crate) fn decl_env(&self) -> &DeclEnvironment {
+        self.decl_env.as_ref().unwrap()
+    }
+
+    pub(crate) fn decl_env_mut(&mut self) -> &mut DeclEnvironment {
+        self.decl_env.as_mut().unwrap()
+    }
+
+    pub(crate) fn func_env(&self) -> &FuncEnvironment {
+        self.func_env.as_ref().unwrap()
+    }
+
+    pub(crate) fn func_env_mut(&mut self) -> &mut FuncEnvironment {
+        self.func_env.as_mut().unwrap()
+    }
+
+    pub(crate) fn obj_env(&self) -> &ObjEnvironment {
+        self.obj_env.as_ref().unwrap()
+    }
+
+    pub(crate) fn obj_env_mut(&mut self) -> &mut ObjEnvironment {
+        self.obj_env.as_mut().unwrap()
+    }
+
+    pub(crate) fn global_env(&self) -> &GlobalEnvironment {
+        self.global_env.as_ref().unwrap()
+    }
+
+    pub(crate) fn global_env_mut(&mut self) -> &mut GlobalEnvironment {
+        self.global_env.as_mut().unwrap()
     }
 }

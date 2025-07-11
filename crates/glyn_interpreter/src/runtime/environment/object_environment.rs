@@ -36,7 +36,7 @@ impl ObjEnvironment {
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let obj_env = agent.environment(env_addr).obj_env.as_ref().unwrap();
+        let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object_addr = obj_env.binding_object.unwrap();
@@ -93,7 +93,7 @@ impl ObjEnvironment {
         name: JSString,
         configurable: bool,
     ) -> CompletionRecord {
-        let obj_env = agent.environment(env_addr).obj_env.as_ref().unwrap();
+        let obj_env = agent.environment(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = obj_env.binding_object.unwrap();
@@ -131,12 +131,16 @@ impl ObjEnvironment {
     /// 9.1.1.2.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-initializebinding-n-v
     pub(crate) fn initialize_binding(
-        _agent: &mut JSAgent,
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _value: JSValue,
+        agent: &mut JSAgent,
+        env_addr: EnvironmentAddr,
+        name: JSString,
+        value: JSValue,
     ) -> CompletionRecord {
-        todo!()
+        // 1. Perform ? envRec.SetMutableBinding(N, V, false).
+        ObjEnvironment::set_mutable_binding(agent, env_addr, name, value, false)?;
+
+        // 2. Return unused.
+        Ok(())
     }
 
     /// 9.1.1.2.5 SetMutableBinding ( N, V, S )
