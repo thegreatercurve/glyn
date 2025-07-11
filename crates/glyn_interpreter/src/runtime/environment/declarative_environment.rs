@@ -247,13 +247,15 @@ impl DeclEnvironment {
     /// 9.1.1.1.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hasthisbinding
     pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return false.
+        false
     }
 
     /// 9.1.1.1.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hassuperbinding
     pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return false.
+        false
     }
 
     /// 9.1.1.1.10 WithBaseObject ( )
@@ -262,7 +264,8 @@ impl DeclEnvironment {
         _agent: &JSAgent,
         _env_addr: EnvironmentAddr,
     ) -> Option<JSObjAddr> {
-        todo!()
+        // 1. Return undefined.
+        None
     }
 }
 

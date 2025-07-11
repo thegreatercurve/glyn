@@ -14,14 +14,6 @@ use crate::{
     JSAgent, JSValue,
 };
 
-#[derive(Debug)]
-pub(crate) struct Binding {
-    value: Option<JSValue>,
-    mutable: bool,
-    deletable: bool,
-    strict: bool,
-}
-
 /// 9.1.1.4 Global Environment Records
 /// https://262.ecma-international.org/16.0/#sec-global-environment-records
 #[derive(Debug, Default)]
@@ -186,13 +178,15 @@ impl GlobalEnvironment {
     /// 9.1.1.4.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-hasthisbinding
     pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return true.
+        true
     }
 
     /// 9.1.1.4.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-hassuperbinding
     pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return false.
+        false
     }
 
     /// 9.1.1.4.10 WithBaseObject ( )
@@ -201,7 +195,8 @@ impl GlobalEnvironment {
         _agent: &JSAgent,
         _env_addr: EnvironmentAddr,
     ) -> Option<JSObjAddr> {
-        todo!()
+        // 1. Return undefined.
+        None
     }
 }
 

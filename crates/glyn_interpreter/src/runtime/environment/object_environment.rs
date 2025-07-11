@@ -239,22 +239,32 @@ impl ObjEnvironment {
     /// 9.1.1.2.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasthisbinding
     pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return false.
+        false
     }
 
     /// 9.1.1.2.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hassuperbinding
     pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
-        todo!()
+        // 1. Return false.
+        false
     }
 
     /// 9.1.1.2.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-withbaseobject
     pub(crate) fn with_base_object(
-        _agent: &JSAgent,
-        _env_addr: EnvironmentAddr,
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
     ) -> Option<JSObjAddr> {
-        todo!()
+        let obj_env = agent.environment(env_addr).obj_env();
+
+        // 1. If envRec.[[IsWithEnvironment]] is true, return envRec.[[BindingObject]].
+        if obj_env.is_with_environment {
+            return Some(obj_env.binding_object());
+        }
+
+        // 2. Otherwise, return undefined.
+        None
     }
 }
 
