@@ -16,11 +16,11 @@ enum Literal {
     Null,
 }
 
-// 13 ECMAScript Language: Expressions
-// https://262.ecma-international.org/16.0/#sec-ecmascript-language-expressions
+/// 13 ECMAScript Language: Expressions
+/// https://262.ecma-international.org/16.0/#sec-ecmascript-language-expressions
 impl<'a> Parser<'a> {
-    // 13.1 Identifiers
-    // https://262.ecma-international.org/16.0/#prod-IdentifierReference
+    /// 13.1 Identifiers
+    /// https://262.ecma-international.org/16.0/#prod-IdentifierReference
     pub(crate) fn js_parse_identifier_reference(&mut self) -> CodeGenResult<JSString> {
         let binding_identifier = self.current_token.to_string();
 
@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
         Ok(binding_identifier.into())
     }
 
-    // https://262.ecma-international.org/16.0/#prod-BindingIdentifier
+    /// https://262.ecma-international.org/16.0/#prod-BindingIdentifier
     pub(crate) fn js_parse_binding_identifier(&mut self) -> CodeGenResult<JSString> {
         let binding_identifier = self.current_token.to_string();
 
@@ -46,8 +46,8 @@ impl<'a> Parser<'a> {
         Ok(binding_identifier.into())
     }
 
-    // 13.15 Assignment Operators
-    // https://262.ecma-international.org/16.0/#prod-AssignmentExpression
+    /// 13.15 Assignment Operators
+    /// https://262.ecma-international.org/16.0/#prod-AssignmentExpression
     pub(crate) fn js_parse_assignment_expression(&mut self) -> CodeGenResult {
         self.js_parse_conditional_expression()?;
 
@@ -64,14 +64,14 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    // 13.16 Comma Operator ( , )
-    // https://262.ecma-international.org/16.0/#prod-Expression
+    /// 13.16 Comma Operator ( , )
+    /// https://262.ecma-international.org/16.0/#prod-Expression
     pub(crate) fn js_parse_expression(&mut self) -> CodeGenResult {
         self.js_parse_assignment_expression()
     }
 
-    // 13.2 Primary Expressions
-    // https://262.ecma-international.org/16.0/#prod-PrimaryExpression
+    /// 13.2 Primary Expressions
+    /// https://262.ecma-international.org/16.0/#prod-PrimaryExpression
     fn js_parse_primary_expression(&mut self) -> CodeGenResult {
         match &self.current_token {
             // token if token.is_identifier_reference() => {
@@ -87,8 +87,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // 13.2.3 Literals
-    // https://262.ecma-international.org/16.0/#prod-Literal
+    /// 13.2.3 Literals
+    /// https://262.ecma-international.org/16.0/#prod-Literal
     fn js_parse_literal(&mut self) -> CodeGenResult {
         let literal_type = match self.current_token {
             Token::Keyword(Keyword::True) => LiteralType::Boolean(true),
@@ -112,20 +112,20 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    // 13.3 Left-Hand-Side Expressions
-    // https://262.ecma-international.org/16.0/#prod-LeftHandSideExpression
+    /// 13.3 Left-Hand-Side Expressions
+    /// https://262.ecma-international.org/16.0/#prod-LeftHandSideExpression
     fn js_parse_left_hand_side_expression(&mut self) -> CodeGenResult {
         self.js_parse_primary_expression()
     }
 
-    // 13.4 Update Expressions
-    // https://262.ecma-international.org/16.0/#prod-UpdateExpression
+    /// 13.4 Update Expressions
+    /// https://262.ecma-international.org/16.0/#prod-UpdateExpression
     fn js_parse_update_expression(&mut self) -> CodeGenResult {
         self.js_parse_left_hand_side_expression()
     }
 
-    // 13.5 Unary Operators
-    // https://262.ecma-international.org/16.0/#prod-UnaryExpression
+    /// 13.5 Unary Operators
+    /// https://262.ecma-international.org/16.0/#prod-UnaryExpression
     fn js_parse_unary_expression(&mut self) -> CodeGenResult {
         match self.current_token {
             Token::Plus | Token::Minus => {
@@ -141,35 +141,35 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // 13.6 Exponentiation Operator
-    // https://262.ecma-international.org/16.0/#prod-ExponentiationExpression
-
-    // 13.7 Multiplicative Operators
-    // https://262.ecma-international.org/16.0/#prod-MultiplicativeExpression
-
-    // 13.8 Additive Operators
-    // https://262.ecma-international.org/16.0/#prod-AdditiveExpression
-
-    // 13.9 Bitwise Shift Operators
-    // https://262.ecma-international.org/16.0/#prod-ShiftExpression
-
-    // 13.10 Relational Operators
-    // https://262.ecma-international.org/16.0/#prod-RelationalExpression
-
-    // 13.11 Equality Operators
-    // https://262.ecma-international.org/16.0/#prod-EqualityExpression
-
-    // 13.12 Binary Bitwise Operators
-    // https://262.ecma-international.org/16.0/#prod-BitwiseANDExpression
-    // https://262.ecma-international.org/16.0/#prod-BitwiseXORExpression
-    // https://262.ecma-international.org/16.0/#prod-BitwiseORExpression
-
-    // 13.13 Binary Logical Operators
-    // https://262.ecma-international.org/16.0/#prod-LogicalANDExpression
-    // https://262.ecma-international.org/16.0/#prod-LogicalORExpression
-
-    // 13.14 Conditional Operator ( ? : )
-    // https://262.ecma-international.org/16.0/#prod-ConditionalExpression
+    /// 13.6 Exponentiation Operator
+    /// https://262.ecma-international.org/16.0/#prod-ExponentiationExpression
+    ///
+    /// 13.7 Multiplicative Operators
+    /// https://262.ecma-international.org/16.0/#prod-MultiplicativeExpression
+    ///
+    /// 13.8 Additive Operators
+    /// https://262.ecma-international.org/16.0/#prod-AdditiveExpression
+    ///
+    /// 13.9 Bitwise Shift Operators
+    /// https://262.ecma-international.org/16.0/#prod-ShiftExpression
+    ///
+    /// 13.10 Relational Operators
+    /// https://262.ecma-international.org/16.0/#prod-RelationalExpression
+    ///
+    /// 13.11 Equality Operators
+    /// https://262.ecma-international.org/16.0/#prod-EqualityExpression
+    ///
+    /// 13.12 Binary Bitwise Operators
+    /// https://262.ecma-international.org/16.0/#prod-BitwiseANDExpression
+    /// https://262.ecma-international.org/16.0/#prod-BitwiseXORExpression
+    /// https://262.ecma-international.org/16.0/#prod-BitwiseORExpression
+    ///
+    /// 13.13 Binary Logical Operators
+    /// https://262.ecma-international.org/16.0/#prod-LogicalANDExpression
+    /// https://262.ecma-international.org/16.0/#prod-LogicalORExpression
+    ///
+    /// 13.14 Conditional Operator ( ? : )
+    /// https://262.ecma-international.org/16.0/#prod-ConditionalExpression
     fn js_parse_conditional_expression(&mut self) -> CodeGenResult {
         self.js_parse_binary_expression(BinOpPrecedence::Lowest)
     }
