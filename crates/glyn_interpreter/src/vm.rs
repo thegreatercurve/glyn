@@ -1,5 +1,7 @@
 use crate::{
     abstract_ops::{
+        execution_contexts::resolve_binding,
+        reference_operations::initialize_referenced_binding,
         runtime_operations::{
             apply_numeric_binary_operator, apply_string_or_numeric_binary_operator,
         },
@@ -7,13 +9,14 @@ use crate::{
     },
     codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
     lexer::Token,
-    runtime::agent::JSAgent,
-    value::JSValue,
+    runtime::{agent::JSAgent, reference::Reference},
+    value::{string::JSString, JSValue},
 };
 
 pub(crate) struct VM<'a> {
     agent: &'a mut JSAgent,
     stack: Vec<JSValue>,
+    references: Vec<Reference>,
     program: &'a FinalProgram,
     locals: Vec<JSValue>,
     ip: usize,
@@ -21,11 +24,13 @@ pub(crate) struct VM<'a> {
 }
 
 pub(crate) enum VMError {
-    StackUnderflow,
     BinOperationError,
-    UnaryOperationError,
-    LooselyEqualComparisonError,
+    InitializeReferencedBindingError,
     LessThanComparisonError,
+    LooselyEqualComparisonError,
+    ReferenceError,
+    StackUnderflow,
+    UnaryOperationError,
     UnexpectedInstruction,
 }
 
@@ -36,6 +41,7 @@ impl<'a> VM<'a> {
         Self {
             agent,
             stack: Vec::with_capacity(32),
+            references: Vec::with_capacity(32),
             locals: Vec::with_capacity(32),
             program,
             ip: 0,
@@ -60,6 +66,7 @@ impl<'a> VM<'a> {
 
         match instruction {
             Instruction::Const => self.exec_const(),
+            Instruction::Undefined => self.exec_undefined(),
             Instruction::Add => self.exec_bin_add(),
             Instruction::Subtract => self.exec_numeric_bin_op(Token::Minus),
             Instruction::Multiply => self.exec_numeric_bin_op(Token::Multiply),
@@ -84,6 +91,8 @@ impl<'a> VM<'a> {
             Instruction::BitShiftRightUnsigned => {
                 self.exec_numeric_bin_op(Token::UnsignedRightShift)
             }
+            Instruction::ResolveBinding => self.exec_resolve_binding(),
+            Instruction::InitializeReferencedBinding => self.exec_initialize_referenced_binding(),
             Instruction::Halt => {
                 self.running = false;
 
@@ -107,6 +116,10 @@ impl<'a> VM<'a> {
         self.program.constants[index as usize].clone()
     }
 
+    fn get_identifier(&mut self, index: u8) -> String {
+        self.program.identifiers[index as usize].clone()
+    }
+
     fn push(&mut self, value: JSValue) {
         self.stack.push(value);
     }
@@ -120,6 +133,14 @@ impl<'a> VM<'a> {
         let a = self.pop()?;
 
         Ok((a, b))
+    }
+
+    fn push_reference(&mut self, binding: Reference) {
+        self.references.push(binding);
+    }
+
+    fn pop_reference(&mut self) -> VMResult<Reference> {
+        self.references.pop().ok_or(VMError::ReferenceError)
     }
 
     fn exec_const(&mut self) -> VMResult {
@@ -264,6 +285,39 @@ impl<'a> VM<'a> {
         let result = is_strictly_equal(&a, &b);
 
         self.push(JSValue::from(if check_equal { result } else { !result }));
+
+        Ok(())
+    }
+
+    fn exec_resolve_binding(&mut self) -> VMResult {
+        let index = self.read_byte();
+
+        let value = self.get_identifier(index);
+
+        let binding = resolve_binding(
+            self.agent,
+            &JSString::from(value),
+            self.agent.running_execution_context().lexical_environment,
+        )
+        .map_err(|_| VMError::ReferenceError)?;
+
+        self.push_reference(binding);
+
+        Ok(())
+    }
+
+    fn exec_initialize_referenced_binding(&mut self) -> VMResult {
+        let reference = self.pop_reference()?;
+        let value = self.pop()?;
+
+        initialize_referenced_binding(self.agent, reference, value)
+            .map_err(|_| VMError::InitializeReferencedBindingError)?;
+
+        Ok(())
+    }
+
+    fn exec_undefined(&mut self) -> VMResult {
+        self.push(JSValue::Undefined);
 
         Ok(())
     }

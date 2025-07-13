@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Debug)]
 pub(crate) enum CodeGenError {
     UnexpectedToken,
     InvalidInteger64Literal,

@@ -60,6 +60,10 @@ pub(crate) enum Instruction {
     Return,
     Pop,
 
+    // Reference operations
+    ResolveBinding,
+    InitializeReferencedBinding,
+
     // Utility operations
     Print,
     Halt,
@@ -115,6 +119,8 @@ impl Display for Instruction {
             Instruction::Call => f.pad("CALL"),
             Instruction::Return => f.pad("RETURN"),
             Instruction::Pop => f.pad("POP"),
+            Instruction::ResolveBinding => f.pad("RESOLVE_BINDING"),
+            Instruction::InitializeReferencedBinding => f.pad("INITIALIZE_REFERENCED_BINDING"),
             Instruction::Print => f.pad("PRINT"),
             Instruction::Halt => f.pad("HALT"),
         }

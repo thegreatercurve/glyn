@@ -30,7 +30,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (agent.environment(env).methods.has_binding)(agent, env, &name)?;
+    let exists = (agent.environment(env).methods.has_binding)(agent, env, name)?;
 
     // 3. If exists is true, then
     if exists {

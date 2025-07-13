@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     codegen::{
         bytecode::{emitter::Emitter, instruction::Instruction},
@@ -18,23 +20,17 @@ pub(crate) enum LiteralType {
 pub(crate) struct FinalProgram {
     pub(crate) instructions: Vec<u8>,
     pub(crate) constants: Vec<JSValue>,
+    pub(crate) identifiers: Vec<String>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct BytecodeGenerator {
     emit: Emitter,
-    identifiers: Vec<JSString>,
 }
 
 impl BytecodeGenerator {
     pub(crate) fn program(self) -> FinalProgram {
         self.emit.program()
-    }
-
-    fn add_identifier(&mut self, identifier: JSString) -> u8 {
-        self.identifiers.push(identifier);
-
-        (self.identifiers.len() - 1) as u8
     }
 
     pub(crate) fn generate_binary_exp(&mut self, op_token: &Token) -> CodeGenResult {
@@ -95,6 +91,30 @@ impl BytecodeGenerator {
             LiteralType::Int64(value) => self.emit.constant(JSValue::from(*value)),
             LiteralType::String(value) => self.emit.constant(JSValue::from(value.clone())),
         };
+
+        Ok(())
+    }
+
+    /// 14.3.1 Let and Const Declarations
+    /// https://262.ecma-international.org/16.0/#sec-let-and-const-declarations
+    /// LexicalBinding : BindingIdentifier
+    /// LexicalBinding : BindingIdentifier Initializer
+    pub(crate) fn let_declaration(
+        &mut self,
+        binding_id: JSString,
+        has_initializer: bool,
+    ) -> CodeGenResult {
+        if has_initializer {
+            todo!()
+        } else {
+            // 1. Let lhs be ! ResolveBinding(StringValue of BindingIdentifier).
+            let binding_id = self.emit.identifier(binding_id);
+            self.emit.resolve_binding(binding_id);
+
+            // 2. Perform ! InitializeReferencedBinding(lhs, undefined).
+            self.emit.undefined();
+            self.emit.initialize_referenced_binding();
+        }
 
         Ok(())
     }
