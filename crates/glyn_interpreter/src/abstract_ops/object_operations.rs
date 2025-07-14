@@ -1,10 +1,13 @@
-use crate::value::{
-    object::{
-        internal_slots::{InternalSlotName, JSObjectInternalSlots},
-        property::{JSObjectPropDescriptor, JSObjectPropKey},
-        JSObjAddr, JSObject, JSObjectInternalMethods,
+use crate::{
+    runtime::agent::type_error,
+    value::{
+        object::{
+            internal_slots::{InternalSlotName, JSObjectInternalSlots},
+            property::{JSObjectPropDescriptor, JSObjectPropKey},
+            JSObjAddr, JSObject, JSObjectInternalMethods,
+        },
+        JSValue,
     },
-    JSValue,
 };
 
 use crate::abstract_ops::{
@@ -68,7 +71,7 @@ pub(crate) fn getv(
     key: &JSObjectPropKey,
 ) -> CompletionRecord<JSValue> {
     // 1. Let O be ? ToObject(V).
-    let obj_addr = to_object(agent, value);
+    let obj_addr = to_object(value);
 
     // 2. Return ? O.[[Get]](P, V).
     (agent.object(obj_addr).methods.get)(agent, obj_addr, key, value)
@@ -89,7 +92,7 @@ pub(crate) fn set(
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
     if !success && throw {
-        agent.type_error("Failed to set property on object");
+        type_error("Failed to set property on object");
     }
 
     // 3. Return unused.
@@ -130,7 +133,7 @@ pub(crate) fn create_data_property_or_throw(
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
-        agent.type_error("Failed to create data property on object");
+        type_error("Failed to create data property on object");
     }
 
     // 3. Return unused.
@@ -180,7 +183,7 @@ pub(crate) fn define_property_or_throw(
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
-        agent.type_error("Failed to define property on object");
+        type_error("Failed to define property on object");
     }
 
     // 3. Return unused.
@@ -199,7 +202,7 @@ pub(crate) fn delete_property_or_throw(
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
-        agent.type_error("Failed to delete property from object");
+        type_error("Failed to delete property from object");
     }
 
     // 3. Return unused.
@@ -223,7 +226,7 @@ pub(crate) fn get_method(
 
     // 3. If IsCallable(func) is false, throw a TypeError exception.
     if !is_callable(agent, &func) {
-        agent.type_error("Method is not callable.");
+        type_error("Method is not callable.");
     }
 
     // 4. Return func.
@@ -269,7 +272,7 @@ pub(crate) fn call(
 
     // 2. If IsCallable(F) is false, throw a TypeError exception.
     if !is_callable(agent, &function_value) {
-        agent.type_error("Function cannot be called.");
+        type_error("Function cannot be called.");
     }
 
     // 3. Return ? F.[[Call]](V, argumentsList).

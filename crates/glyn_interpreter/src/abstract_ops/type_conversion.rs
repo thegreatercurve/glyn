@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use crate::abstract_ops::object_operations::get_method;
-use crate::runtime::agent::JSAgent;
+use crate::runtime::agent::{range_error, type_error, JSAgent};
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{
     number::JSNumber,
@@ -74,7 +74,7 @@ pub(crate) fn to_primitive(
 
 /// 7.1.2 ToBoolean ( argument )
 /// https://262.ecma-international.org/16.0/#sec-toboolean
-pub(crate) fn to_boolean(agent: &JSAgent, arg: JSValue) -> bool {
+pub(crate) fn to_boolean(arg: JSValue) -> bool {
     // 1. If argument is a Boolean, return argument.
     if let Some(value) = arg.as_boolean() {
         return *value;
@@ -118,8 +118,8 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
         // 1. If argument is a Number, return argument.
         JSValue::Number(number) => return Ok(number.clone()),
         // 2. If argument is either a Symbol or a BigInt, throw a TypeError exception.
-        JSValue::Symbol(_) => agent.type_error("Cannot convert Symbol to JSNumber"),
-        JSValue::BigInt(_) => agent.type_error("Cannot convert BigInt to JSNumber"),
+        JSValue::Symbol(_) => type_error("Cannot convert Symbol to JSNumber"),
+        JSValue::BigInt(_) => type_error("Cannot convert BigInt to JSNumber"),
         // 3. If argument is undefined, return NaN.
         JSValue::Undefined => return Ok(JSNumber::NAN),
         // 4. If argument is either null or false, return +0𝔽.
@@ -223,7 +223,7 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 
     // 2. If argument is a Symbol, throw a TypeError exception.
     if argument.is_symbol() {
-        agent.type_error("Cannot convert Symbol to string");
+        type_error("Cannot convert Symbol to string");
     }
 
     // 3. If argument is undefined, return "undefined".
@@ -271,15 +271,15 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/16.0/#sec-toobject
-pub(crate) fn to_object(agent: &JSAgent, arg: &JSValue) -> JSObjAddr {
+pub(crate) fn to_object(arg: &JSValue) -> JSObjAddr {
     match arg {
         JSValue::Undefined => {
             // Throw a TypeError exception.
-            agent.type_error("Cannot convert undefined to object");
+            type_error("Cannot convert undefined to object");
         }
         JSValue::Null => {
             // Throw a TypeError exception.
-            agent.type_error("Cannot convert null to object");
+            type_error("Cannot convert null to object");
         }
         // Return a new Boolean object whose [[BooleanData]] internal slot is set to argument.
         JSValue::Bool(_value) => todo!(),
@@ -369,7 +369,7 @@ pub(crate) fn to_index(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSNu
 
     // 2. If integer is not in the inclusive interval from 0 to 2^53 - 1, throw a RangeError exception.
     if integer < JSNumber::ZERO || integer > JSNumber::from(JSNumber::MAX_SAFE_INTEGER as f64) {
-        agent.range_error("Index must be in the range 0 - 2^53-1");
+        range_error("Index must be in the range 0 - 2^53-1");
     }
 
     // 3. Return integer.

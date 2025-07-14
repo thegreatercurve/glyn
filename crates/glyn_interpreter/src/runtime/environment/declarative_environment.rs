@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     runtime::{
+        agent::{reference_error, type_error},
         completion::CompletionRecord,
         environment::{EnvironmentAddr, EnvironmentMethods},
     },
@@ -153,7 +154,7 @@ impl DeclEnvironment {
         if !decl_env.has_binding_impl(&name) {
             // a. If S is true, throw a ReferenceError exception.
             if strict {
-                agent.reference_error(&format!("Property {name:?} is not defined"));
+                reference_error(&format!("Property {name:?} is not defined"));
             }
 
             // b. Perform ! envRec.CreateMutableBinding(N, true).
@@ -176,7 +177,7 @@ impl DeclEnvironment {
         // 3. If the binding for N in envRec has not yet been initialized, then
         if binding.value.is_none() {
             // a. Throw a ReferenceError exception.
-            agent.reference_error(&format!("Property {name:?} is not defined"));
+            reference_error(&format!("Property {name:?} is not defined"));
         }
         // 4. Else if the binding for N in envRec is a mutable binding, then
         else if binding.mutable {
@@ -188,7 +189,7 @@ impl DeclEnvironment {
             // a. Assert: This is an attempt to change the value of an immutable binding.
             // b. If S is true, throw a TypeError exception.
             if strict {
-                agent.type_error(&format!(
+                type_error(&format!(
                     "Cannot change the value of an immutable property: {name:?}"
                 ));
             }
@@ -216,7 +217,7 @@ impl DeclEnvironment {
         if let Some(value) = &decl_env.binding(name).value {
             Ok(value.clone())
         } else {
-            agent.reference_error(&format!("Property {name:?} is not initialized"));
+            reference_error(&format!("Property {name:?} is not initialized"))
         }
     }
 

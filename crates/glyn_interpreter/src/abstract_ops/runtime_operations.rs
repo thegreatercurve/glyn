@@ -4,7 +4,7 @@ use crate::{
         type_conversion::{to_numeric, to_primitive, to_string, PreferredPrimType},
     },
     lexer::Token,
-    runtime::completion::CompletionRecord,
+    runtime::{agent::type_error, completion::CompletionRecord},
     value::{string::JSString, JSValue},
     JSAgent,
 };
@@ -59,7 +59,7 @@ pub(crate) fn apply_numeric_binary_operator(
 
     // 5. If SameType(lNum, rNum) is false, throw a TypeError exception.
     if !same_type(&lnum, &rnum) {
-        agent.type_error(&format!(
+        type_error(&format!(
             "Cannot use {:?} and {:?} in a binary expression",
             lnum, rnum
         ));

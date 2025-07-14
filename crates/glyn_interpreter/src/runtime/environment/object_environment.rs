@@ -4,10 +4,8 @@ use crate::{
         object_operations::{define_property_or_throw, get, has_property, set},
         type_conversion::to_boolean,
     },
-    runtime::{
-        completion::CompletionRecord,
-        environment::{EnvironmentAddr, EnvironmentMethods},
-    },
+    runtime::environment::{EnvironmentAddr, EnvironmentMethods},
+    runtime::{agent::reference_error, completion::CompletionRecord},
     value::{
         object::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
@@ -72,15 +70,12 @@ impl ObjEnvironment {
         // 6. If unscopables is an Object, then
         if let Some(unscopables_obj) = unscopables.as_object() {
             // a. Let blocked be ToBoolean(? Get(unscopables, N)).
-            let blocked = to_boolean(
+            let blocked = to_boolean(get(
                 agent,
-                get(
-                    agent,
-                    unscopables_obj,
-                    &JSObjectPropKey::from(name),
-                    &JSValue::from(unscopables_obj),
-                )?,
-            );
+                unscopables_obj,
+                &JSObjectPropKey::from(name),
+                &JSValue::from(unscopables_obj),
+            )?);
 
             // b. If blocked is true, return false.
             if blocked {
@@ -169,7 +164,7 @@ impl ObjEnvironment {
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {
-            agent.reference_error(&format!("Property {name:?} is not defined"));
+            reference_error(&format!("Property {name:?} is not defined"));
         }
 
         // 4. Perform ? Set(bindingObject, N, V, S).
@@ -205,7 +200,7 @@ impl ObjEnvironment {
         if !value {
             // a. If S is false, return undefined; otherwise throw a ReferenceError exception.
             if strict {
-                agent.reference_error(&format!("Property {name:?} is not defined"));
+                reference_error(&format!("Property {name:?} is not defined"));
             }
 
             return Ok(JSValue::Undefined);

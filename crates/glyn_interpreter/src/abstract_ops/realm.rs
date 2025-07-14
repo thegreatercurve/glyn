@@ -74,7 +74,7 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
         Some(new_global_environment(agent, global, this_value));
 
     // 16. Perform ? SetDefaultGlobalBindings(realm).
-    set_default_global_bindings(agent, &realm_addr)?;
+    set_default_global_bindings(&realm_addr)?;
 
     // 17. Create any host-defined global object properties on global.
     // TODO: Implement this step.
@@ -103,7 +103,7 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> I
 
 /// 9.3.3 SetDefaultGlobalBindings ( realm )
 /// https://262.ecma-international.org/16.0/#sec-setdefaultglobalbindings
-fn set_default_global_bindings(agent: &mut JSAgent, realm: &RealmAddr) -> CompletionRecord {
+fn set_default_global_bindings(realm: &RealmAddr) -> CompletionRecord {
     // TODO: Implement
     Ok(())
 }

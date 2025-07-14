@@ -1,6 +1,7 @@
 use crate::{
     abstract_ops::object_operations::has_property,
     runtime::{
+        agent::type_error,
         completion::CompletionRecord,
         environment::{
             declarative_environment::DeclEnvironment, object_environment::ObjEnvironment,
@@ -71,7 +72,7 @@ impl GlobalEnvironment {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, throw a TypeError exception.
         if DeclEnvironment::has_binding(agent, env_addr, &name)? {
-            agent.type_error(&format!("Binding already exists for {name:?}"));
+            type_error(&format!("Binding already exists for {name:?}"));
         }
 
         // 3. Return ! DclRec.CreateImmutableBinding(N, S).

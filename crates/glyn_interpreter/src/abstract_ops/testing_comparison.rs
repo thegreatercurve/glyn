@@ -1,7 +1,7 @@
 use crate::abstract_ops::type_conversion::{
     to_number, to_numeric, to_primitive, PreferredPrimType,
 };
-use crate::runtime::agent::JSAgent;
+use crate::runtime::agent::{type_error, JSAgent};
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{object::JSObjAddr, JSValue};
 
@@ -10,10 +10,10 @@ use crate::value::{object::JSObjAddr, JSValue};
 
 /// 7.2.1 RequireObjectCoercible ( argument )
 /// https://262.ecma-international.org/16.0/#sec-requireobjectcoercible
-pub(crate) fn require_object_coercible(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSValue> {
+pub(crate) fn require_object_coercible(arg: JSValue) -> CompletionRecord<JSValue> {
     //  It throws an error if argument is a value that cannot be converted to an Object using ToObject (e.g. null or undefined).
     if arg.is_null() || arg.is_undefined() {
-        agent.type_error("Cannot convert null or undefined to object");
+        type_error("Cannot convert null or undefined to object");
     }
 
     Ok(arg)

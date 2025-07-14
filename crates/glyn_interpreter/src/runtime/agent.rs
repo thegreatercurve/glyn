@@ -71,22 +71,6 @@ impl JSAgent {
             .unwrap_or_else(|| unreachable!())
     }
 
-    pub(crate) fn type_error(&self, message: &str) -> ! {
-        panic!("TypeError: {message:?}");
-    }
-
-    pub(crate) fn reference_error(&self, message: &str) -> ! {
-        panic!("ReferenceError: {message:?}");
-    }
-
-    pub(crate) fn syntax_error(&self, message: &str) -> ! {
-        panic!("SyntaxError: {message:?}");
-    }
-
-    pub(crate) fn range_error(&self, message: &str) -> ! {
-        panic!("RangeError: {message:?}");
-    }
-
     pub(crate) fn allocate_object(&mut self, object: JSObject) -> JSObjAddr {
         self.object_heap.alloc(object).into()
     }
@@ -129,4 +113,20 @@ impl JSAgent {
     pub(crate) fn well_known_symbols(&self) -> &WellKnownSymbols {
         &self.well_known_symbols
     }
+}
+
+pub(crate) fn type_error(message: &str) -> ! {
+    panic!("TypeError: {message:?}");
+}
+
+pub(crate) fn reference_error(message: &str) -> ! {
+    panic!("ReferenceError: {message:?}");
+}
+
+pub(crate) fn syntax_error(message: &str) -> ! {
+    panic!("SyntaxError: {message:?}");
+}
+
+pub(crate) fn range_error(message: &str) -> ! {
+    panic!("RangeError: {message:?}");
 }
