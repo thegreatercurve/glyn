@@ -16,7 +16,7 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
     // 1. Let realm be a new Realm Record.
     let realm = Realm::default();
 
-    let realm_addr = agent.allocate_realm(realm);
+    let realm_addr = agent.allocator.alloc(realm).into();
 
     // 2. Perform CreateIntrinsics(realm).
     create_intrinsics(agent, realm_addr);
@@ -54,7 +54,7 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
     // a. Let global be OrdinaryObjectCreate(realm.[[Intrinsics]].[[%Object.prototype%]]).
     let global = ordinary_object_create(
         agent,
-        agent.realm(realm_addr).intrinsics.object_prototype,
+        agent.allocator.get(realm_addr).intrinsics.object_prototype,
         None,
     );
 
@@ -67,10 +67,10 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
     let this_value = global;
 
     // 14. Set realm.[[GlobalObject]] to global.
-    agent.realm_mut(realm_addr).global_object = Some(global);
+    agent.allocator.get_mut::<Realm>(realm_addr).global_object = Some(global);
 
     // 15. Set realm.[[GlobalEnv]] to NewGlobalEnvironment(global, thisValue).
-    agent.realm_mut(realm_addr).global_env =
+    agent.allocator.get_mut(realm_addr).global_env =
         Some(new_global_environment(agent, global, this_value));
 
     // 16. Perform ? SetDefaultGlobalBindings(realm).

@@ -8,7 +8,7 @@ use crate::{
 
 /// 6.2.5.2 IsUnresolvableReference ( V )
 /// https://262.ecma-international.org/16.0/#sec-isunresolvablereference
-fn is_unresolvable_reference(agent: &JSAgent, value: &Reference) -> bool {
+fn is_unresolvable_reference(value: &Reference) -> bool {
     // 1. If V.[[Base]] is unresolvable, return true; otherwise return false.
     value.base == ReferenceBase::Unresolvable
 }
@@ -21,7 +21,7 @@ pub(crate) fn initialize_referenced_binding(
     value: JSValue,
 ) -> CompletionRecord {
     // 1. Assert: IsUnresolvableReference(V) is false.
-    debug_assert!(!is_unresolvable_reference(agent, &reference));
+    debug_assert!(!is_unresolvable_reference(&reference));
 
     // 2. Let base be V.[[Base]].
     let base = reference.base;
@@ -34,7 +34,7 @@ pub(crate) fn initialize_referenced_binding(
     };
 
     // 4. Return ? base.InitializeBinding(V.[[ReferencedName]], W).
-    (agent.environment(env_addr).methods.initialize_binding)(
+    (agent.allocator.get(env_addr).methods.initialize_binding)(
         agent,
         env_addr,
         reference.referenced_name.as_string().unwrap(),

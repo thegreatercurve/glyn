@@ -30,7 +30,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (agent.environment(env).methods.has_binding)(agent, env, name)?;
+    let exists = (agent.allocator.get(env).methods.has_binding)(agent, env, name)?;
 
     // 3. If exists is true, then
     if exists {
@@ -45,7 +45,7 @@ pub(crate) fn get_identifier_reference(
 
     // 4. Else,
     // a. Let outer be env.[[OuterEnv]].
-    let outer = agent.environment(env).outer;
+    let outer = agent.allocator.get(env).outer;
 
     // b. Return ? GetIdentifierReference(outer, name, strict).
     get_identifier_reference(agent, outer, name, strict)
@@ -64,7 +64,7 @@ pub(crate) fn new_declarative_environment(
     env.outer = outer_env;
 
     // 3. Return env.
-    agent.allocate_environment(env)
+    agent.allocator.alloc(env).into()
 }
 
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
@@ -90,7 +90,7 @@ pub(crate) fn new_object_environment(
     env.outer = outer_env;
 
     // 5. Return env.
-    agent.allocate_environment(env)
+    agent.allocator.alloc(env).into()
 }
 
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
@@ -103,25 +103,28 @@ pub(crate) fn new_function_environment(
     // 1. Let env be a new Function Environment Record containing no bindings.
     let mut env = Environment::new(EnvironmentKind::Function);
 
-    let func_env = env.func_env_mut();
-
     // 2. Set env.[[FunctionObject]] to F.
-    func_env.function_object = Some(function_object_addr);
+    env.func_env_mut().function_object = Some(function_object_addr);
 
     // 3. If F.[[ThisMode]] is lexical, set env.[[ThisBindingStatus]] to lexical.
-    func_env.this_binding_status = ThisBindingStatus::Lexical;
+    // TODO: Implement this using the function object's [[ThisMode]]
+    env.func_env_mut().this_binding_status = ThisBindingStatus::Uninitialized;
 
     // 4. Else, set env.[[ThisBindingStatus]] to uninitialized.
-    func_env.this_binding_status = ThisBindingStatus::Uninitialized;
+    env.func_env_mut().this_binding_status = ThisBindingStatus::Uninitialized;
 
     // 5. Set env.[[NewTarget]] to newTarget.
-    func_env.new_target = new_target;
+    env.func_env_mut().new_target = new_target;
 
     // 6. Set env.[[OuterEnv]] to F.[[Environment]].
-    env.outer = agent.object(function_object_addr).slots.environment();
+    env.outer = agent
+        .allocator
+        .get(function_object_addr)
+        .slots
+        .environment();
 
     // 7. Return env.
-    agent.allocate_environment(env)
+    agent.allocator.alloc(env).into()
 }
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
@@ -149,5 +152,5 @@ pub(crate) fn new_global_environment(
     // 6. Set env.[[DeclarativeRecord]] to dclRec.
     // 7. Set env.[[OuterEnv]] to null.
     // 8. Return env.
-    agent.allocate_environment(env)
+    agent.allocator.alloc(env).into()
 }

@@ -1,4 +1,5 @@
 pub(crate) mod agent;
+pub(crate) mod allocator;
 pub(crate) mod completion;
 pub(crate) mod environment;
 pub(crate) mod execution_context;

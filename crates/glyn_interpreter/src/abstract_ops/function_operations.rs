@@ -21,7 +21,9 @@ pub(crate) fn set_function_name(
     opt_prefix: Option<String>,
 ) {
     // 1. Assert: F is an extensible object that does not have a "name" own property.
-    debug_assert!(agent.object(func).extensible() && !agent.object(func).has_property(&name));
+    debug_assert!(
+        agent.allocator.get(func).extensible() && !agent.allocator.get(func).has_property(&name)
+    );
 
     let mut name_str = match name {
         // 2. If name is a Symbol, then
@@ -51,10 +53,11 @@ pub(crate) fn set_function_name(
 
     // 4. If F has an [[InitialName]] internal slot, then
 
-    if agent.object(func).slots.initial_name().is_some() {
+    if agent.allocator.get(func).slots.initial_name().is_some() {
         // a. Set F.[[InitialName]] to name.
         agent
-            .object_mut(func)
+            .allocator
+            .get_mut(func)
             .slots
             .set_initial_name(name_str.clone());
     }
@@ -66,10 +69,11 @@ pub(crate) fn set_function_name(
 
         name_str = JSString::from(new_name);
         // b. If F has an [[InitialName]] internal slot, then
-        if agent.object(func).slots.initial_name().is_some() {
+        if agent.allocator.get(func).slots.initial_name().is_some() {
             // i. Optionally, set F.[[InitialName]] to name.
             agent
-                .object_mut(func)
+                .allocator
+                .get_mut(func)
                 .slots
                 .set_initial_name(name_str.clone());
         }
@@ -99,7 +103,8 @@ pub(crate) fn set_function_length(agent: &mut JSAgent, func: JSObjAddr, length: 
 
     // Assert: F is an extensible object that does not have a "length" own property.
     debug_assert!(
-        agent.object(func).extensible() && !agent.object(func).has_property(&length_prop_key)
+        agent.allocator.get(func).extensible()
+            && !agent.allocator.get(func).has_property(&length_prop_key)
     );
 
     // 2. Perform ! DefinePropertyOrThrow(F, "length", PropertyDescriptor { [[Value]]: 𝔽(length), [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: true }).
@@ -135,7 +140,7 @@ pub(crate) fn create_builtin_function(
     let realm = opt_realm_addr.unwrap_or_else(|| agent.current_realm());
 
     // 2. If prototype is not present, set prototype to realm.[[Intrinsics]].[[%Function.prototype%]].
-    let prototype = prototype.or(agent.realm(realm).intrinsics.function_prototype);
+    let prototype = prototype.or(agent.allocator.get(realm).intrinsics.function_prototype);
 
     // 3. Let internalSlotsList be a List containing the names of all the internal slots that 10.3 requires for the built-in function object that is about to be created.
     let mut internal_slots_list = vec![
@@ -151,16 +156,20 @@ pub(crate) fn create_builtin_function(
     // 5. Let func be a new built-in function object that, when called, performs the action described by behaviour using the provided arguments as the values of the corresponding parameters specified by behaviour. The new function object has internal slots whose names are the elements of internalSlotsList, and an [[InitialName]] internal slot.
     let func = make_basic_object(agent, internal_slots_list, None);
 
-    agent.object_mut(func).slots.set_behaviour_fn(behaviour);
+    agent
+        .allocator
+        .get_mut(func)
+        .slots
+        .set_behaviour_fn(behaviour);
 
     // 6. Set func.[[Prototype]] to prototype.
-    agent.object_mut(func).slots.set_prototype(prototype);
+    agent.allocator.get_mut(func).slots.set_prototype(prototype);
 
     // 7. Set func.[[Extensible]] to true.
     // NOTE: This is the default.
 
     // 8. Set func.[[Realm]] to realm.
-    agent.object_mut(func).slots.set_realm(realm);
+    agent.allocator.get_mut(func).slots.set_realm(realm);
 
     // 9. Set func.[[InitialName]] to null.
     // NOTE: This is the default.

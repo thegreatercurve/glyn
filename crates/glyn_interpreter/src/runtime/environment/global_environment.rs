@@ -54,7 +54,7 @@ impl GlobalEnvironment {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, throw a TypeError exception.
         if DeclEnvironment::has_binding(agent, env_addr, &name)? {
-            agent.type_error(&format!("Binding already exists for {name:?}"));
+            type_error(&format!("Binding already exists for {name:?}"));
         }
 
         // 3. Return ! DclRec.CreateMutableBinding(N, D).
@@ -158,7 +158,7 @@ impl GlobalEnvironment {
         }
 
         // 3. Let ObjRec be envRec.[[ObjectRecord]].
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 4. Let globalObject be ObjRec.[[BindingObject]].
         let global_object = obj_env.binding_object();

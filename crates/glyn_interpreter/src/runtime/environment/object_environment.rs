@@ -41,7 +41,7 @@ impl ObjEnvironment {
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object_addr = obj_env.binding_object();
@@ -95,7 +95,7 @@ impl ObjEnvironment {
         name: JSString,
         configurable: bool,
     ) -> CompletionRecord {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = obj_env.binding_object();
@@ -154,7 +154,7 @@ impl ObjEnvironment {
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = obj_env.binding_object();
@@ -188,7 +188,7 @@ impl ObjEnvironment {
         name: &JSString,
         strict: bool,
     ) -> CompletionRecord<JSValue> {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = obj_env.binding_object();
@@ -222,7 +222,7 @@ impl ObjEnvironment {
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = obj_env.binding_object();
@@ -251,7 +251,7 @@ impl ObjEnvironment {
         agent: &JSAgent,
         env_addr: EnvironmentAddr,
     ) -> Option<JSObjAddr> {
-        let obj_env = agent.environment(env_addr).obj_env();
+        let obj_env = agent.allocator.get(env_addr).obj_env();
 
         // 1. If envRec.[[IsWithEnvironment]] is true, return envRec.[[BindingObject]].
         if obj_env.is_with_environment {

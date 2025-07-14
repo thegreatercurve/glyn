@@ -48,7 +48,7 @@ pub(crate) fn make_basic_object(
     obj.slots.set_extensible(true);
 
     // 9. Return obj.
-    agent.allocate_object(obj)
+    agent.allocator.alloc(obj).into()
 }
 
 /// 7.3.2 Get ( O, P )
@@ -60,7 +60,7 @@ pub(crate) fn get(
     receiver: &JSValue,
 ) -> CompletionRecord<JSValue> {
     // 1. Return ? O.[[Get]](P, O).
-    (agent.object(obj_addr).methods.get)(agent, obj_addr, key, receiver)
+    (agent.allocator.get(obj_addr).methods.get)(agent, obj_addr, key, receiver)
 }
 
 /// 7.3.3 GetV ( V, P )
@@ -74,7 +74,7 @@ pub(crate) fn getv(
     let obj_addr = to_object(value);
 
     // 2. Return ? O.[[Get]](P, V).
-    (agent.object(obj_addr).methods.get)(agent, obj_addr, key, value)
+    (agent.allocator.get(obj_addr).methods.get)(agent, obj_addr, key, value)
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
@@ -88,7 +88,7 @@ pub(crate) fn set(
 ) -> CompletionRecord<Option<bool>> {
     // 1. Let success be ? O.[[Set]](P, V, O).
     let success =
-        (agent.object(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
+        (agent.allocator.get(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
     if !success && throw {
@@ -117,7 +117,7 @@ pub(crate) fn create_data_property(
     };
 
     // 2. Return ? O.[[DefineOwnProperty]](P, newDesc).
-    (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, new_desc)
+    (agent.allocator.get(obj_addr).methods.define_own_property)(agent, obj_addr, key, new_desc)
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
@@ -148,7 +148,7 @@ pub(crate) fn create_non_enumerable_data_property_or_throw(
     key: &JSObjectPropKey,
     value: JSValue,
 ) {
-    let object = agent.object_mut(obj_addr);
+    let object = agent.allocator.get_mut(obj_addr);
 
     // 1. Assert: O is an ordinary, extensible object with no non-configurable properties.
     debug_assert!(
@@ -179,7 +179,8 @@ pub(crate) fn define_property_or_throw(
     desc: JSObjectPropDescriptor,
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[DefineOwnProperty]](P, desc).
-    let success = (agent.object(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
+    let success =
+        (agent.allocator.get(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
@@ -198,7 +199,7 @@ pub(crate) fn delete_property_or_throw(
     key: &JSObjectPropKey,
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[Delete]](P).
-    let success = (agent.object(obj_addr).methods.delete)(agent, obj_addr, key)?;
+    let success = (agent.allocator.get(obj_addr).methods.delete)(agent, obj_addr, key)?;
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
@@ -241,7 +242,7 @@ pub(crate) fn has_property(
     key: &JSObjectPropKey,
 ) -> CompletionRecord<bool> {
     // 1. Return ? O.[[HasProperty]](P).
-    (agent.object(obj_addr).methods.has_property)(agent, obj_addr, key)
+    (agent.allocator.get(obj_addr).methods.has_property)(agent, obj_addr, key)
 }
 
 /// 7.3.12 HasOwnProperty ( O, P )
@@ -252,7 +253,7 @@ pub(crate) fn has_own_property(
     key: &JSObjectPropKey,
 ) -> CompletionRecord<bool> {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
-    let desc = (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, key)?;
+    let desc = (agent.allocator.get(obj_addr).methods.get_own_property)(agent, obj_addr, key)?;
 
     // 2. If desc is undefined, return false.
     // 3. Return true.
@@ -278,7 +279,7 @@ pub(crate) fn call(
     // 3. Return ? F.[[Call]](V, argumentsList).
     let function_obj_addr = function_value.as_object().unwrap_or_else(|| unreachable!());
 
-    let call_fn = agent.object(function_obj_addr).methods.call.unwrap();
+    let call_fn = agent.allocator.get(function_obj_addr).methods.call.unwrap();
 
     call_fn(agent, function_obj_addr, this_value, &args)
 }
@@ -298,7 +299,7 @@ pub(crate) fn construct(
     let arguments_list = arguments_list.unwrap_or_default();
 
     // 3. Return ? F.[[Construct]](argumentsList, newTarget).
-    let construct_fn = agent.object(constructor).methods.construct.unwrap();
+    let construct_fn = agent.allocator.get(constructor).methods.construct.unwrap();
 
     let result = construct_fn(agent, &arguments_list, new_target_addr);
 
@@ -320,7 +321,7 @@ pub(crate) fn set_integrity_level(
     level: IntegrityLevel,
 ) -> CompletionRecord<bool> {
     // 1. Let status be ? O.[[PreventExtensions]]().
-    let status = (agent.object(obj_addr).methods.prevent_extensions)(agent, obj_addr);
+    let status = (agent.allocator.get(obj_addr).methods.prevent_extensions)(agent, obj_addr);
 
     // 2. If status is false, return false.
     if !status {
@@ -328,7 +329,7 @@ pub(crate) fn set_integrity_level(
     }
 
     // 3. Let keys be ? O.[[OwnPropertyKeys]]().
-    let keys = (agent.object(obj_addr).methods.own_property_keys)(agent, obj_addr);
+    let keys = (agent.allocator.get(obj_addr).methods.own_property_keys)(agent, obj_addr);
 
     // 4. If level is sealed, then
     if matches!(level, IntegrityLevel::Sealed) {
@@ -355,7 +356,7 @@ pub(crate) fn set_integrity_level(
         for key in keys {
             // i. Let currentDesc be ? O.[[GetOwnProperty]](k).
             let current_desc =
-                (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
+                (agent.allocator.get(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
 
             // ii. If currentDesc is not undefined, then
             if let Some(current_desc) = current_desc {
@@ -398,7 +399,7 @@ pub(crate) fn test_integrity_level(
     level: IntegrityLevel,
 ) -> CompletionRecord<bool> {
     // 1. Let extensible be ? IsExtensible(O).
-    let extensible = (agent.object(obj_addr).methods.is_extensible)(agent, obj_addr);
+    let extensible = (agent.allocator.get(obj_addr).methods.is_extensible)(agent, obj_addr);
 
     // 2. If extensible is true, return false.
     if extensible {
@@ -407,13 +408,13 @@ pub(crate) fn test_integrity_level(
 
     // 3. NOTE: If the object is extensible, none of its properties are examined.
     // 4. Let keys be ? O.[[OwnPropertyKeys]]().
-    let keys = (agent.object(obj_addr).methods.own_property_keys)(agent, obj_addr);
+    let keys = (agent.allocator.get(obj_addr).methods.own_property_keys)(agent, obj_addr);
 
     // 5. For each element k of keys, do
     for key in keys {
         // a. Let currentDesc be ? O.[[GetOwnProperty]](k).
         let current_desc =
-            (agent.object(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
+            (agent.allocator.get(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
 
         // b. If currentDesc is not undefined, then
         if let Some(current_desc) = current_desc {

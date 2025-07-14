@@ -310,7 +310,7 @@ impl<'a> VM<'a> {
         let reference = self.pop_reference()?;
         let value = self.pop()?;
 
-        initialize_referenced_binding(reference, value)
+        initialize_referenced_binding(self.agent, reference, value)
             .map_err(|_| VMError::InitializeReferencedBindingError)?;
 
         Ok(())
