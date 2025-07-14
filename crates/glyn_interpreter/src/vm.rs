@@ -7,7 +7,7 @@ use crate::{
         },
         testing_comparison::{is_less_than, is_loosely_equal, is_strictly_equal},
     },
-    codegen::bytecode::{generator::FinalProgram, instruction::Instruction},
+    codegen::bytecode::{generator::ExecutableProgram, instruction::Instruction},
     lexer::Token,
     runtime::{agent::JSAgent, reference::Reference},
     value::{string::JSString, JSValue},
@@ -17,7 +17,7 @@ pub(crate) struct VM<'a> {
     agent: &'a mut JSAgent,
     stack: Vec<JSValue>,
     references: Vec<Reference>,
-    program: &'a FinalProgram,
+    program: &'a ExecutableProgram,
     locals: Vec<JSValue>,
     ip: usize,
     running: bool,
@@ -37,7 +37,7 @@ pub(crate) enum VMError {
 type VMResult<T = ()> = Result<T, VMError>;
 
 impl<'a> VM<'a> {
-    pub(crate) fn new(agent: &'a mut JSAgent, program: &'a FinalProgram) -> Self {
+    pub(crate) fn new(agent: &'a mut JSAgent, program: &'a ExecutableProgram) -> Self {
         Self {
             agent,
             stack: Vec::with_capacity(32),

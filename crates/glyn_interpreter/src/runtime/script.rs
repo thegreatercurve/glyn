@@ -1,4 +1,4 @@
-use crate::{codegen::bytecode::generator::FinalProgram, runtime::realm::RealmAddr};
+use crate::{codegen::bytecode::generator::ExecutableProgram, runtime::realm::RealmAddr};
 
 /// 16.1.4 Script Records
 /// https://262.ecma-international.org/16.0/#script-record
@@ -8,7 +8,7 @@ pub(crate) struct ScriptRecord {
     pub(crate) realm: RealmAddr,
 
     /// [[ECMAScriptCode]]
-    pub(crate) ecmascript_code: FinalProgram,
+    pub(crate) ecmascript_code: ExecutableProgram,
 
     /// [[HostDefined]]
     pub(crate) host_defined: Option<()>,

@@ -5,7 +5,7 @@ use crate::{
     },
     lexer::Token,
     runtime::completion::CompletionRecord,
-    value::{number::JSNumber, string::JSString, JSValue},
+    value::{string::JSString, JSValue},
     JSAgent,
 };
 

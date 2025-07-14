@@ -6,7 +6,7 @@ use std::iter::Peekable;
 
 use crate::{
     codegen::{
-        bytecode::generator::{BytecodeGenerator, FinalProgram},
+        bytecode::generator::{BytecodeGenerator, ExecutableProgram},
         error::{CodeGenError, CodeGenResult},
     },
     lexer::{Lexer, Token},
@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn program(self) -> FinalProgram {
+    pub(crate) fn program(self) -> ExecutableProgram {
         self.bytecode.program()
     }
 

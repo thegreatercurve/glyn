@@ -3,7 +3,7 @@ use crate::abstract_ops::type_conversion::{
 };
 use crate::runtime::agent::JSAgent;
 use crate::runtime::completion::CompletionRecord;
-use crate::value::{number::JSNumber, object::JSObjAddr, JSValue};
+use crate::value::{object::JSObjAddr, JSValue};
 
 // 7.2 Testing and Comparison Operations
 // https://262.ecma-international.org/16.0/#sec-testing-and-comparison-operations

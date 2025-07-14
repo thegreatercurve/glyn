@@ -1,5 +1,5 @@
 use crate::{
-    codegen::{bytecode::generator::FinalProgram, parser::Parser},
+    codegen::{bytecode::generator::ExecutableProgram, parser::Parser},
     lexer::Lexer,
     runtime::{
         agent::JSAgent,
@@ -14,7 +14,7 @@ use crate::{
 
 /// 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
 /// https://262.ecma-international.org/16.0/#sec-parsetext
-pub(crate) fn parse_text(source_text: &str) -> Result<FinalProgram, String> {
+pub(crate) fn parse_text(source_text: &str) -> Result<ExecutableProgram, String> {
     // 1. Attempt to parse sourceText using goalSymbol as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     let lexer = Lexer::new(source_text);
     let mut parser = Parser::new(lexer);
