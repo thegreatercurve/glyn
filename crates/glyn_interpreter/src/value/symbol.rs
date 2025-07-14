@@ -5,3 +5,11 @@ pub(crate) struct JSSymbol {
     /// [[Description]]
     pub(crate) description: Option<String>,
 }
+
+impl From<String> for JSSymbol {
+    fn from(value: String) -> Self {
+        Self {
+            description: Some(value),
+        }
+    }
+}

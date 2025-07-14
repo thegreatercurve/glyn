@@ -1,4 +1,7 @@
-use crate::value::{number::JSNumber, string::JSString, symbol::JSSymbol, JSValue};
+use crate::{
+    runtime::agent::WellKnownSymbols,
+    value::{number::JSNumber, string::JSString, symbol::JSSymbol, JSValue},
+};
 
 /// 6.1.7 The Object Type
 /// https://262.ecma-international.org/16.0/#sec-object-type
@@ -65,6 +68,12 @@ impl From<JSSymbol> for JSObjectPropKey {
 impl From<&JSSymbol> for JSObjectPropKey {
     fn from(value: &JSSymbol) -> Self {
         JSObjectPropKey::Symbol(value.clone())
+    }
+}
+
+impl From<WellKnownSymbols> for JSObjectPropKey {
+    fn from(value: WellKnownSymbols) -> Self {
+        JSObjectPropKey::Symbol(JSSymbol::from(value.to_string()))
     }
 }
 

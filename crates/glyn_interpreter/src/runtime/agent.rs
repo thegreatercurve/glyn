@@ -1,35 +1,56 @@
+use std::fmt::Display;
+
 use crate::runtime::allocator::GlynAllocator;
 use crate::runtime::environment::Environment;
 use crate::runtime::execution_context::ExecutionContext;
 use crate::runtime::realm::RealmAddr;
-use crate::value::symbol::JSSymbol;
 
 /// 6.1.5.1 Well-Known Symbols
 /// https://262.ecma-international.org/16.0/#sec-well-known-symbols
-
-#[derive(Default)]
-pub(crate) struct WellKnownSymbols {
-    pub(crate) async_iterator: JSSymbol,
-    pub(crate) has_instance: JSSymbol,
-    pub(crate) is_concat_spreadable: JSSymbol,
-    pub(crate) iterator: JSSymbol,
-    pub(crate) match_: JSSymbol,
-    pub(crate) match_all: JSSymbol,
-    pub(crate) replace: JSSymbol,
-    pub(crate) search: JSSymbol,
-    pub(crate) species: JSSymbol,
-    pub(crate) split: JSSymbol,
-    pub(crate) to_primitive: JSSymbol,
-    pub(crate) to_string_tag: JSSymbol,
-    pub(crate) unscopables: JSSymbol,
+#[derive(Debug)]
+pub(crate) enum WellKnownSymbols {
+    AsyncIterator,
+    HasInstance,
+    IsConcatSpreadable,
+    Iterator,
+    Match,
+    MatchAll,
+    Replace,
+    Search,
+    Species,
+    Split,
+    ToPrimitive,
+    ToStringTag,
+    Unscopables,
 }
+
+impl Display for WellKnownSymbols {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "%{self:?}%")
+    }
+}
+
+pub(crate) const WELL_KNOWN_SYMBOLS_ASYNC_ITERATOR: WellKnownSymbols =
+    WellKnownSymbols::AsyncIterator;
+pub(crate) const WELL_KNOWN_SYMBOLS_HAS_INSTANCE: WellKnownSymbols = WellKnownSymbols::HasInstance;
+pub(crate) const WELL_KNOWN_SYMBOLS_IS_CONCAT_SPREADABLE: WellKnownSymbols =
+    WellKnownSymbols::IsConcatSpreadable;
+pub(crate) const WELL_KNOWN_SYMBOLS_ITERATOR: WellKnownSymbols = WellKnownSymbols::Iterator;
+pub(crate) const WELL_KNOWN_SYMBOLS_MATCH: WellKnownSymbols = WellKnownSymbols::Match;
+pub(crate) const WELL_KNOWN_SYMBOLS_MATCH_ALL: WellKnownSymbols = WellKnownSymbols::MatchAll;
+pub(crate) const WELL_KNOWN_SYMBOLS_REPLACE: WellKnownSymbols = WellKnownSymbols::Replace;
+pub(crate) const WELL_KNOWN_SYMBOLS_SEARCH: WellKnownSymbols = WellKnownSymbols::Search;
+pub(crate) const WELL_KNOWN_SYMBOLS_SPECIES: WellKnownSymbols = WellKnownSymbols::Species;
+pub(crate) const WELL_KNOWN_SYMBOLS_SPLIT: WellKnownSymbols = WellKnownSymbols::Split;
+pub(crate) const WELL_KNOWN_SYMBOLS_TO_PRIMITIVE: WellKnownSymbols = WellKnownSymbols::ToPrimitive;
+pub(crate) const WELL_KNOWN_SYMBOLS_TO_STRING_TAG: WellKnownSymbols = WellKnownSymbols::ToStringTag;
+pub(crate) const WELL_KNOWN_SYMBOLS_UNSCOPABLES: WellKnownSymbols = WellKnownSymbols::Unscopables;
 
 #[derive(Default)]
 pub struct JSAgent {
     pub(crate) execution_contexts: Vec<ExecutionContext>,
     environment_records: Vec<Environment>,
     pub(crate) allocator: GlynAllocator,
-    well_known_symbols: WellKnownSymbols,
 }
 
 impl JSAgent {
@@ -38,7 +59,6 @@ impl JSAgent {
             execution_contexts: vec![],
             environment_records: vec![],
             allocator: GlynAllocator::default(),
-            well_known_symbols: WellKnownSymbols::default(),
         }
     }
 
@@ -63,10 +83,6 @@ impl JSAgent {
         self.execution_contexts
             .pop()
             .unwrap_or_else(|| unreachable!())
-    }
-
-    pub(crate) fn well_known_symbols(&self) -> &WellKnownSymbols {
-        &self.well_known_symbols
     }
 }
 

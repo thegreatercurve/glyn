@@ -4,8 +4,11 @@ use crate::{
         object_operations::{define_property_or_throw, get, has_property, set},
         type_conversion::to_boolean,
     },
-    runtime::environment::{EnvironmentAddr, EnvironmentMethods},
-    runtime::{agent::reference_error, completion::CompletionRecord},
+    runtime::{
+        agent::{reference_error, WELL_KNOWN_SYMBOLS_UNSCOPABLES},
+        completion::CompletionRecord,
+        environment::{EnvironmentAddr, EnvironmentMethods},
+    },
     value::{
         object::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
@@ -63,7 +66,7 @@ impl ObjEnvironment {
         let unscopables = get(
             agent,
             binding_object_addr,
-            &JSObjectPropKey::from(&agent.well_known_symbols().unscopables),
+            &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_UNSCOPABLES),
             &JSValue::from(binding_object_addr),
         )?;
 

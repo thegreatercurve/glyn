@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use crate::abstract_ops::object_operations::get_method;
-use crate::runtime::agent::{range_error, type_error, JSAgent};
+use crate::runtime::agent::{range_error, type_error, JSAgent, WELL_KNOWN_SYMBOLS_TO_PRIMITIVE};
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{
     number::JSNumber,
@@ -34,7 +34,7 @@ pub(crate) fn to_primitive(
         let exotic_to_prim = get_method(
             agent,
             &input,
-            &JSObjectPropKey::from(&agent.well_known_symbols().to_primitive),
+            &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_TO_PRIMITIVE),
         )?;
 
         // b. If exoticToPrim is not undefined, then
