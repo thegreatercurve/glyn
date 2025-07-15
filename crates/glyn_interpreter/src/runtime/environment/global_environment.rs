@@ -199,6 +199,18 @@ impl GlobalEnvironment {
         // 1. Return undefined.
         None
     }
+
+    /// 9.1.1.4.12 HasLexicalDeclaration ( envRec, N )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-haslexicaldeclaration-envrec-n
+    pub(crate) fn has_lexical_declaration(
+        agent: &JSAgent,
+        env_addr: EnvironmentAddr,
+        name: &JSString,
+    ) -> CompletionRecord<bool> {
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        // 2. Return ! DclRec.HasBinding(N).
+        DeclEnvironment::has_binding(agent, env_addr, name)
+    }
 }
 
 pub(crate) static GLOBAL_ENVIRONMENT_METHODS: EnvironmentMethods = EnvironmentMethods {
