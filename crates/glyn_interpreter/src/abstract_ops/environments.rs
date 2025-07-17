@@ -64,7 +64,7 @@ pub(crate) fn new_declarative_environment(
     env.outer = outer_env;
 
     // 3. Return env.
-    agent.allocator.alloc(env).into()
+    agent.allocator.alloc(env)
 }
 
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
@@ -90,7 +90,7 @@ pub(crate) fn new_object_environment(
     env.outer = outer_env;
 
     // 5. Return env.
-    agent.allocator.alloc(env).into()
+    agent.allocator.alloc(env)
 }
 
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
@@ -119,12 +119,12 @@ pub(crate) fn new_function_environment(
     // 6. Set env.[[OuterEnv]] to F.[[Environment]].
     env.outer = agent
         .allocator
-        .obj(function_object_addr)
+        .obj(&function_object_addr)
         .slots
         .environment();
 
     // 7. Return env.
-    agent.allocator.alloc(env).into()
+    agent.allocator.alloc(env)
 }
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
@@ -152,5 +152,5 @@ pub(crate) fn new_global_environment(
     // 6. Set env.[[DeclarativeRecord]] to dclRec.
     // 7. Set env.[[OuterEnv]] to null.
     // 8. Return env.
-    agent.allocator.alloc(env).into()
+    agent.allocator.alloc(env)
 }

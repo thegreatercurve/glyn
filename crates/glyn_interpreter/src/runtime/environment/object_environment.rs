@@ -1,6 +1,5 @@
 use crate::{
     abstract_ops::{
-        object::delete,
         object_operations::{define_property_or_throw, get, has_property, set},
         type_conversion::to_boolean,
     },
@@ -12,7 +11,7 @@ use crate::{
     value::{
         object::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr,
+            JSObjAddr, JSObjectInternalMethods,
         },
         string::JSString,
     },
@@ -50,7 +49,8 @@ impl ObjEnvironment {
         let binding_object_addr = obj_env.binding_object();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
-        let found_binding = has_property(agent, binding_object_addr, &JSObjectPropKey::from(name))?;
+        let found_binding =
+            has_property(agent, &binding_object_addr, &JSObjectPropKey::from(name))?;
 
         // 3. If foundBinding is false, return false.
         if !found_binding {
@@ -65,7 +65,7 @@ impl ObjEnvironment {
         // 5. Let unscopables be ? Get(bindingObject, %Symbol.unscopables%).
         let unscopables = get(
             agent,
-            binding_object_addr,
+            &binding_object_addr,
             &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_UNSCOPABLES),
             &JSValue::from(binding_object_addr),
         )?;
@@ -75,7 +75,7 @@ impl ObjEnvironment {
             // a. Let blocked be ToBoolean(? Get(unscopables, N)).
             let blocked = to_boolean(get(
                 agent,
-                unscopables_obj,
+                &unscopables_obj,
                 &JSObjectPropKey::from(name),
                 &JSValue::from(unscopables_obj),
             )?);
@@ -106,7 +106,7 @@ impl ObjEnvironment {
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
             agent,
-            binding_object,
+            &binding_object,
             &JSObjectPropKey::from(name),
             JSObjectPropDescriptor {
                 value: None,
@@ -163,7 +163,7 @@ impl ObjEnvironment {
         let binding_object = obj_env.binding_object();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
-        let still_exists = has_property(agent, binding_object, &JSObjectPropKey::from(&name))?;
+        let still_exists = has_property(agent, &binding_object, &JSObjectPropKey::from(&name))?;
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {
@@ -173,7 +173,7 @@ impl ObjEnvironment {
         // 4. Perform ? Set(bindingObject, N, V, S).
         set(
             agent,
-            binding_object,
+            &binding_object,
             &JSObjectPropKey::from(name),
             value,
             strict,
@@ -197,7 +197,7 @@ impl ObjEnvironment {
         let binding_object = obj_env.binding_object();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
-        let value = has_property(agent, binding_object, &JSObjectPropKey::from(name))?;
+        let value = has_property(agent, &binding_object, &JSObjectPropKey::from(name))?;
 
         // 3. If value is false, then
         if !value {
@@ -212,7 +212,7 @@ impl ObjEnvironment {
         // 4. Return ? Get(bindingObject, N).
         get(
             agent,
-            binding_object,
+            &binding_object,
             &JSObjectPropKey::from(name),
             &JSValue::from(binding_object),
         )
@@ -231,7 +231,7 @@ impl ObjEnvironment {
         let binding_object = obj_env.binding_object();
 
         // 2. Return ? bindingObject.[[Delete]](N).
-        delete(agent, binding_object, &JSObjectPropKey::from(name))
+        binding_object.delete(agent, &JSObjectPropKey::from(name))
     }
 
     /// 9.1.1.2.8 HasThisBinding ( )

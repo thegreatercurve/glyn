@@ -190,3 +190,9 @@ impl From<JSObjAddr> for JSValue {
         JSValue::Object(value)
     }
 }
+
+impl From<&JSObjAddr> for JSValue {
+    fn from(value: &JSObjAddr) -> Self {
+        JSValue::Object(value.clone())
+    }
+}

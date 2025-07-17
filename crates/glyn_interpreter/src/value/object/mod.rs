@@ -1,6 +1,8 @@
 pub(crate) mod internal_slots;
 pub(crate) mod property;
 
+use std::any::TypeId;
+
 use crate::{
     gc::{Gc, Trace, Tracer},
     runtime::{agent::JSAgent, completion::CompletionRecord},
@@ -15,86 +17,149 @@ use crate::{
 
 pub(crate) type JSObjAddr = Gc<JSObject>;
 
-type InternalMethodsCallFn = Option<
-    fn(
-        agent: &JSAgent,
-        obj_addr: JSObjAddr,
-        this_value: &JSValue,
-        args: &[JSValue],
-    ) -> CompletionRecord<JSValue>,
->;
+pub(crate) struct JSObjectInternalMethodsVTable {
+    pub(crate) get_prototype_of: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> Option<JSObjAddr>,
 
-type InternalMethodsConstructFn =
-    Option<fn(agent: &mut JSAgent, args: &[JSValue], obj_addr: JSObjAddr) -> JSObjAddr>;
-
-/// Essential Internal Methods
-/// https://262.ecma-international.org/16.0/#table-essential-internal-methods
-#[derive(Debug, PartialEq)]
-pub(crate) struct JSObjectInternalMethods {
-    /// [[GetPrototypeOf]]
-    pub(crate) get_prototype_of: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Option<JSObjAddr>,
-
-    /// [[SetPrototypeOf]]
     pub(crate) set_prototype_of:
-        fn(agent: &mut JSAgent, obj_addr: JSObjAddr, prototype: Option<JSObjAddr>) -> bool,
+        fn(agent: &mut JSAgent, obj_addr: &JSObjAddr, value_addr: Option<JSObjAddr>) -> bool,
 
-    /// [[IsExtensible]]
-    pub(crate) is_extensible: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> bool,
+    pub(crate) is_extensible: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool,
 
-    /// [[PreventExtensions]]
-    pub(crate) prevent_extensions: fn(agent: &mut JSAgent, object: JSObjAddr) -> bool,
+    pub(crate) prevent_extensions: fn(agent: &mut JSAgent, obj_addr: &JSObjAddr) -> bool,
 
-    /// [[GetOwnProperty]]
     pub(crate) get_own_property: fn(
         agent: &JSAgent,
-        obj_addr: JSObjAddr,
+        obj_addr: &JSObjAddr,
         key: &JSObjectPropKey,
     ) -> CompletionRecord<Option<JSObjectPropDescriptor>>,
 
-    /// [[DefineOwnProperty]]
     pub(crate) define_own_property: fn(
         agent: &mut JSAgent,
-        obj_addr: JSObjAddr,
+        obj_addr: &JSObjAddr,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
     ) -> CompletionRecord<bool>,
 
-    /// [[HasProperty]]
     pub(crate) has_property:
-        fn(agent: &JSAgent, obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
+        fn(agent: &JSAgent, obj_addr: &JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
 
-    /// [[Get]]
     pub(crate) get: fn(
         agent: &JSAgent,
-        obj_addr: JSObjAddr,
+        obj_addr: &JSObjAddr,
         key: &JSObjectPropKey,
         receiver: &JSValue,
     ) -> CompletionRecord<JSValue>,
 
-    /// [[Set]]
     pub(crate) set: fn(
         agent: &mut JSAgent,
-        obj_addr: JSObjAddr,
+        obj_addr: &JSObjAddr,
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
     ) -> CompletionRecord<bool>,
 
-    /// [[Delete]]
     pub(crate) delete: fn(
         agent: &mut JSAgent,
-        obj_addr: JSObjAddr,
+        obj_addr: &JSObjAddr,
         key: &JSObjectPropKey,
     ) -> CompletionRecord<bool>,
 
+    pub(crate) own_property_keys: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropKey>,
+}
+
+/// Essential Internal Methods
+/// https://262.ecma-international.org/16.0/#table-essential-internal-methods
+pub(crate) trait JSObjectInternalMethods {
+    fn v_table(&self) -> JSObjectInternalMethodsVTable;
+
+    /// [[GetPrototypeOf]]
+    fn get_prototype_of(&self, agent: &JSAgent) -> Option<JSObjAddr>;
+
+    /// [[SetPrototypeOf]]
+    fn set_prototype_of(&self, agent: &mut JSAgent, prototype: Option<JSObjAddr>) -> bool;
+
+    /// [[IsExtensible]]
+    fn is_extensible(&self, agent: &JSAgent) -> bool;
+
+    /// [[PreventExtensions]]
+    fn prevent_extensions(&self, agent: &mut JSAgent) -> bool;
+
+    /// [[GetOwnProperty]]
+    fn get_own_property(
+        &self,
+        agent: &JSAgent,
+        key: &JSObjectPropKey,
+    ) -> CompletionRecord<Option<JSObjectPropDescriptor>>;
+
+    /// [[DefineOwnProperty]]
+    fn define_own_property(
+        &self,
+        agent: &mut JSAgent,
+        key: &JSObjectPropKey,
+        descriptor: JSObjectPropDescriptor,
+    ) -> CompletionRecord<bool>;
+
+    /// [[HasProperty]]
+    fn has_property(&self, agent: &JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool>;
+
+    /// [[Get]]
+    fn get(
+        &self,
+        agent: &JSAgent,
+        key: &JSObjectPropKey,
+        receiver: &JSValue,
+    ) -> CompletionRecord<JSValue>;
+
+    /// [[Set]]
+    fn set(
+        &self,
+        agent: &mut JSAgent,
+        key: &JSObjectPropKey,
+        value: JSValue,
+        receiver: JSValue,
+    ) -> CompletionRecord<bool>;
+
+    /// [[Delete]]
+    fn delete(&self, agent: &mut JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool>;
+
     /// [[OwnPropertyKeys]]
-    pub(crate) own_property_keys: fn(agent: &JSAgent, obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,
+    fn own_property_keys(&self, agent: &JSAgent) -> Vec<JSObjectPropKey>;
+}
+
+pub(crate) struct JSObjectExtraInternalMethodsVTable {
+    pub(crate) call: Option<
+        fn(
+            agent: &JSAgent,
+            obj_addr: &JSObjAddr,
+            this_value: &JSValue,
+            args: &[JSValue],
+        ) -> CompletionRecord<JSValue>,
+    >,
+
+    pub(crate) construct:
+        Option<fn(agent: &mut JSAgent, obj_addr: &JSObjAddr, args: &[JSValue]) -> JSObjAddr>,
+}
+
+/// Additional Essential Internal Methods of Function Objects
+/// https://262.ecma-international.org/16.0/#table-additional-essential-internal-methods-of-function-objects
+pub(crate) trait JSObjectExtraInternalMethods {
+    fn v_table_extra(&self) -> JSObjectExtraInternalMethodsVTable;
 
     /// [[Call]]
-    pub(crate) call: InternalMethodsCallFn,
+    fn call(
+        &self,
+        agent: &JSAgent,
+        this_value: &JSValue,
+        args: &[JSValue],
+    ) -> CompletionRecord<JSValue>;
 
     /// [[Construct]]
-    pub(crate) construct: InternalMethodsConstructFn,
+    fn construct(
+        &self,
+        agent: &mut JSAgent,
+        args: &[JSValue],
+        obj_addr: &JSObjAddr,
+    ) -> CompletionRecord<JSObjAddr>;
 }
 
 pub(crate) struct PropertyIndex(usize);
@@ -103,7 +168,6 @@ pub(crate) struct PropertyIndex(usize);
 /// https://262.ecma-international.org/16.0/#sec-object-type
 #[derive(Debug)]
 pub(crate) struct JSObject {
-    pub(crate) methods: &'static JSObjectInternalMethods,
     pub(crate) slots: JSObjectInternalSlots,
     pub(crate) keys: Vec<JSObjectPropKey>,
     pub(crate) values: Vec<JSObjectPropDescriptor>,

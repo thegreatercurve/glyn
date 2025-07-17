@@ -1,22 +1,18 @@
 use crate::{
-    runtime::agent::type_error,
+    abstract_ops::{testing_comparison::is_callable, type_conversion::to_object},
+    runtime::{
+        agent::{type_error, JSAgent},
+        completion::CompletionRecord,
+    },
     value::{
         object::{
             internal_slots::{InternalSlotName, JSObjectInternalSlots},
             property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr, JSObject, JSObjectInternalMethods,
+            JSObjAddr, JSObject, JSObjectExtraInternalMethods, JSObjectInternalMethods,
         },
         JSValue,
     },
 };
-
-use crate::abstract_ops::{
-    object::ORDINARY_OBJECT_INTERNAL_METHODS, testing_comparison::is_callable,
-    type_conversion::to_object,
-};
-
-use crate::runtime::agent::JSAgent;
-use crate::runtime::completion::CompletionRecord;
 
 // 7.3 Operations on Objects
 // https://262.ecma-international.org/16.0/#sec-operations-on-objects
@@ -26,13 +22,11 @@ use crate::runtime::completion::CompletionRecord;
 pub(crate) fn make_basic_object(
     agent: &mut JSAgent,
     internal_slots_list: Vec<InternalSlotName>,
-    internal_methods: Option<&'static JSObjectInternalMethods>,
 ) -> JSObjAddr {
     // 1. Set internalSlotsList to the list-concatenation of internalSlotsList and « [[PrivateElements]] ».
     // 2. Let obj be a newly created object with an internal slot for each name in internalSlotsList.
     let mut obj = JSObject {
         // 4. Set obj's essential internal methods to the default ordinary object definitions specified in 10.1.
-        methods: internal_methods.unwrap_or(&ORDINARY_OBJECT_INTERNAL_METHODS),
         slots: JSObjectInternalSlots::from(internal_slots_list),
         keys: vec![],
         values: vec![],
@@ -55,12 +49,12 @@ pub(crate) fn make_basic_object(
 /// https://262.ecma-international.org/16.0/#sec-get-o-p
 pub(crate) fn get(
     agent: &JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     receiver: &JSValue,
 ) -> CompletionRecord<JSValue> {
     // 1. Return ? O.[[Get]](P, O).
-    (agent.allocator.obj(obj_addr).methods.get)(agent, obj_addr, key, receiver)
+    obj_addr.get(agent, key, receiver)
 }
 
 /// 7.3.3 GetV ( V, P )
@@ -74,21 +68,20 @@ pub(crate) fn getv(
     let obj_addr = to_object(value);
 
     // 2. Return ? O.[[Get]](P, V).
-    (agent.allocator.obj(obj_addr).methods.get)(agent, obj_addr, key, value)
+    obj_addr.get(agent, key, value)
 }
 
 /// 7.3.4 Set ( O, P, V, Throw )
 /// https://262.ecma-international.org/16.0/#sec-set-o-p-v-throw
 pub(crate) fn set(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
     throw: bool,
 ) -> CompletionRecord<Option<bool>> {
     // 1. Let success be ? O.[[Set]](P, V, O).
-    let success =
-        (agent.allocator.obj(obj_addr).methods.set)(agent, obj_addr, key, value, obj_addr.into())?;
+    let success = obj_addr.set(agent, key, value, JSValue::from(obj_addr))?;
 
     // 2. If success is false and Throw is true, throw a TypeError exception.
     if !success && throw {
@@ -103,7 +96,7 @@ pub(crate) fn set(
 /// https://262.ecma-international.org/16.0/#sec-createdataproperty
 pub(crate) fn create_data_property(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) -> CompletionRecord<bool> {
@@ -117,14 +110,14 @@ pub(crate) fn create_data_property(
     };
 
     // 2. Return ? O.[[DefineOwnProperty]](P, newDesc).
-    (agent.allocator.obj(obj_addr).methods.define_own_property)(agent, obj_addr, key, new_desc)
+    obj_addr.define_own_property(agent, key, new_desc)
 }
 
 /// 7.3.6 CreateDataPropertyOrThrow ( O, P, V )
 /// https://262.ecma-international.org/16.0/#sec-createdatapropertyorthrow
 pub(crate) fn create_data_property_or_throw(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) -> CompletionRecord {
@@ -144,7 +137,7 @@ pub(crate) fn create_data_property_or_throw(
 /// https://262.ecma-international.org/16.0/#sec-createnonenumerabledatapropertyorthrow
 pub(crate) fn create_non_enumerable_data_property_or_throw(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
 ) {
@@ -174,13 +167,12 @@ pub(crate) fn create_non_enumerable_data_property_or_throw(
 /// https://262.ecma-international.org/16.0/#sec-definepropertyorthrow
 pub(crate) fn define_property_or_throw(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
     desc: JSObjectPropDescriptor,
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[DefineOwnProperty]](P, desc).
-    let success =
-        (agent.allocator.obj(obj_addr).methods.define_own_property)(agent, obj_addr, key, desc)?;
+    let success = obj_addr.define_own_property(agent, key, desc)?;
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
@@ -195,11 +187,11 @@ pub(crate) fn define_property_or_throw(
 /// https://262.ecma-international.org/16.0/#sec-deletepropertyorthrow
 pub(crate) fn delete_property_or_throw(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
 ) -> CompletionRecord {
     // 1. Let success be ? O.[[Delete]](P).
-    let success = (agent.allocator.obj(obj_addr).methods.delete)(agent, obj_addr, key)?;
+    let success = obj_addr.delete(agent, key)?;
 
     // 2. If success is false, throw a TypeError exception.
     if !success {
@@ -226,7 +218,7 @@ pub(crate) fn get_method(
     };
 
     // 3. If IsCallable(func) is false, throw a TypeError exception.
-    if !is_callable(agent, &func) {
+    if !is_callable(&func) {
         type_error("Method is not callable.");
     }
 
@@ -238,22 +230,22 @@ pub(crate) fn get_method(
 /// https://262.ecma-international.org/16.0/#sec-hasproperty
 pub(crate) fn has_property(
     agent: &JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
 ) -> CompletionRecord<bool> {
     // 1. Return ? O.[[HasProperty]](P).
-    (agent.allocator.obj(obj_addr).methods.has_property)(agent, obj_addr, key)
+    obj_addr.has_property(agent, key)
 }
 
 /// 7.3.12 HasOwnProperty ( O, P )
 /// https://262.ecma-international.org/16.0/#sec-hasownproperty
 pub(crate) fn has_own_property(
     agent: &JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
 ) -> CompletionRecord<bool> {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
-    let desc = (agent.allocator.obj(obj_addr).methods.get_own_property)(agent, obj_addr, key)?;
+    let desc = obj_addr.get_own_property(agent, key)?;
 
     // 2. If desc is undefined, return false.
     // 3. Return true.
@@ -272,16 +264,14 @@ pub(crate) fn call(
     let args = arguments_list.unwrap_or_default();
 
     // 2. If IsCallable(F) is false, throw a TypeError exception.
-    if !is_callable(agent, &function_value) {
+    if !is_callable(&function_value) {
         type_error("Function cannot be called.");
     }
 
     // 3. Return ? F.[[Call]](V, argumentsList).
     let function_obj_addr = function_value.as_object().unwrap_or_else(|| unreachable!());
 
-    let call_fn = agent.allocator.obj(function_obj_addr).methods.call.unwrap();
-
-    call_fn(agent, function_obj_addr, this_value, &args)
+    function_obj_addr.call(agent, this_value, &args)
 }
 
 /// 7.3.14 Construct ( F [ , argumentsList [ , newTarget ] ] )
@@ -299,11 +289,7 @@ pub(crate) fn construct(
     let arguments_list = arguments_list.unwrap_or_default();
 
     // 3. Return ? F.[[Construct]](argumentsList, newTarget).
-    let construct_fn = agent.allocator.obj(constructor).methods.construct.unwrap();
-
-    let result = construct_fn(agent, &arguments_list, new_target_addr);
-
-    Ok(result)
+    constructor.construct(agent, &arguments_list, &new_target_addr)
 }
 
 /// Integrity level for SetIntegrityLevel operation
@@ -317,11 +303,11 @@ pub(crate) enum IntegrityLevel {
 /// https://262.ecma-international.org/16.0/#sec-setintegritylevel
 pub(crate) fn set_integrity_level(
     agent: &mut JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     level: IntegrityLevel,
 ) -> CompletionRecord<bool> {
     // 1. Let status be ? O.[[PreventExtensions]]().
-    let status = (agent.allocator.obj(obj_addr).methods.prevent_extensions)(agent, obj_addr);
+    let status = obj_addr.prevent_extensions(agent);
 
     // 2. If status is false, return false.
     if !status {
@@ -329,7 +315,7 @@ pub(crate) fn set_integrity_level(
     }
 
     // 3. Let keys be ? O.[[OwnPropertyKeys]]().
-    let keys = (agent.allocator.obj(obj_addr).methods.own_property_keys)(agent, obj_addr);
+    let keys = obj_addr.own_property_keys(agent);
 
     // 4. If level is sealed, then
     if matches!(level, IntegrityLevel::Sealed) {
@@ -338,7 +324,7 @@ pub(crate) fn set_integrity_level(
             // i. Perform ? DefinePropertyOrThrow(O, k, PropertyDescriptor { [[Configurable]]: false }).
             define_property_or_throw(
                 agent,
-                obj_addr,
+                &obj_addr,
                 &key,
                 JSObjectPropDescriptor {
                     configurable: Some(false),
@@ -355,8 +341,7 @@ pub(crate) fn set_integrity_level(
         // b. For each element k of keys, do
         for key in keys {
             // i. Let currentDesc be ? O.[[GetOwnProperty]](k).
-            let current_desc =
-                (agent.allocator.obj(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
+            let current_desc = obj_addr.get_own_property(agent, &key)?;
 
             // ii. If currentDesc is not undefined, then
             if let Some(current_desc) = current_desc {
@@ -369,7 +354,7 @@ pub(crate) fn set_integrity_level(
                     };
 
                     // 3. Perform ? DefinePropertyOrThrow(O, k, desc).
-                    define_property_or_throw(agent, obj_addr, &key, desc)?;
+                    define_property_or_throw(agent, &obj_addr, &key, desc)?;
                 }
                 // 2. Else,
                 else {
@@ -381,7 +366,7 @@ pub(crate) fn set_integrity_level(
                     };
 
                     // 3. Perform ? DefinePropertyOrThrow(O, k, desc).
-                    define_property_or_throw(agent, obj_addr, &key, desc)?;
+                    define_property_or_throw(agent, &obj_addr, &key, desc)?;
                 }
             }
         }
@@ -395,11 +380,11 @@ pub(crate) fn set_integrity_level(
 /// https://262.ecma-international.org/16.0/#sec-testintegritylevel
 pub(crate) fn test_integrity_level(
     agent: &JSAgent,
-    obj_addr: JSObjAddr,
+    obj_addr: &JSObjAddr,
     level: IntegrityLevel,
 ) -> CompletionRecord<bool> {
     // 1. Let extensible be ? IsExtensible(O).
-    let extensible = (agent.allocator.obj(obj_addr).methods.is_extensible)(agent, obj_addr);
+    let extensible = obj_addr.is_extensible(agent);
 
     // 2. If extensible is true, return false.
     if extensible {
@@ -408,13 +393,12 @@ pub(crate) fn test_integrity_level(
 
     // 3. NOTE: If the object is extensible, none of its properties are examined.
     // 4. Let keys be ? O.[[OwnPropertyKeys]]().
-    let keys = (agent.allocator.obj(obj_addr).methods.own_property_keys)(agent, obj_addr);
+    let keys = obj_addr.own_property_keys(agent);
 
     // 5. For each element k of keys, do
     for key in keys {
         // a. Let currentDesc be ? O.[[GetOwnProperty]](k).
-        let current_desc =
-            (agent.allocator.obj(obj_addr).methods.get_own_property)(agent, obj_addr, &key)?;
+        let current_desc = obj_addr.get_own_property(agent, &key)?;
 
         // b. If currentDesc is not undefined, then
         if let Some(current_desc) = current_desc {

@@ -164,7 +164,7 @@ impl GlobalEnvironment {
         let global_object = obj_env.binding_object();
 
         // 5. Let existingProp be ? HasOwnProperty(globalObject, N).
-        let existing_prop = has_property(agent, global_object, &JSObjectPropKey::from(name))?;
+        let existing_prop = has_property(agent, &global_object, &JSObjectPropKey::from(name))?;
 
         // 6. If existingProp is true, then
         if existing_prop {

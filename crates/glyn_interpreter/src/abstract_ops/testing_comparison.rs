@@ -3,6 +3,7 @@ use crate::abstract_ops::type_conversion::{
 };
 use crate::runtime::agent::{type_error, JSAgent};
 use crate::runtime::completion::CompletionRecord;
+use crate::value::object::JSObjectExtraInternalMethods;
 use crate::value::{object::JSObjAddr, JSValue};
 
 // 7.2 Testing and Comparison Operations
@@ -21,14 +22,14 @@ pub(crate) fn require_object_coercible(arg: JSValue) -> CompletionRecord<JSValue
 
 /// 7.2.3 IsCallable ( argument )
 /// https://262.ecma-international.org/16.0/#sec-iscallable
-pub(crate) fn is_callable(agent: &JSAgent, arg: &JSValue) -> bool {
+pub(crate) fn is_callable(arg: &JSValue) -> bool {
     // If argument is not an Object, return false.
     let Some(obj_addr) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Call]] internal method, return true.
-    if agent.allocator.obj(obj_addr).methods.call.is_some() {
+    if obj_addr.v_table_extra().call.is_some() {
         return true;
     }
 
@@ -38,14 +39,14 @@ pub(crate) fn is_callable(agent: &JSAgent, arg: &JSValue) -> bool {
 
 /// 7.2.4 IsConstructor ( argument )
 /// https://262.ecma-international.org/16.0/#sec-isconstructor
-pub(crate) fn is_constructor(agent: &JSAgent, arg: JSValue) -> bool {
+pub(crate) fn is_constructor(arg: JSValue) -> bool {
     // If argument is not an Object, return false.
     let Some(obj_addr) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Construct]] internal method, return true.
-    if agent.allocator.obj(obj_addr).methods.construct.is_some() {
+    if obj_addr.v_table_extra().construct.is_some() {
         return true;
     }
 
@@ -55,7 +56,7 @@ pub(crate) fn is_constructor(agent: &JSAgent, arg: JSValue) -> bool {
 
 ///  7.2.5 IsExtensible ( O )
 /// https://262.ecma-international.org/16.0/#sec-isextensible-o
-pub(crate) fn is_extensible(agent: &JSAgent, obj_addr: JSObjAddr) -> bool {
+pub(crate) fn is_extensible(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
     agent.allocator.obj(obj_addr).extensible()
 }

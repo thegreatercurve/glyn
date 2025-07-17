@@ -1,5 +1,5 @@
 use crate::{
-    abstract_ops::{environments::new_global_environment, object::ordinary_object_create},
+    abstract_ops::{environments::new_global_environment, ordinary::ordinary_object_create},
     intrinsics::{function_prototype::FunctionPrototype, object_prototype::JSObjectPrototype},
     runtime::{
         agent::JSAgent,

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     runtime::{environment::Environment, realm::Realm},
-    value::object::JSObject,
+    value::object::{JSObjAddr, JSObject},
 };
 
 type ID = u32;
@@ -185,12 +185,12 @@ impl Allocator {
         self.heap.get_mut(&ptr.id).unwrap()
     }
 
-    pub(crate) fn obj(&self, ptr: Gc<JSObject>) -> &JSObject {
-        self.get(ptr).as_object().unwrap()
+    pub(crate) fn obj(&self, ptr: &JSObjAddr) -> &JSObject {
+        self.get(*ptr).as_object().unwrap()
     }
 
-    pub(crate) fn obj_mut(&mut self, ptr: Gc<JSObject>) -> &mut JSObject {
-        self.get_mut(ptr).as_object_mut().unwrap()
+    pub(crate) fn obj_mut(&mut self, ptr: &JSObjAddr) -> &mut JSObject {
+        self.get_mut(*ptr).as_object_mut().unwrap()
     }
 
     pub(crate) fn env(&self, ptr: Gc<Environment>) -> &Environment {
