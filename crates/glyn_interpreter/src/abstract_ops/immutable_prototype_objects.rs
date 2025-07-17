@@ -9,7 +9,8 @@ pub(crate) fn set_immutable_prototype(
     value_addr: Option<JSObjAddr>,
 ) -> bool {
     // 1. Let current be ? O.[[GetPrototypeOf]]().
-    let opt_current_addr = (agent.allocator.get(obj_addr).methods.get_prototype_of)(agent, obj_addr);
+    let opt_current_addr =
+        (agent.allocator.obj(obj_addr).methods.get_prototype_of)(agent, obj_addr);
 
     // 2. If SameValue(V, current) is true, return true.
     if let (Some(value), Some(current)) = (value_addr, opt_current_addr) {

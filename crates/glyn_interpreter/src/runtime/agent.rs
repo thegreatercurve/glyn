@@ -1,9 +1,8 @@
-use std::fmt::Display;
-
-use crate::runtime::allocator::GlynAllocator;
+use crate::gc::{Allocator, Trace};
 use crate::runtime::environment::Environment;
 use crate::runtime::execution_context::ExecutionContext;
 use crate::runtime::realm::RealmAddr;
+use std::fmt::Display;
 
 /// 6.1.5.1 Well-Known Symbols
 /// https://262.ecma-international.org/16.0/#sec-well-known-symbols
@@ -50,7 +49,7 @@ pub(crate) const WELL_KNOWN_SYMBOLS_UNSCOPABLES: WellKnownSymbols = WellKnownSym
 pub struct JSAgent {
     pub(crate) execution_contexts: Vec<ExecutionContext>,
     environment_records: Vec<Environment>,
-    pub(crate) allocator: GlynAllocator,
+    pub(crate) allocator: Allocator,
 }
 
 impl JSAgent {
@@ -58,7 +57,7 @@ impl JSAgent {
         Self {
             execution_contexts: vec![],
             environment_records: vec![],
-            allocator: GlynAllocator::default(),
+            allocator: Allocator::default(),
         }
     }
 

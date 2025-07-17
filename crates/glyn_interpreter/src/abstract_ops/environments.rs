@@ -30,7 +30,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (agent.allocator.get(env).methods.has_binding)(agent, env, name)?;
+    let exists = (agent.allocator.env(env).methods.has_binding)(agent, env, name)?;
 
     // 3. If exists is true, then
     if exists {
@@ -45,7 +45,7 @@ pub(crate) fn get_identifier_reference(
 
     // 4. Else,
     // a. Let outer be env.[[OuterEnv]].
-    let outer = agent.allocator.get(env).outer;
+    let outer = agent.allocator.env(env).outer;
 
     // b. Return ? GetIdentifierReference(outer, name, strict).
     get_identifier_reference(agent, outer, name, strict)
@@ -119,7 +119,7 @@ pub(crate) fn new_function_environment(
     // 6. Set env.[[OuterEnv]] to F.[[Environment]].
     env.outer = agent
         .allocator
-        .get(function_object_addr)
+        .obj(function_object_addr)
         .slots
         .environment();
 

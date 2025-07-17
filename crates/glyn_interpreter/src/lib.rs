@@ -1,6 +1,7 @@
 mod abstract_ops;
 mod codegen;
 mod eval_script;
+mod gc;
 mod intrinsics;
 mod lexer;
 mod runtime;

@@ -28,7 +28,7 @@ pub(crate) fn is_callable(agent: &JSAgent, arg: &JSValue) -> bool {
     };
 
     // 2. If argument has a [[Call]] internal method, return true.
-    if agent.allocator.get(obj_addr).methods.call.is_some() {
+    if agent.allocator.obj(obj_addr).methods.call.is_some() {
         return true;
     }
 
@@ -45,7 +45,7 @@ pub(crate) fn is_constructor(agent: &JSAgent, arg: JSValue) -> bool {
     };
 
     // 2. If argument has a [[Construct]] internal method, return true.
-    if agent.allocator.get(obj_addr).methods.construct.is_some() {
+    if agent.allocator.obj(obj_addr).methods.construct.is_some() {
         return true;
     }
 
@@ -57,7 +57,7 @@ pub(crate) fn is_constructor(agent: &JSAgent, arg: JSValue) -> bool {
 /// https://262.ecma-international.org/16.0/#sec-isextensible-o
 pub(crate) fn is_extensible(agent: &JSAgent, obj_addr: JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
-    agent.allocator.get(obj_addr).extensible()
+    agent.allocator.obj(obj_addr).extensible()
 }
 
 /// 7.2.8 SameType ( x, y )

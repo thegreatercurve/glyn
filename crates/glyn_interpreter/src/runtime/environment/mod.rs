@@ -3,9 +3,8 @@ pub(crate) mod function_environment;
 pub(crate) mod global_environment;
 pub(crate) mod object_environment;
 
-use safe_gc::{Collector, Gc, Trace};
-
 use crate::{
+    gc::{Gc, Trace, Tracer},
     runtime::{
         completion::CompletionRecord,
         environment::{
@@ -130,7 +129,7 @@ pub(crate) struct Environment {
 }
 
 impl Trace for Environment {
-    fn trace(&self, _collector: &mut Collector) {}
+    fn trace(&self, _tracer: &mut Tracer) {}
 }
 
 impl Environment {

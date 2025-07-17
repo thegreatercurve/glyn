@@ -29,7 +29,11 @@ impl FunctionPrototype {
             vec![],
             Some(realm_addr),
             // has a [[Prototype]] internal slot whose value is %Object.prototype%.
-            agent.allocator.get(realm_addr).intrinsics.object_prototype,
+            agent
+                .allocator
+                .realm(realm_addr)
+                .intrinsics
+                .object_prototype,
             None,
         )
     }

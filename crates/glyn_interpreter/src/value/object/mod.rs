@@ -1,9 +1,8 @@
 pub(crate) mod internal_slots;
 pub(crate) mod property;
 
-use safe_gc::{Collector, Gc, Trace};
-
 use crate::{
+    gc::{Gc, Trace, Tracer},
     runtime::{agent::JSAgent, completion::CompletionRecord},
     value::{
         object::{
@@ -111,7 +110,7 @@ pub(crate) struct JSObject {
 }
 
 impl Trace for JSObject {
-    fn trace(&self, collector: &mut Collector) {
+    fn trace(&self, collector: &mut Tracer) {
         if let Some(prototype) = self.prototype() {
             collector.edge(prototype);
         }
