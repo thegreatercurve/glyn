@@ -1,7 +1,7 @@
 use crate::abstract_ops::type_conversion::{
     to_number, to_numeric, to_primitive, PreferredPrimType,
 };
-use crate::runtime::agent::{type_error, JSAgent};
+use crate::runtime::agent::type_error;
 use crate::runtime::completion::CompletionRecord;
 use crate::value::object::JSObjectExtraInternalMethods;
 use crate::value::{object::JSObjAddr, JSValue};

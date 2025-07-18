@@ -20,30 +20,24 @@ use crate::{
 
 /// 9.1.1.2 Object Environment Records
 /// https://262.ecma-international.org/16.0/#sec-object-environment-records
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct ObjEnvironment {
+    /// [[OuterEnv]]
+    pub(crate) outer_env: Option<EnvironmentAddr>,
+
     /// [[BindingObject]]
-    pub(crate) binding_object: Option<JSObjAddr>,
+    pub(crate) binding_object: JSObjAddr,
 
     /// [[IsWithEnvironment]]
     pub(crate) is_with_environment: bool,
 }
 
-impl ObjEnvironment {
-    pub(crate) fn binding_object(&self) -> JSObjAddr {
-        self.binding_object.clone().unwrap()
-    }
-}
-
-impl ObjEnvironment {
+impl EnvironmentMethods for ObjEnvironment {
     /// 9.1.1.2.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasbinding-n
-    pub(crate) fn has_binding(
-        env_addr: EnvironmentAddr,
-        name: &JSString,
-    ) -> CompletionRecord<bool> {
+    fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object_addr = env_addr.borrow().obj_env().binding_object();
+        let binding_object_addr = self.binding_object.clone();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
         let found_binding =
@@ -55,7 +49,7 @@ impl ObjEnvironment {
         }
 
         // 4. If envRec.[[IsWithEnvironment]] is false, return true.
-        if !env_addr.borrow().obj_env().is_with_environment {
+        if !self.is_with_environment {
             return Ok(true);
         }
 
@@ -87,13 +81,9 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createmutablebinding-n-d
-    pub(crate) fn create_mutable_binding(
-        env_addr: EnvironmentAddr,
-        name: JSString,
-        configurable: bool,
-    ) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = env_addr.borrow().obj_env().binding_object();
+        let binding_object = self.binding_object.clone();
 
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
@@ -103,7 +93,7 @@ impl ObjEnvironment {
                 value: None,
                 writable: Some(true),
                 enumerable: Some(true),
-                configurable: Some(configurable),
+                configurable: Some(deletable),
                 ..JSObjectPropDescriptor::default()
             },
         )?;
@@ -114,24 +104,16 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createimmutablebinding-n-s
-    pub(crate) fn create_immutable_binding(
-        _env_addr: EnvironmentAddr,
-        _name: JSString,
-        _strict: bool,
-    ) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
         // The CreateImmutableBinding concrete method of an Object Environment Record is never used within this specification.
         unreachable!()
     }
 
     /// 9.1.1.2.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-initializebinding-n-v
-    pub(crate) fn initialize_binding(
-        env_addr: EnvironmentAddr,
-        name: JSString,
-        value: JSValue,
-    ) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
         // 1. Perform ? envRec.SetMutableBinding(N, V, false).
-        ObjEnvironment::set_mutable_binding(env_addr, name, value, false)?;
+        self.set_mutable_binding(name, value, false)?;
 
         // 2. Return unused.
         Ok(())
@@ -139,14 +121,15 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-setmutablebinding-n-v-s
-    pub(crate) fn set_mutable_binding(
-        env_addr: EnvironmentAddr,
+    fn set_mutable_binding(
+        &mut self,
+
         name: JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = env_addr.borrow().obj_env().binding_object();
+        let binding_object = self.binding_object.clone();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
         let still_exists = has_property(binding_object.clone(), &JSObjectPropKey::from(&name))?;
@@ -165,13 +148,9 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-getbindingvalue-n-s
-    pub(crate) fn get_binding_value(
-        env_addr: EnvironmentAddr,
-        name: &JSString,
-        strict: bool,
-    ) -> CompletionRecord<JSValue> {
+    fn get_binding_value(&self, name: &JSString, strict: bool) -> CompletionRecord<JSValue> {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = env_addr.borrow().obj_env().binding_object();
+        let binding_object = self.binding_object.clone();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
         let value = has_property(binding_object.clone(), &JSObjectPropKey::from(name))?;
@@ -196,12 +175,9 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-deletebinding-n
-    pub(crate) fn delete_binding(
-        env_addr: EnvironmentAddr,
-        name: &JSString,
-    ) -> CompletionRecord<bool> {
+    fn delete_binding(&mut self, name: &JSString) -> CompletionRecord<bool> {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = env_addr.borrow().obj_env().binding_object();
+        let binding_object = self.binding_object.clone();
 
         // 2. Return ? bindingObject.[[Delete]](N).
         binding_object.delete(&JSObjectPropKey::from(name))
@@ -209,40 +185,27 @@ impl ObjEnvironment {
 
     /// 9.1.1.2.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasthisbinding
-    pub(crate) fn has_this_binding(_env_addr: EnvironmentAddr) -> bool {
+    fn has_this_binding(&self) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.2.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hassuperbinding
-    pub(crate) fn has_super_binding(_env_addr: EnvironmentAddr) -> bool {
+    fn has_super_binding(&self) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.2.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-withbaseobject
-    pub(crate) fn with_base_object(env_addr: EnvironmentAddr) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<JSObjAddr> {
         // 1. If envRec.[[IsWithEnvironment]] is true, return envRec.[[BindingObject]].
-        if env_addr.borrow().obj_env().is_with_environment {
-            return Some(env_addr.borrow().obj_env().binding_object());
+        if self.is_with_environment {
+            return Some(self.binding_object.clone());
         }
 
         // 2. Otherwise, return undefined.
         None
     }
 }
-
-pub(crate) static OBJECT_ENVIRONMENT_METHODS: EnvironmentMethods = EnvironmentMethods {
-    has_binding: ObjEnvironment::has_binding,
-    create_mutable_binding: ObjEnvironment::create_mutable_binding,
-    create_immutable_binding: ObjEnvironment::create_immutable_binding,
-    initialize_binding: ObjEnvironment::initialize_binding,
-    set_mutable_binding: ObjEnvironment::set_mutable_binding,
-    get_binding_value: ObjEnvironment::get_binding_value,
-    delete_binding: ObjEnvironment::delete_binding,
-    has_this_binding: ObjEnvironment::has_this_binding,
-    has_super_binding: ObjEnvironment::has_super_binding,
-    with_base_object: ObjEnvironment::with_base_object,
-};

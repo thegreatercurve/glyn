@@ -42,7 +42,7 @@ pub(crate) fn set_function_name(
             }
         }
         // 3. Else if name is a Private Name, then
-        JSObjectPropKey::PrivateName(private_name) => {
+        JSObjectPropKey::PrivateName(_private_name) => {
             // a. Set name to name.[[Description]].
             todo!()
         }
@@ -50,7 +50,6 @@ pub(crate) fn set_function_name(
     };
 
     // 4. If F has an [[InitialName]] internal slot, then
-
     if func.borrow().slots.initial_name().is_some() {
         // a. Set F.[[InitialName]] to name.
         func.borrow_mut().slots.set_initial_name(name_str.clone());
@@ -59,7 +58,7 @@ pub(crate) fn set_function_name(
     // 5. If prefix is present, then
     if let Some(prefix) = opt_prefix {
         // a. Set name to the string-concatenation of prefix, the code unit 0x0020 (SPACE), and name.
-        let new_name = format!("{} {:?}", prefix, &name_str);
+        let new_name = format!("{} {:?}", prefix, name_str);
 
         name_str = JSString::from(new_name);
         // b. If F has an [[InitialName]] internal slot, then

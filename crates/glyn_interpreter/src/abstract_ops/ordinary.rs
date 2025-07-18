@@ -685,13 +685,6 @@ fn ordinary_delete(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionReco
     Ok(false)
 }
 
-/// 10.1.11 [[OwnPropertyKeys]] ( )
-/// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
-fn own_property_keys(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {
-    // 1. Return OrdinaryOwnPropertyKeys(O).
-    ordinary_own_property_keys(obj_addr)
-}
-
 /// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryownpropertykeys
 fn ordinary_own_property_keys(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {

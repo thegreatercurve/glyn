@@ -3,7 +3,11 @@ use crate::{
     runtime::{
         completion::CompletionRecord,
         environment::{
-            function_environment::ThisBindingStatus, Environment, EnvironmentAddr, EnvironmentKind,
+            declarative_environment::DeclEnvironment,
+            function_environment::{FuncEnvironment, ThisBindingStatus},
+            global_environment::GlobalEnvironment,
+            object_environment::ObjEnvironment,
+            Environment, EnvironmentAddr, EnvironmentMethods,
         },
         reference::{Reference, ReferenceBase, ReferenceName},
     },
@@ -29,7 +33,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (env.borrow().methods.has_binding)(env.clone(), name)?;
+    let exists = env.has_binding(name)?;
 
     // 3. If exists is true, then
     if exists {
@@ -44,7 +48,7 @@ pub(crate) fn get_identifier_reference(
 
     // 4. Else,
     // a. Let outer be env.[[OuterEnv]].
-    let outer = env.borrow().outer.clone();
+    let outer = env.outer();
 
     // b. Return ? GetIdentifierReference(outer, name, strict).
     get_identifier_reference(outer, name, strict)
@@ -54,13 +58,13 @@ pub(crate) fn get_identifier_reference(
 /// https://262.ecma-international.org/16.0/#sec-newdeclarativeenvironment
 pub(crate) fn new_declarative_environment(outer_env: Option<EnvironmentAddr>) -> EnvironmentAddr {
     // 1. Let env be a new Declarative Environment Record containing no bindings.
-    let mut env = Environment::new(EnvironmentKind::Declarative);
+    let mut env = DeclEnvironment::default();
 
     // 2. Set env.[[OuterEnv]] to E.
-    env.outer = outer_env;
+    env.outer_env = outer_env;
 
     // 3. Return env.
-    Gc::new(env)
+    Gc::new(Environment::Declarative(env))
 }
 
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
@@ -71,21 +75,19 @@ pub(crate) fn new_object_environment(
     outer_env: Option<EnvironmentAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Object Environment Record.
-    let mut env = Environment::new(EnvironmentKind::Object);
+    let env = ObjEnvironment {
+        // 2. Set env.[[BindingObject]] to O.
+        binding_object,
 
-    let obj_env = env.obj_env_mut();
+        // 3. Set env.[[IsWithEnvironment]] to W.
+        is_with_environment,
 
-    // 2. Set env.[[BindingObject]] to O.
-    obj_env.binding_object = Some(binding_object);
-
-    // 3. Set env.[[IsWithEnvironment]] to W.
-    obj_env.is_with_environment = is_with_environment;
-
-    // 4. Set env.[[OuterEnv]] to E.
-    env.outer = outer_env;
+        // 4. Set env.[[OuterEnv]] to E.
+        outer_env,
+    };
 
     // 5. Return env.
-    Gc::new(env)
+    Gc::new(Environment::Object(env))
 }
 
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
@@ -95,26 +97,28 @@ pub(crate) fn new_function_environment(
     new_target: Option<JSObjAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Function Environment Record containing no bindings.
-    let mut env = Environment::new(EnvironmentKind::Function);
+    let env = FuncEnvironment {
+        // 2. Set env.[[FunctionObject]] to F.
+        function_object: Some(function_object_addr.clone()),
 
-    // 2. Set env.[[FunctionObject]] to F.
-    env.func_env_mut().function_object = Some(function_object_addr.clone());
+        // 3. If F.[[ThisMode]] is lexical, set env.[[ThisBindingStatus]] to lexical.
+        // TODO: Implement this using the function object's [[ThisMode]]
+        // 4. Else, set env.[[ThisBindingStatus]] to uninitialized.
+        this_binding_status: ThisBindingStatus::Uninitialized,
 
-    // 3. If F.[[ThisMode]] is lexical, set env.[[ThisBindingStatus]] to lexical.
-    // TODO: Implement this using the function object's [[ThisMode]]
-    env.func_env_mut().this_binding_status = ThisBindingStatus::Uninitialized;
+        // 5. Set env.[[NewTarget]] to newTarget.
+        new_target,
 
-    // 4. Else, set env.[[ThisBindingStatus]] to uninitialized.
-    env.func_env_mut().this_binding_status = ThisBindingStatus::Uninitialized;
+        // 6. Set env.[[OuterEnv]] to F.[[Environment]].
+        outer_env: function_object_addr.borrow().slots.environment(),
 
-    // 5. Set env.[[NewTarget]] to newTarget.
-    env.func_env_mut().new_target = new_target;
+        decl_env: DeclEnvironment::default(),
 
-    // 6. Set env.[[OuterEnv]] to F.[[Environment]].
-    env.outer = function_object_addr.borrow().slots.environment();
+        this_value: None,
+    };
 
     // 7. Return env.
-    Gc::new(env)
+    Gc::new(Environment::Function(env))
 }
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
@@ -123,23 +127,31 @@ pub(crate) fn new_global_environment(
     global_object: JSObjAddr,
     this_value: JSObjAddr,
 ) -> EnvironmentAddr {
-    // Note: Object and Declarative Environment Records are created in Environment::new.
+    // Let objRec be NewObjectEnvironment(G, false, null).
+    let obj_env = ObjEnvironment {
+        binding_object: global_object,
+        is_with_environment: false,
+        outer_env: None,
+    };
+
     // 2. Let dclRec be NewDeclarativeEnvironment(null).
+    let decl_env = DeclEnvironment::default();
+
     // 3. Let env be a new Global Environment Record.
-    let mut env = Environment::new(EnvironmentKind::Global);
+    let env = GlobalEnvironment {
+        // 4. Set env.[[ObjectRecord]] to objRec.
+        object_record: obj_env,
 
-    // 1. Let objRec be NewObjectEnvironment(G, false, null).
-    // Note: Overwrite default binding object with provided global object.
-    env.obj_env_mut().binding_object = Some(global_object);
+        // 5. Set env.[[GlobalThisValue]] to thisValue.
+        global_this_value: Some(this_value),
 
-    let global_env = env.global_env_mut();
+        // 6. Set env.[[DeclarativeRecord]] to dclRec.
+        declarative_record: decl_env,
 
-    // 4. Set env.[[ObjectRecord]] to objRec.
-    // 5. Set env.[[GlobalThisValue]] to thisValue.
-    global_env.global_this_value = Some(this_value);
+        // 7. Set env.[[OuterEnv]] to null.
+        outer_env: None,
+    };
 
-    // 6. Set env.[[DeclarativeRecord]] to dclRec.
-    // 7. Set env.[[OuterEnv]] to null.
     // 8. Return env.
-    Gc::new(env)
+    Gc::new(Environment::Global(env))
 }

@@ -1,9 +1,10 @@
 use crate::{
     runtime::{
         completion::CompletionRecord,
+        environment::EnvironmentMethods,
         reference::{Reference, ReferenceBase},
     },
-    JSValue,
+    JSAgent, JSValue,
 };
 
 /// 6.2.5.2 IsUnresolvableReference ( V )
@@ -15,7 +16,7 @@ fn is_unresolvable_reference(value: &Reference) -> bool {
 
 /// 6.2.5.8 InitializeReferencedBinding ( V, W )
 /// https://262.ecma-international.org/16.0/#sec-initializereferencedbinding
-pub(crate) fn initialize_referenced_binding(
+pub(crate) fn initialize_referenced_binding<'a>(
     reference: Reference,
     value: JSValue,
 ) -> CompletionRecord {
@@ -28,14 +29,10 @@ pub(crate) fn initialize_referenced_binding(
     // 3. Assert: base is an Environment Record.
     debug_assert!(matches!(base, ReferenceBase::Environment(_)));
 
-    let ReferenceBase::Environment(env_addr) = base else {
+    let ReferenceBase::Environment(mut env_addr) = base else {
         unreachable!()
     };
 
     // 4. Return ? base.InitializeBinding(V.[[ReferencedName]], W).
-    (env_addr.clone().borrow_mut().methods.initialize_binding)(
-        env_addr.clone(),
-        reference.referenced_name.as_string().unwrap(),
-        value,
-    )
+    env_addr.initialize_binding(reference.referenced_name.as_string().unwrap(), value)
 }
