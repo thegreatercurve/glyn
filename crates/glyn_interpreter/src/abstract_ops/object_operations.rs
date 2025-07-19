@@ -42,7 +42,7 @@ pub(crate) fn make_basic_object(
     obj.slots.set_extensible(true);
 
     // 9. Return obj.
-    agent.allocator.alloc(obj).into()
+    agent.heap.alloc(obj).into()
 }
 
 /// 7.3.2 Get ( O, P )
@@ -141,7 +141,7 @@ pub(crate) fn create_non_enumerable_data_property_or_throw(
     key: &JSObjectPropKey,
     value: JSValue,
 ) {
-    let object = agent.allocator.obj_mut(obj_addr);
+    let object = agent.heap.obj_mut(obj_addr);
 
     // 1. Assert: O is an ordinary, extensible object with no non-configurable properties.
     debug_assert!(

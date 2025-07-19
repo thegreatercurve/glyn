@@ -30,7 +30,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (agent.allocator.env(env).methods.has_binding)(agent, env, name)?;
+    let exists = (agent.heap.env(env).methods.has_binding)(agent, env, name)?;
 
     // 3. If exists is true, then
     if exists {
@@ -45,7 +45,7 @@ pub(crate) fn get_identifier_reference(
 
     // 4. Else,
     // a. Let outer be env.[[OuterEnv]].
-    let outer = agent.allocator.env(env).outer;
+    let outer = agent.heap.env(env).outer;
 
     // b. Return ? GetIdentifierReference(outer, name, strict).
     get_identifier_reference(agent, outer, name, strict)
@@ -64,7 +64,7 @@ pub(crate) fn new_declarative_environment(
     env.outer = outer_env;
 
     // 3. Return env.
-    agent.allocator.alloc(env)
+    agent.heap.alloc(env)
 }
 
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
@@ -90,7 +90,7 @@ pub(crate) fn new_object_environment(
     env.outer = outer_env;
 
     // 5. Return env.
-    agent.allocator.alloc(env)
+    agent.heap.alloc(env)
 }
 
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
@@ -117,14 +117,10 @@ pub(crate) fn new_function_environment(
     env.func_env_mut().new_target = new_target;
 
     // 6. Set env.[[OuterEnv]] to F.[[Environment]].
-    env.outer = agent
-        .allocator
-        .obj(&function_object_addr)
-        .slots
-        .environment();
+    env.outer = agent.heap.obj(&function_object_addr).slots.environment();
 
     // 7. Return env.
-    agent.allocator.alloc(env)
+    agent.heap.alloc(env)
 }
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
@@ -152,5 +148,5 @@ pub(crate) fn new_global_environment(
     // 6. Set env.[[DeclarativeRecord]] to dclRec.
     // 7. Set env.[[OuterEnv]] to null.
     // 8. Return env.
-    agent.allocator.alloc(env)
+    agent.heap.alloc(env)
 }

@@ -58,7 +58,7 @@ pub(crate) fn is_constructor(arg: JSValue) -> bool {
 /// https://262.ecma-international.org/16.0/#sec-isextensible-o
 pub(crate) fn is_extensible(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
-    agent.allocator.obj(obj_addr).extensible()
+    agent.heap.obj(obj_addr).extensible()
 }
 
 /// 7.2.8 SameType ( x, y )

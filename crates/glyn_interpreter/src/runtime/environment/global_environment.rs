@@ -158,7 +158,7 @@ impl GlobalEnvironment {
         }
 
         // 3. Let ObjRec be envRec.[[ObjectRecord]].
-        let obj_env = agent.allocator.env(env_addr).obj_env();
+        let obj_env = agent.heap.env(env_addr).obj_env();
 
         // 4. Let globalObject be ObjRec.[[BindingObject]].
         let global_object = obj_env.binding_object();

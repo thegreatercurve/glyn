@@ -30,7 +30,7 @@ impl FunctionPrototype {
             Some(realm_addr),
             // has a [[Prototype]] internal slot whose value is %Object.prototype%.
             agent
-                .allocator
+                .heap
                 .realm(realm_addr)
                 .intrinsics
                 .object_prototype,

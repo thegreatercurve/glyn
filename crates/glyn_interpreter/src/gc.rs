@@ -141,18 +141,18 @@ pub(crate) trait Trace {
 }
 
 #[derive(Default)]
-pub(crate) struct Allocator {
-    heap: HashMap<ID, Box<Item>>,
+pub(crate) struct Heap {
+    items: HashMap<ID, Box<Item>>,
     next_id: ID,
 }
 
-impl Allocator {
+impl Heap {
     pub(crate) fn alloc<T: Trace + Into<Item>>(&mut self, data: T) -> Gc<T> {
         let id = self.next_id;
 
         self.next_id += 1;
 
-        self.heap.insert(id, Box::new(data.into()));
+        self.items.insert(id, Box::new(data.into()));
 
         Gc::new(id)
     }
@@ -174,15 +174,15 @@ impl Allocator {
     }
 
     fn sweep(&mut self, tracer: Tracer) {
-        self.heap.retain(|id, _| !tracer.is_marked(*id));
+        self.items.retain(|id, _| !tracer.is_marked(*id));
     }
 
     fn get<T: Trace>(&self, ptr: Gc<T>) -> &Item {
-        self.heap.get(&ptr.id).unwrap()
+        self.items.get(&ptr.id).unwrap()
     }
 
     fn get_mut<T: Trace>(&mut self, ptr: Gc<T>) -> &mut Item {
-        self.heap.get_mut(&ptr.id).unwrap()
+        self.items.get_mut(&ptr.id).unwrap()
     }
 
     pub(crate) fn obj(&self, ptr: &JSObjAddr) -> &JSObject {

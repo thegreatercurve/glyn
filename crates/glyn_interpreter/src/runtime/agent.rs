@@ -1,4 +1,4 @@
-use crate::gc::{Allocator, Trace};
+use crate::gc::{Heap, Trace};
 use crate::runtime::environment::Environment;
 use crate::runtime::execution_context::ExecutionContext;
 use crate::runtime::realm::RealmAddr;
@@ -49,7 +49,7 @@ pub(crate) const WELL_KNOWN_SYMBOLS_UNSCOPABLES: WellKnownSymbols = WellKnownSym
 pub struct JSAgent {
     pub(crate) execution_contexts: Vec<ExecutionContext>,
     environment_records: Vec<Environment>,
-    pub(crate) allocator: Allocator,
+    pub(crate) heap: Heap,
 }
 
 impl JSAgent {
@@ -57,7 +57,7 @@ impl JSAgent {
         Self {
             execution_contexts: vec![],
             environment_records: vec![],
-            allocator: Allocator::default(),
+            heap: Heap::default(),
         }
     }
 

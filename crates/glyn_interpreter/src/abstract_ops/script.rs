@@ -53,7 +53,7 @@ pub(crate) fn script_evaluation(
     script_record: &ScriptRecord,
 ) -> CompletionRecord<JSValue> {
     // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-    let global_env = &agent.allocator.realm(script_record.realm).global_env;
+    let global_env = &agent.heap.realm(script_record.realm).global_env;
 
     // 2. Let scriptContext be a new ECMAScript code execution context.
     let script_context = ExecutionContext {

@@ -34,7 +34,7 @@ pub(crate) fn initialize_referenced_binding(
     };
 
     // 4. Return ? base.InitializeBinding(V.[[ReferencedName]], W).
-    (agent.allocator.env(env_addr).methods.initialize_binding)(
+    (agent.heap.env(env_addr).methods.initialize_binding)(
         agent,
         env_addr,
         reference.referenced_name.as_string().unwrap(),

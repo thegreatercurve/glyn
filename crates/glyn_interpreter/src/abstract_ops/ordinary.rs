@@ -134,7 +134,7 @@ impl JSObjectInternalMethods for JSObjAddr {
 /// https://262.ecma-international.org/16.0/#sec-ordinarygetprototypeof
 fn ordinary_get_prototype_of(agent: &JSAgent, obj_addr: &JSObjAddr) -> Option<JSObjAddr> {
     // 1. Return O.[[Prototype]].
-    agent.allocator.obj(obj_addr).prototype()
+    agent.heap.obj(obj_addr).prototype()
 }
 
 /// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
@@ -182,16 +182,12 @@ fn ordinary_set_prototype_of(
             }
 
             // ii. Else, set p to p.[[Prototype]].
-            opt_p = agent.allocator.obj(&parent).prototype();
+            opt_p = agent.heap.obj(&parent).prototype();
         }
     }
 
     // 8. Set O.[[Prototype]] to V.
-    agent
-        .allocator
-        .obj_mut(obj_addr)
-        .slots
-        .set_prototype(proto_addr);
+    agent.heap.obj_mut(obj_addr).slots.set_prototype(proto_addr);
 
     // 9. Return true.
     true
@@ -201,18 +197,14 @@ fn ordinary_set_prototype_of(
 /// https://262.ecma-international.org/16.0/#sec-ordinaryisextensible
 fn ordinary_is_extensible(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
-    agent.allocator.obj(obj_addr).extensible()
+    agent.heap.obj(obj_addr).extensible()
 }
 
 /// 10.1.4.1 OrdinaryPreventExtensions ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinarypreventextensions
 fn ordinary_prevent_extensions(agent: &mut JSAgent, obj_addr: &JSObjAddr) -> bool {
     // 1. Set O.[[Extensible]] to false.
-    agent
-        .allocator
-        .obj_mut(obj_addr)
-        .slots
-        .set_extensible(false);
+    agent.heap.obj_mut(obj_addr).slots.set_extensible(false);
 
     // 2. Return true.
     true
@@ -225,7 +217,7 @@ fn ordinary_get_own_property(
     obj_addr: &JSObjAddr,
     key: &JSObjectPropKey,
 ) -> CompletionRecord<Option<JSObjectPropDescriptor>> {
-    let object = agent.allocator.obj(obj_addr);
+    let object = agent.heap.obj(obj_addr);
 
     // 1. If O does not have an own property with key P, return undefined.
     // 3. Let X be O's own property whose key is P.
@@ -318,7 +310,7 @@ fn validate_and_apply_property_descriptor(
             return true;
         };
 
-        let object_mut = agent.allocator.obj_mut(&obj_addr);
+        let object_mut = agent.heap.obj_mut(&obj_addr);
 
         // c. If IsAccessorDescriptor(Desc) is true, then
         if descriptor.is_accessor_descriptor() {
@@ -423,7 +415,7 @@ fn validate_and_apply_property_descriptor(
 
     // 6. If O is not undefined, then
     if let Some(obj_addr) = opt_obj_addr {
-        let object_mut = agent.allocator.obj_mut(&obj_addr);
+        let object_mut = agent.heap.obj_mut(&obj_addr);
 
         // a. If IsDataDescriptor(current) is true and IsAccessorDescriptor(Desc) is true, then
         if current.is_data_descriptor() && descriptor.is_accessor_descriptor() {
@@ -710,12 +702,12 @@ fn ordinary_delete(
     if desc.configurable.unwrap_or(false) {
         // a. Remove the own property with name P from O.
         let property = agent
-            .allocator
+            .heap
             .obj(obj_addr)
             .find_property_index(key)
             .unwrap_or_else(|| unreachable!());
 
-        agent.allocator.obj_mut(obj_addr).delete_property(property);
+        agent.heap.obj_mut(obj_addr).delete_property(property);
 
         // b. Return true.
         return Ok(true);
@@ -735,7 +727,7 @@ fn own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropK
 /// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryownpropertykeys
 fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropKey> {
-    let object = agent.allocator.obj(obj_addr);
+    let object = agent.heap.obj(obj_addr);
 
     // Let keys be a new empty List.
     let mut keys: Vec<JSObjectPropKey> = Vec::new();
@@ -790,11 +782,7 @@ pub(crate) fn ordinary_object_create(
     let obj = make_basic_object(agent, internal_slots_list);
 
     // 4. Set O.[[Prototype]] to proto.
-    agent
-        .allocator
-        .obj_mut(&obj)
-        .slots
-        .set_prototype(proto_addr);
+    agent.heap.obj_mut(&obj).slots.set_prototype(proto_addr);
 
     // 5. Return O.
     obj

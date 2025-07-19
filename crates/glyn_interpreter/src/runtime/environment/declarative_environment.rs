@@ -73,11 +73,7 @@ impl DeclEnvironment {
     ) -> CompletionRecord<bool> {
         // 1. If envRec has a binding for N, return true.
         // 2. Return false.
-        Ok(agent
-            .allocator
-            .env(env_addr)
-            .decl_env()
-            .has_binding_impl(name))
+        Ok(agent.heap.env(env_addr).decl_env().has_binding_impl(name))
     }
 
     /// 9.1.1.1.2 CreateMutableBinding ( N, D )
@@ -91,7 +87,7 @@ impl DeclEnvironment {
         // 1. Assert: envRec does not already have a binding for N.
         // 2. Create a mutable binding in envRec for N and record that it is uninitialized. If D is true, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
         agent
-            .allocator
+            .heap
             .env_mut(env_addr)
             .decl_env_mut()
             .add_binding_impl(name, true, deletable, true);
@@ -111,7 +107,7 @@ impl DeclEnvironment {
         // 1. Assert: envRec does not already have a binding for N.
         // Create an immutable binding in envRec for N and record that it is uninitialized. If S is true, record that the newly created binding is a strict binding.
         agent
-            .allocator
+            .heap
             .env_mut(env_addr)
             .decl_env_mut()
             .add_binding_impl(name, false, false, strict);
@@ -131,7 +127,7 @@ impl DeclEnvironment {
         // 1. Assert: envRec must have an uninitialized binding for N.
         // 2. Set the bound value for N in envRec to V.
         agent
-            .allocator
+            .heap
             .env_mut(env_addr)
             .decl_env_mut()
             .initialize_binding_impl(name, value);
@@ -152,7 +148,7 @@ impl DeclEnvironment {
         value: JSValue,
         mut strict: bool,
     ) -> CompletionRecord {
-        let decl_env = agent.allocator.env_mut(env_addr).decl_env_mut();
+        let decl_env = agent.heap.env_mut(env_addr).decl_env_mut();
 
         // 1. If envRec does not have a binding for N, then
         if !decl_env.has_binding_impl(&name) {
@@ -211,7 +207,7 @@ impl DeclEnvironment {
         name: &JSString,
         _strict: bool,
     ) -> CompletionRecord<JSValue> {
-        let decl_env = agent.allocator.env(env_addr).decl_env();
+        let decl_env = agent.heap.env(env_addr).decl_env();
 
         // 1. Assert: envRec has a binding for N.
         debug_assert!(decl_env.has_binding_impl(name));
@@ -232,7 +228,7 @@ impl DeclEnvironment {
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let decl_env = agent.allocator.env_mut(env_addr).decl_env_mut();
+        let decl_env = agent.heap.env_mut(env_addr).decl_env_mut();
 
         // 1. Assert: envRec has a binding for N.
         debug_assert!(decl_env.has_binding_impl(name));
