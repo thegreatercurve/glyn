@@ -1,4 +1,5 @@
 use crate::{
+    gc::Gc,
     runtime::{
         completion::CompletionRecord,
         environment::{
@@ -7,13 +8,11 @@ use crate::{
         reference::{Reference, ReferenceBase, ReferenceName},
     },
     value::{object::JSObjAddr, string::JSString},
-    JSAgent,
 };
 
 /// 9.1.2.1 GetIdentifierReference ( env, name, strict )
 /// https://262.ecma-international.org/16.0/#sec-getidentifierreference
 pub(crate) fn get_identifier_reference(
-    agent: &JSAgent,
     env: Option<EnvironmentAddr>,
     name: &JSString,
     strict: bool,
@@ -30,7 +29,7 @@ pub(crate) fn get_identifier_reference(
     };
 
     // 2. Let exists be ? env.HasBinding(name).
-    let exists = (agent.heap.env(env).methods.has_binding)(agent, env, name)?;
+    let exists = (env.borrow().methods.has_binding)(env.clone(), name)?;
 
     // 3. If exists is true, then
     if exists {
@@ -45,18 +44,15 @@ pub(crate) fn get_identifier_reference(
 
     // 4. Else,
     // a. Let outer be env.[[OuterEnv]].
-    let outer = agent.heap.env(env).outer;
+    let outer = env.borrow().outer.clone();
 
     // b. Return ? GetIdentifierReference(outer, name, strict).
-    get_identifier_reference(agent, outer, name, strict)
+    get_identifier_reference(outer, name, strict)
 }
 
 /// 9.1.2.2 NewDeclarativeEnvironment ( E )
 /// https://262.ecma-international.org/16.0/#sec-newdeclarativeenvironment
-pub(crate) fn new_declarative_environment(
-    agent: &mut JSAgent,
-    outer_env: Option<EnvironmentAddr>,
-) -> EnvironmentAddr {
+pub(crate) fn new_declarative_environment(outer_env: Option<EnvironmentAddr>) -> EnvironmentAddr {
     // 1. Let env be a new Declarative Environment Record containing no bindings.
     let mut env = Environment::new(EnvironmentKind::Declarative);
 
@@ -64,13 +60,12 @@ pub(crate) fn new_declarative_environment(
     env.outer = outer_env;
 
     // 3. Return env.
-    agent.heap.alloc(env)
+    Gc::new(env)
 }
 
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
 /// https://262.ecma-international.org/16.0/#sec-newobjectenvironment
 pub(crate) fn new_object_environment(
-    agent: &mut JSAgent,
     binding_object: JSObjAddr,
     is_with_environment: bool,
     outer_env: Option<EnvironmentAddr>,
@@ -90,13 +85,12 @@ pub(crate) fn new_object_environment(
     env.outer = outer_env;
 
     // 5. Return env.
-    agent.heap.alloc(env)
+    Gc::new(env)
 }
 
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
 /// https://262.ecma-international.org/16.0/#sec-newfunctionenvironment
 pub(crate) fn new_function_environment(
-    agent: &mut JSAgent,
     function_object_addr: JSObjAddr,
     new_target: Option<JSObjAddr>,
 ) -> EnvironmentAddr {
@@ -104,7 +98,7 @@ pub(crate) fn new_function_environment(
     let mut env = Environment::new(EnvironmentKind::Function);
 
     // 2. Set env.[[FunctionObject]] to F.
-    env.func_env_mut().function_object = Some(function_object_addr);
+    env.func_env_mut().function_object = Some(function_object_addr.clone());
 
     // 3. If F.[[ThisMode]] is lexical, set env.[[ThisBindingStatus]] to lexical.
     // TODO: Implement this using the function object's [[ThisMode]]
@@ -117,16 +111,15 @@ pub(crate) fn new_function_environment(
     env.func_env_mut().new_target = new_target;
 
     // 6. Set env.[[OuterEnv]] to F.[[Environment]].
-    env.outer = agent.heap.obj(&function_object_addr).slots.environment();
+    env.outer = function_object_addr.borrow().slots.environment();
 
     // 7. Return env.
-    agent.heap.alloc(env)
+    Gc::new(env)
 }
 
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
 /// https://262.ecma-international.org/16.0/#sec-newglobalenvironment
 pub(crate) fn new_global_environment(
-    agent: &mut JSAgent,
     global_object: JSObjAddr,
     this_value: JSObjAddr,
 ) -> EnvironmentAddr {
@@ -148,5 +141,5 @@ pub(crate) fn new_global_environment(
     // 6. Set env.[[DeclarativeRecord]] to dclRec.
     // 7. Set env.[[OuterEnv]] to null.
     // 8. Return env.
-    agent.heap.alloc(env)
+    Gc::new(env)
 }

@@ -29,7 +29,6 @@ pub(crate) fn parse_text(source_text: &str) -> Result<ExecutableProgram, String>
 /// 16.1.5 ParseScript ( sourceText, realm, hostDefined )
 /// https://262.ecma-international.org/16.0/#sec-parse-script
 pub(crate) fn parse_script(
-    _agent: &mut JSAgent,
     source_text: &str,
     realm_addr: RealmAddr,
     host_defined: Option<()>,
@@ -53,7 +52,7 @@ pub(crate) fn script_evaluation(
     script_record: &ScriptRecord,
 ) -> CompletionRecord<JSValue> {
     // 1. Let globalEnv be scriptRecord.[[Realm]].[[GlobalEnv]].
-    let global_env = &agent.heap.realm(script_record.realm).global_env;
+    let global_env = script_record.realm.borrow().global_env.clone();
 
     // 2. Let scriptContext be a new ECMAScript code execution context.
     let script_context = ExecutionContext {
@@ -61,16 +60,16 @@ pub(crate) fn script_evaluation(
         function: None,
 
         // 4. Set the Realm of scriptContext to scriptRecord.[[Realm]].
-        realm: script_record.realm,
+        realm: script_record.realm.clone(),
 
         // 5. Set the ScriptOrModule of scriptContext to scriptRecord.
         script_or_module: Some(ScriptOrModule::Script(script_record.clone())),
 
         // 6. Set the VariableEnvironment of scriptContext to globalEnv.
-        variable_environment: *global_env,
+        variable_environment: global_env.clone(),
 
         // 7. Set the LexicalEnvironment of scriptContext to globalEnv.
-        lexical_environment: *global_env,
+        lexical_environment: global_env.clone(),
 
         // 8. Set the PrivateEnvironment of scriptContext to null.
         private_environment: None,

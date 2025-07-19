@@ -1,11 +1,9 @@
 pub(crate) mod internal_slots;
 pub(crate) mod property;
 
-use std::any::TypeId;
-
 use crate::{
-    gc::{Gc, Trace, Tracer},
-    runtime::{agent::JSAgent, completion::CompletionRecord},
+    gc::Gc,
+    runtime::completion::CompletionRecord,
     value::{
         object::{
             internal_slots::JSObjectInternalSlots,
@@ -18,53 +16,44 @@ use crate::{
 pub(crate) type JSObjAddr = Gc<JSObject>;
 
 pub(crate) struct JSObjectInternalMethodsVTable {
-    pub(crate) get_prototype_of: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> Option<JSObjAddr>,
+    pub(crate) get_prototype_of: fn(obj_addr: JSObjAddr) -> Option<JSObjAddr>,
 
-    pub(crate) set_prototype_of:
-        fn(agent: &mut JSAgent, obj_addr: &JSObjAddr, value_addr: Option<JSObjAddr>) -> bool,
+    pub(crate) set_prototype_of: fn(obj_addr: JSObjAddr, value_addr: Option<JSObjAddr>) -> bool,
 
-    pub(crate) is_extensible: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool,
+    pub(crate) is_extensible: fn(obj_addr: JSObjAddr) -> bool,
 
-    pub(crate) prevent_extensions: fn(agent: &mut JSAgent, obj_addr: &JSObjAddr) -> bool,
+    pub(crate) prevent_extensions: fn(obj_addr: JSObjAddr) -> bool,
 
     pub(crate) get_own_property: fn(
-        agent: &JSAgent,
-        obj_addr: &JSObjAddr,
+        obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
     ) -> CompletionRecord<Option<JSObjectPropDescriptor>>,
 
     pub(crate) define_own_property: fn(
-        agent: &mut JSAgent,
-        obj_addr: &JSObjAddr,
+        obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
     ) -> CompletionRecord<bool>,
 
     pub(crate) has_property:
-        fn(agent: &JSAgent, obj_addr: &JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
+        fn(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
 
     pub(crate) get: fn(
-        agent: &JSAgent,
-        obj_addr: &JSObjAddr,
+        obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         receiver: &JSValue,
     ) -> CompletionRecord<JSValue>,
 
     pub(crate) set: fn(
-        agent: &mut JSAgent,
-        obj_addr: &JSObjAddr,
+        obj_addr: JSObjAddr,
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
     ) -> CompletionRecord<bool>,
 
-    pub(crate) delete: fn(
-        agent: &mut JSAgent,
-        obj_addr: &JSObjAddr,
-        key: &JSObjectPropKey,
-    ) -> CompletionRecord<bool>,
+    pub(crate) delete: fn(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
 
-    pub(crate) own_property_keys: fn(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropKey>,
+    pub(crate) own_property_keys: fn(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,
 }
 
 /// Essential Internal Methods
@@ -73,71 +62,61 @@ pub(crate) trait JSObjectInternalMethods {
     fn v_table(&self) -> JSObjectInternalMethodsVTable;
 
     /// [[GetPrototypeOf]]
-    fn get_prototype_of(&self, agent: &JSAgent) -> Option<JSObjAddr>;
+    fn get_prototype_of(&self) -> Option<JSObjAddr>;
 
     /// [[SetPrototypeOf]]
-    fn set_prototype_of(&self, agent: &mut JSAgent, prototype: Option<JSObjAddr>) -> bool;
+    fn set_prototype_of(&self, prototype: Option<JSObjAddr>) -> bool;
 
     /// [[IsExtensible]]
-    fn is_extensible(&self, agent: &JSAgent) -> bool;
+    fn is_extensible(&self) -> bool;
 
     /// [[PreventExtensions]]
-    fn prevent_extensions(&self, agent: &mut JSAgent) -> bool;
+    fn prevent_extensions(&self) -> bool;
 
     /// [[GetOwnProperty]]
     fn get_own_property(
         &self,
-        agent: &JSAgent,
         key: &JSObjectPropKey,
     ) -> CompletionRecord<Option<JSObjectPropDescriptor>>;
 
     /// [[DefineOwnProperty]]
     fn define_own_property(
         &self,
-        agent: &mut JSAgent,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
     ) -> CompletionRecord<bool>;
 
     /// [[HasProperty]]
-    fn has_property(&self, agent: &JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool>;
+    fn has_property(&self, key: &JSObjectPropKey) -> CompletionRecord<bool>;
 
     /// [[Get]]
-    fn get(
-        &self,
-        agent: &JSAgent,
-        key: &JSObjectPropKey,
-        receiver: &JSValue,
-    ) -> CompletionRecord<JSValue>;
+    fn get(&self, key: &JSObjectPropKey, receiver: &JSValue) -> CompletionRecord<JSValue>;
 
     /// [[Set]]
     fn set(
         &self,
-        agent: &mut JSAgent,
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
     ) -> CompletionRecord<bool>;
 
     /// [[Delete]]
-    fn delete(&self, agent: &mut JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool>;
+    fn delete(&self, key: &JSObjectPropKey) -> CompletionRecord<bool>;
 
     /// [[OwnPropertyKeys]]
-    fn own_property_keys(&self, agent: &JSAgent) -> Vec<JSObjectPropKey>;
+    fn own_property_keys(&self) -> Vec<JSObjectPropKey>;
 }
 
 pub(crate) struct JSObjectExtraInternalMethodsVTable {
     pub(crate) call: Option<
         fn(
-            agent: &JSAgent,
-            obj_addr: &JSObjAddr,
+            obj_addr: JSObjAddr,
             this_value: &JSValue,
             args: &[JSValue],
         ) -> CompletionRecord<JSValue>,
     >,
 
-    pub(crate) construct:
-        Option<fn(agent: &mut JSAgent, obj_addr: &JSObjAddr, args: &[JSValue]) -> JSObjAddr>,
+    pub(crate) construct: Option<fn(obj_addr: JSObjAddr, args: &[JSValue]) -> JSObjAddr>,
 }
 
 /// Additional Essential Internal Methods of Function Objects
@@ -146,20 +125,10 @@ pub(crate) trait JSObjectExtraInternalMethods {
     fn v_table_extra(&self) -> JSObjectExtraInternalMethodsVTable;
 
     /// [[Call]]
-    fn call(
-        &self,
-        agent: &JSAgent,
-        this_value: &JSValue,
-        args: &[JSValue],
-    ) -> CompletionRecord<JSValue>;
+    fn call(&self, this_value: &JSValue, args: &[JSValue]) -> CompletionRecord<JSValue>;
 
     /// [[Construct]]
-    fn construct(
-        &self,
-        agent: &mut JSAgent,
-        args: &[JSValue],
-        obj_addr: &JSObjAddr,
-    ) -> CompletionRecord<JSObjAddr>;
+    fn construct(&self, args: &[JSValue], obj_addr: JSObjAddr) -> CompletionRecord<JSObjAddr>;
 }
 
 pub(crate) struct PropertyIndex(usize);
@@ -171,14 +140,6 @@ pub(crate) struct JSObject {
     pub(crate) slots: JSObjectInternalSlots,
     pub(crate) keys: Vec<JSObjectPropKey>,
     pub(crate) values: Vec<JSObjectPropDescriptor>,
-}
-
-impl Trace for JSObject {
-    fn trace(&self, collector: &mut Tracer) {
-        if let Some(prototype) = self.prototype() {
-            collector.edge(prototype);
-        }
-    }
 }
 
 impl JSObject {

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    runtime::{agent::JSAgent, environment::EnvironmentAddr, realm::RealmAddr},
+    runtime::{environment::EnvironmentAddr, realm::RealmAddr},
     value::{object::JSObjAddr, string::JSString, JSValue},
 };
 
-pub(crate) type BehaviourFn = fn(&mut JSAgent, Vec<JSValue>) -> JSValue;
+pub(crate) type BehaviourFn = fn(Vec<JSValue>) -> JSValue;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) enum InternalSlotName {
@@ -52,7 +52,7 @@ impl JSObjectInternalSlots {
 
     pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
         match self.get(&InternalSlotName::Prototype) {
-            Some(InternalSlotValue::Value(JSValue::Object(addr))) => Some(*addr),
+            Some(InternalSlotValue::Value(JSValue::Object(addr))) => Some(addr.clone()),
             _ => None,
         }
     }
@@ -78,9 +78,9 @@ impl JSObjectInternalSlots {
         );
     }
 
-    pub(crate) fn realm(self) -> Option<RealmAddr> {
+    pub(crate) fn realm(&self) -> Option<&RealmAddr> {
         match self.get(&InternalSlotName::Realm) {
-            Some(InternalSlotValue::Realm(realm_addr)) => Some(*realm_addr),
+            Some(InternalSlotValue::Realm(realm_addr)) => Some(&realm_addr),
             _ => None,
         }
     }
@@ -120,7 +120,7 @@ impl JSObjectInternalSlots {
 
     pub(crate) fn environment(&self) -> Option<EnvironmentAddr> {
         match self.get(&InternalSlotName::Environment) {
-            Some(InternalSlotValue::Environment(env_addr)) => Some(*env_addr),
+            Some(InternalSlotValue::Environment(env_addr)) => Some(env_addr.clone()),
             _ => None,
         }
     }

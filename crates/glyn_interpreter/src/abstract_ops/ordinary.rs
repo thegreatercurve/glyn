@@ -10,7 +10,7 @@ use crate::{
         JSObjAddr, JSObjectExtraInternalMethods, JSObjectExtraInternalMethodsVTable,
         JSObjectInternalMethods, JSObjectInternalMethodsVTable,
     },
-    JSAgent, JSValue,
+    JSValue,
 };
 
 /// 10.1 Ordinary Object Internal Methods and Internal Slots
@@ -34,118 +34,108 @@ impl JSObjectInternalMethods for JSObjAddr {
 
     /// 10.1.1 [[GetPrototypeOf]] ( )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-getprototypeof
-    fn get_prototype_of(&self, agent: &JSAgent) -> Option<JSObjAddr> {
+    fn get_prototype_of(&self) -> Option<JSObjAddr> {
         // 1. Return OrdinaryGetPrototypeOf(O).
-        (self.v_table().get_prototype_of)(agent, self)
+        (self.v_table().get_prototype_of)(self.clone())
     }
 
     /// 10.1.2 [[SetPrototypeOf]] ( V )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
-    fn set_prototype_of(&self, agent: &mut JSAgent, proto_addr: Option<JSObjAddr>) -> bool {
+    fn set_prototype_of(&self, proto_addr: Option<JSObjAddr>) -> bool {
         // 1. Return OrdinarySetPrototypeOf(O, V).
-        (self.v_table().set_prototype_of)(agent, self, proto_addr)
+        (self.v_table().set_prototype_of)(self.clone(), proto_addr)
     }
 
     /// 10.1.3 [[IsExtensible]] ( )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-isextensible
-    fn is_extensible(&self, agent: &JSAgent) -> bool {
+    fn is_extensible(&self) -> bool {
         // 1. Return OrdinaryIsExtensible(O).
-        (self.v_table().is_extensible)(agent, self)
+        (self.v_table().is_extensible)(self.clone())
     }
 
     /// 10.1.4 [[PreventExtensions]] ( )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-preventextensions
-    fn prevent_extensions(&self, agent: &mut JSAgent) -> bool {
+    fn prevent_extensions(&self) -> bool {
         // 1. Return OrdinaryPreventExtensions(O).
-        (self.v_table().prevent_extensions)(agent, self)
+        (self.v_table().prevent_extensions)(self.clone())
     }
 
     /// 10.1.5 [[GetOwnProperty]] ( P )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-getownproperty-p
     fn get_own_property(
         &self,
-        agent: &JSAgent,
         key: &JSObjectPropKey,
     ) -> CompletionRecord<Option<JSObjectPropDescriptor>> {
         // 1. Return OrdinaryGetOwnProperty(O, P).
-        (self.v_table().get_own_property)(agent, self, key)
+        (self.v_table().get_own_property)(self.clone(), key)
     }
 
     /// 10.1.6 [[DefineOwnProperty]] ( P, Desc )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-defineownproperty-p-desc
     fn define_own_property(
         &self,
-        agent: &mut JSAgent,
+
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
     ) -> CompletionRecord<bool> {
         // 1. Return OrdinaryDefineOwnProperty(O, P, Desc).
-        (self.v_table().define_own_property)(agent, self, key, descriptor)
+        (self.v_table().define_own_property)(self.clone(), key, descriptor)
     }
 
     /// 10.1.7 [[HasProperty]] ( P )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-hasproperty-p
-    fn has_property(&self, agent: &JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool> {
+    fn has_property(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
         // 1. Return OrdinaryHasProperty(O, P).
-        (self.v_table().has_property)(agent, self, key)
+        (self.v_table().has_property)(self.clone(), key)
     }
 
     /// 10.1.8 [[Get]] ( P, Receiver )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-get-p-receiver
-    fn get(
-        &self,
-        agent: &JSAgent,
-        key: &JSObjectPropKey,
-        receiver: &JSValue,
-    ) -> CompletionRecord<JSValue> {
+    fn get(&self, key: &JSObjectPropKey, receiver: &JSValue) -> CompletionRecord<JSValue> {
         // 1. Return OrdinaryGet(O, P, Receiver).
-        (self.v_table().get)(agent, self, key, receiver)
+        (self.v_table().get)(self.clone(), key, receiver)
     }
 
     /// 10.1.9 [[Set]] ( P, V, Receiver )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-set-p-v-receiver
     fn set(
         &self,
-        agent: &mut JSAgent,
+
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
     ) -> CompletionRecord<bool> {
         // 1. Return OrdinarySet(O, P, V, Receiver).
-        (self.v_table().set)(agent, self, key, value, receiver)
+        (self.v_table().set)(self.clone(), key, value, receiver)
     }
 
     /// 10.1.10 [[Delete]] ( P )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-delete-p
-    fn delete(&self, agent: &mut JSAgent, key: &JSObjectPropKey) -> CompletionRecord<bool> {
+    fn delete(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
         // 1. Return OrdinaryDelete(O, P).
-        (self.v_table().delete)(agent, self, key)
+        (self.v_table().delete)(self.clone(), key)
     }
 
     /// 10.1.11 [[OwnPropertyKeys]] ( )
     /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
-    fn own_property_keys(&self, agent: &JSAgent) -> Vec<JSObjectPropKey> {
+    fn own_property_keys(&self) -> Vec<JSObjectPropKey> {
         // 1. Return OrdinaryOwnPropertyKeys(O).
-        (self.v_table().own_property_keys)(agent, self)
+        (self.v_table().own_property_keys)(self.clone())
     }
 }
 
 /// 10.1.1.1 OrdinaryGetPrototypeOf ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinarygetprototypeof
-fn ordinary_get_prototype_of(agent: &JSAgent, obj_addr: &JSObjAddr) -> Option<JSObjAddr> {
+fn ordinary_get_prototype_of(obj_addr: JSObjAddr) -> Option<JSObjAddr> {
     // 1. Return O.[[Prototype]].
-    agent.heap.obj(obj_addr).prototype()
+    obj_addr.borrow().prototype()
 }
 
 /// 10.1.2.1 OrdinarySetPrototypeOf ( O, V )
 /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-setprototypeof-v
-fn ordinary_set_prototype_of(
-    agent: &mut JSAgent,
-    obj_addr: &JSObjAddr,
-    proto_addr: Option<JSObjAddr>,
-) -> bool {
+fn ordinary_set_prototype_of(obj_addr: JSObjAddr, proto_addr: Option<JSObjAddr>) -> bool {
     // 1. Let current be O.[[Prototype]].
-    let current = obj_addr.get_prototype_of(agent);
+    let current = obj_addr.get_prototype_of();
 
     // 2. If SameValue(V, current) is true, return true.
     if proto_addr == current {
@@ -153,7 +143,7 @@ fn ordinary_set_prototype_of(
     }
 
     // 3. Let extensible be O.[[Extensible]].
-    let extensible = obj_addr.is_extensible(agent);
+    let extensible = obj_addr.is_extensible();
 
     // 4. If extensible is false, return false.
     if !extensible {
@@ -161,7 +151,7 @@ fn ordinary_set_prototype_of(
     }
 
     // 5. Let p be V.
-    let mut opt_p = proto_addr;
+    let mut opt_p = proto_addr.clone();
 
     // 6. Let done be false.
     // 7. Repeat, while done is false,
@@ -169,7 +159,7 @@ fn ordinary_set_prototype_of(
         // a. If p is null, then
         // i. Set done to true.
         // b. Else if SameValue(p, O) is true, then
-        if parent == *obj_addr {
+        if parent == obj_addr {
             // i. Return false.
             return false;
         }
@@ -182,12 +172,12 @@ fn ordinary_set_prototype_of(
             }
 
             // ii. Else, set p to p.[[Prototype]].
-            opt_p = agent.heap.obj(&parent).prototype();
+            opt_p = parent.borrow().prototype();
         }
     }
 
     // 8. Set O.[[Prototype]] to V.
-    agent.heap.obj_mut(obj_addr).slots.set_prototype(proto_addr);
+    obj_addr.borrow_mut().slots.set_prototype(proto_addr);
 
     // 9. Return true.
     true
@@ -195,16 +185,16 @@ fn ordinary_set_prototype_of(
 
 /// 10.1.3.1 OrdinaryIsExtensible ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryisextensible
-fn ordinary_is_extensible(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool {
+fn ordinary_is_extensible(obj_addr: JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
-    agent.heap.obj(obj_addr).extensible()
+    obj_addr.borrow().extensible()
 }
 
 /// 10.1.4.1 OrdinaryPreventExtensions ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinarypreventextensions
-fn ordinary_prevent_extensions(agent: &mut JSAgent, obj_addr: &JSObjAddr) -> bool {
+fn ordinary_prevent_extensions(obj_addr: JSObjAddr) -> bool {
     // 1. Set O.[[Extensible]] to false.
-    agent.heap.obj_mut(obj_addr).slots.set_extensible(false);
+    obj_addr.borrow_mut().slots.set_extensible(false);
 
     // 2. Return true.
     true
@@ -213,11 +203,10 @@ fn ordinary_prevent_extensions(agent: &mut JSAgent, obj_addr: &JSObjAddr) -> boo
 /// 10.1.5.1 OrdinaryGetOwnProperty ( O, P )
 /// https://262.ecma-international.org/16.0/#sec-ordinarygetownproperty
 fn ordinary_get_own_property(
-    agent: &JSAgent,
-    obj_addr: &JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
 ) -> CompletionRecord<Option<JSObjectPropDescriptor>> {
-    let object = agent.heap.obj(obj_addr);
+    let object = obj_addr.borrow();
 
     // 1. If O does not have an own property with key P, return undefined.
     // 3. Let X be O's own property whose key is P.
@@ -263,21 +252,19 @@ fn ordinary_get_own_property(
 /// 10.1.6.1 OrdinaryDefineOwnProperty ( O, P, Desc )
 /// https://262.ecma-international.org/16.0/#sec-ordinarydefineownproperty
 fn ordinary_define_own_property(
-    agent: &mut JSAgent,
-    obj_addr: &JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     descriptor: JSObjectPropDescriptor,
 ) -> CompletionRecord<bool> {
     // 1. Let current be ? O.[[GetOwnProperty]](P).
-    let current = obj_addr.get_own_property(agent, key)?;
+    let current = obj_addr.get_own_property(key)?;
 
     // 2. Let extensible be ? IsExtensible(O).
-    let extensible = is_extensible(agent, obj_addr);
+    let extensible = is_extensible(obj_addr.clone());
 
     // 3. Return ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current).
     validate_and_apply_property_descriptor(
-        agent,
-        Some(*obj_addr),
+        Some(obj_addr.clone()),
         key,
         extensible,
         descriptor,
@@ -290,7 +277,6 @@ fn ordinary_define_own_property(
 /// 10.1.6.3 ValidateAndApplyPropertyDescriptor ( O, P, extensible, Desc, current )
 /// https://262.ecma-international.org/16.0/#sec-validateandapplypropertydescriptor
 fn validate_and_apply_property_descriptor(
-    agent: &mut JSAgent,
     opt_obj_addr: Option<JSObjAddr>,
     key: &JSObjectPropKey,
     extensible: bool,
@@ -310,7 +296,7 @@ fn validate_and_apply_property_descriptor(
             return true;
         };
 
-        let object_mut = agent.heap.obj_mut(&obj_addr);
+        let mut object_mut = obj_addr.borrow_mut();
 
         // c. If IsAccessorDescriptor(Desc) is true, then
         if descriptor.is_accessor_descriptor() {
@@ -415,7 +401,7 @@ fn validate_and_apply_property_descriptor(
 
     // 6. If O is not undefined, then
     if let Some(obj_addr) = opt_obj_addr {
-        let object_mut = agent.heap.obj_mut(&obj_addr);
+        let mut object_mut = obj_addr.borrow_mut();
 
         // a. If IsDataDescriptor(current) is true and IsAccessorDescriptor(Desc) is true, then
         if current.is_data_descriptor() && descriptor.is_accessor_descriptor() {
@@ -486,13 +472,9 @@ fn validate_and_apply_property_descriptor(
 
 /// 10.1.7.1 OrdinaryHasProperty ( O, P )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryhasproperty
-fn ordinary_has_property(
-    agent: &JSAgent,
-    obj_addr: &JSObjAddr,
-    key: &JSObjectPropKey,
-) -> CompletionRecord<bool> {
+fn ordinary_has_property(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool> {
     // 1. Let hasOwn be ? O.[[GetOwnProperty]](P).
-    let has_own = obj_addr.get_own_property(agent, key)?;
+    let has_own = obj_addr.get_own_property(key)?;
 
     // 2. If hasOwn is not undefined, return true.
     if has_own.is_some() {
@@ -500,12 +482,12 @@ fn ordinary_has_property(
     }
 
     // 3. Let parent be ? O.[[GetPrototypeOf]]().
-    let opt_parent = obj_addr.get_prototype_of(agent);
+    let opt_parent = obj_addr.get_prototype_of();
 
     // 4. If parent is not null, then
     if let Some(parent) = opt_parent {
         // a. Return ? parent.[[HasProperty]](P).
-        return parent.has_property(agent, key);
+        return parent.has_property(key);
     }
 
     // 5. Return false.
@@ -515,18 +497,17 @@ fn ordinary_has_property(
 /// 10.1.8.1 OrdinaryGet ( O, P, Receiver )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryget
 fn ordinary_get(
-    agent: &JSAgent,
-    obj_addr: &JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     receiver: &JSValue,
 ) -> CompletionRecord<JSValue> {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
-    let desc = obj_addr.get_own_property(agent, key)?;
+    let desc = obj_addr.get_own_property(key)?;
 
     // 2. If desc is undefined, then
     let Some(desc) = desc else {
         // a. Let parent be ? O.[[GetPrototypeOf]]().
-        let opt_parent_addr = obj_addr.get_prototype_of(agent);
+        let opt_parent_addr = obj_addr.get_prototype_of();
 
         // b. If parent is null, return undefined.
         let Some(parent) = opt_parent_addr else {
@@ -534,7 +515,7 @@ fn ordinary_get(
         };
 
         // c. Return ? parent.[[Get]](P, Receiver).
-        return parent.get(agent, key, receiver);
+        return parent.get(key, receiver);
     };
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
@@ -554,35 +535,28 @@ fn ordinary_get(
     }
 
     // 7. Return ? Call(getter, Receiver).
-    call(
-        agent,
-        getter.unwrap_or_else(|| unreachable!()),
-        receiver,
-        None,
-    )
+    call(getter.unwrap_or_else(|| unreachable!()), receiver, None)
 }
 
 /// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryset
 fn ordinary_set(
-    agent: &mut JSAgent,
-    obj_addr: &JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
     receiver: JSValue,
 ) -> CompletionRecord<bool> {
     // 1. Let ownDesc be ? O.[[GetOwnProperty]](P).
-    let own_desc = obj_addr.get_own_property(agent, key)?;
+    let own_desc = obj_addr.get_own_property(key)?;
 
     // 2. Return ? OrdinarySetWithOwnDescriptor(O, P, V, Receiver, ownDesc).
-    ordinary_set_with_own_descriptor(agent, obj_addr, key, value, receiver, own_desc)
+    ordinary_set_with_own_descriptor(obj_addr, key, value, receiver, own_desc)
 }
 
 /// 10.1.9.2 OrdinarySetWithOwnDescriptor ( O, P, V, Receiver, ownDesc )
 /// https://262.ecma-international.org/16.0/#sec-ordinarysetwithowndescriptor
 fn ordinary_set_with_own_descriptor(
-    agent: &mut JSAgent,
-    obj_addr: &JSObjAddr,
+    obj_addr: JSObjAddr,
     key: &JSObjectPropKey,
     value: JSValue,
     receiver: JSValue,
@@ -593,12 +567,12 @@ fn ordinary_set_with_own_descriptor(
         own_desc
     } else {
         // a. Let parent be ? O.[[GetPrototypeOf]]().
-        let opt_parent = obj_addr.get_prototype_of(agent);
+        let opt_parent = obj_addr.get_prototype_of();
 
         // b. If parent is not null, then
         if let Some(parent) = opt_parent {
             // i. Return ? parent.[[Set]](P, V, Receiver).
-            return parent.set(agent, key, value, receiver);
+            return parent.set(key, value, receiver);
         }
 
         // c. Else,
@@ -627,7 +601,7 @@ fn ordinary_set_with_own_descriptor(
         // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
         let receiver = receiver.as_object().unwrap_or_else(|| unreachable!());
 
-        let existing_desc = receiver.get_own_property(agent, key)?;
+        let existing_desc = receiver.get_own_property(key)?;
 
         // d. If existingDescriptor is not undefined, then
         if let Some(existing_desc) = existing_desc {
@@ -648,15 +622,15 @@ fn ordinary_set_with_own_descriptor(
             };
 
             // iv. Return ? Receiver.[[DefineOwnProperty]](P, valueDesc).
-            return receiver.define_own_property(agent, key, value_desc);
+            return receiver.define_own_property(key, value_desc);
         }
         // e. Else,
         else {
             // i. Assert: Receiver does not currently have a property P.
-            debug_assert!(!receiver.has_property(agent, key)?);
+            debug_assert!(!receiver.has_property(key)?);
 
             // ii. Return ? CreateDataProperty(Receiver, P, V).
-            return create_data_property(agent, &receiver, key, value);
+            return create_data_property(receiver, key, value);
         }
     }
 
@@ -673,7 +647,6 @@ fn ordinary_set_with_own_descriptor(
 
     // 6. Perform ? Call(setter, Receiver, « V »).
     call(
-        agent,
         setter.unwrap_or_else(|| unreachable!()),
         &receiver,
         Some(vec![value]),
@@ -685,13 +658,9 @@ fn ordinary_set_with_own_descriptor(
 
 /// 10.1.10.1 OrdinaryDelete ( O, P )
 /// https://262.ecma-international.org/16.0/#sec-ordinarydelete
-fn ordinary_delete(
-    agent: &mut JSAgent,
-    obj_addr: &JSObjAddr,
-    key: &JSObjectPropKey,
-) -> CompletionRecord<bool> {
+fn ordinary_delete(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool> {
     // 1. Let desc be ? O.[[GetOwnProperty]](P).
-    let desc = obj_addr.get_own_property(agent, key)?;
+    let desc = obj_addr.get_own_property(key)?;
 
     // 2. If desc is undefined, return true.
     let Some(desc) = desc else {
@@ -701,13 +670,12 @@ fn ordinary_delete(
     // 3. If desc.[[Configurable]] is true, then
     if desc.configurable.unwrap_or(false) {
         // a. Remove the own property with name P from O.
-        let property = agent
-            .heap
-            .obj(obj_addr)
+        let property = obj_addr
+            .borrow()
             .find_property_index(key)
             .unwrap_or_else(|| unreachable!());
 
-        agent.heap.obj_mut(obj_addr).delete_property(property);
+        obj_addr.borrow_mut().delete_property(property);
 
         // b. Return true.
         return Ok(true);
@@ -719,21 +687,19 @@ fn ordinary_delete(
 
 /// 10.1.11 [[OwnPropertyKeys]] ( )
 /// https://262.ecma-international.org/16.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
-fn own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropKey> {
+fn own_property_keys(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {
     // 1. Return OrdinaryOwnPropertyKeys(O).
-    ordinary_own_property_keys(agent, obj_addr)
+    ordinary_own_property_keys(obj_addr)
 }
 
 /// 10.1.11.1 OrdinaryOwnPropertyKeys ( O )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryownpropertykeys
-fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSObjectPropKey> {
-    let object = agent.heap.obj(obj_addr);
-
+fn ordinary_own_property_keys(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey> {
     // Let keys be a new empty List.
     let mut keys: Vec<JSObjectPropKey> = Vec::new();
 
     // 2. For each own property key P of O such that P is an array index, in ascending numeric index order, do
-    for key in object.keys() {
+    for key in obj_addr.borrow().keys() {
         if key.is_array_index() {
             // a. Append P to keys.
             keys.push(key.clone());
@@ -744,7 +710,7 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSOb
     keys.sort_by_key(|key| key.as_array_index().unwrap_or_else(|| unreachable!()));
 
     // 3. For each own property key P of O such that P is a String and P is not an array index, in ascending chronological order of property creation, do
-    for key in object.keys() {
+    for key in obj_addr.borrow().keys() {
         if key.is_string() {
             // a. Append P to keys.
             keys.push(key.clone());
@@ -752,7 +718,7 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSOb
     }
 
     // 4. For each own property key P of O such that P is a Symbol, in ascending chronological order of property creation, do
-    for key in object.keys() {
+    for key in obj_addr.borrow().keys() {
         if key.is_symbol() {
             // a. Append P to keys.
             keys.push(key.clone());
@@ -766,7 +732,6 @@ fn ordinary_own_property_keys(agent: &JSAgent, obj_addr: &JSObjAddr) -> Vec<JSOb
 /// 10.1.12 OrdinaryObjectCreate ( proto [ , additionalInternalSlotsList ] )
 /// https://262.ecma-international.org/16.0/#sec-ordinaryobjectcreate
 pub(crate) fn ordinary_object_create(
-    agent: &mut JSAgent,
     proto_addr: Option<JSObjAddr>,
     additional_internal_slots: Option<Vec<InternalSlotName>>,
 ) -> JSObjAddr {
@@ -779,10 +744,10 @@ pub(crate) fn ordinary_object_create(
     }
 
     // 3. Let O be MakeBasicObject(internalSlotsList).
-    let obj = make_basic_object(agent, internal_slots_list);
+    let obj = make_basic_object(internal_slots_list);
 
     // 4. Set O.[[Prototype]] to proto.
-    agent.heap.obj_mut(&obj).slots.set_prototype(proto_addr);
+    obj.borrow_mut().slots.set_prototype(proto_addr.clone());
 
     // 5. Return O.
     obj
@@ -796,21 +761,11 @@ impl JSObjectExtraInternalMethods for JSObjAddr {
         }
     }
 
-    fn call(
-        &self,
-        _agent: &JSAgent,
-        _this_value: &JSValue,
-        _args: &[JSValue],
-    ) -> CompletionRecord<JSValue> {
+    fn call(&self, _this_value: &JSValue, _args: &[JSValue]) -> CompletionRecord<JSValue> {
         unreachable!()
     }
 
-    fn construct(
-        &self,
-        _agent: &mut JSAgent,
-        _args: &[JSValue],
-        _obj_addr: &JSObjAddr,
-    ) -> CompletionRecord<JSObjAddr> {
+    fn construct(&self, _args: &[JSValue], _obj_addr: JSObjAddr) -> CompletionRecord<JSObjAddr> {
         unreachable!()
     }
 }

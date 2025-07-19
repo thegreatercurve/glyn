@@ -3,7 +3,7 @@ use crate::{
         completion::CompletionRecord,
         reference::{Reference, ReferenceBase},
     },
-    JSAgent, JSValue,
+    JSValue,
 };
 
 /// 6.2.5.2 IsUnresolvableReference ( V )
@@ -16,7 +16,6 @@ fn is_unresolvable_reference(value: &Reference) -> bool {
 /// 6.2.5.8 InitializeReferencedBinding ( V, W )
 /// https://262.ecma-international.org/16.0/#sec-initializereferencedbinding
 pub(crate) fn initialize_referenced_binding(
-    agent: &mut JSAgent,
     reference: Reference,
     value: JSValue,
 ) -> CompletionRecord {
@@ -34,9 +33,8 @@ pub(crate) fn initialize_referenced_binding(
     };
 
     // 4. Return ? base.InitializeBinding(V.[[ReferencedName]], W).
-    (agent.heap.env(env_addr).methods.initialize_binding)(
-        agent,
-        env_addr,
+    (env_addr.clone().borrow_mut().methods.initialize_binding)(
+        env_addr.clone(),
         reference.referenced_name.as_string().unwrap(),
         value,
     )

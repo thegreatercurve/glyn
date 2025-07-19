@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use crate::abstract_ops::object_operations::get_method;
-use crate::runtime::agent::{range_error, type_error, JSAgent, WELL_KNOWN_SYMBOLS_TO_PRIMITIVE};
+use crate::runtime::agent::{range_error, type_error, WELL_KNOWN_SYMBOLS_TO_PRIMITIVE};
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{
     number::JSNumber,
@@ -22,7 +22,6 @@ pub(crate) enum PreferredPrimType {
 /// 7.1.1 ToPrimitive ( input [ , preferredType ] )
 /// https://262.ecma-international.org/16.0/#sec-toprimitive
 pub(crate) fn to_primitive(
-    agent: &JSAgent,
     input: JSValue,
     preferred_type: PreferredPrimType,
 ) -> CompletionRecord<JSValue> {
@@ -32,7 +31,6 @@ pub(crate) fn to_primitive(
     if let Some(obj_addr) = input.as_object() {
         // a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
         let exotic_to_prim = get_method(
-            agent,
             &input,
             &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_TO_PRIMITIVE),
         )?;
@@ -98,9 +96,9 @@ pub(crate) fn to_boolean(arg: JSValue) -> bool {
 
 /// 7.1.3 ToNumeric ( value )
 /// https://262.ecma-international.org/16.0/#sec-tonumeric
-pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSValue> {
+pub(crate) fn to_numeric(value: JSValue) -> CompletionRecord<JSValue> {
     // 1. Let primValue be ? ToPrimitive(value, number).
-    let prim_value = to_primitive(agent, value, PreferredPrimType::Number)?;
+    let prim_value = to_primitive(value, PreferredPrimType::Number)?;
 
     // 2. If primValue is a BigInt, return primValue.
     if prim_value.is_big_int() {
@@ -108,12 +106,12 @@ pub(crate) fn to_numeric(agent: &JSAgent, value: JSValue) -> CompletionRecord<JS
     }
 
     // 3. Return ? ToNumber(primValue).
-    Ok(JSValue::Number(to_number(agent, prim_value)?))
+    Ok(JSValue::Number(to_number(prim_value)?))
 }
 
 /// 7.1.4 ToNumber ( argument )
 /// https://262.ecma-international.org/16.0/#sec-tonumber
-pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_number(arg: JSValue) -> CompletionRecord<JSNumber> {
     match arg {
         // 1. If argument is a Number, return argument.
         JSValue::Number(number) => return Ok(number.clone()),
@@ -127,7 +125,7 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
         // 5. If argument is true, return +1𝔽
         JSValue::Bool(true) => return Ok(JSNumber(1.0)),
         // 6. If argument is a String, return StringToNumber(argument).
-        JSValue::String(ref string) => return Ok(string_to_number(agent, string)),
+        JSValue::String(ref string) => return Ok(string_to_number(string)),
         _ => {}
     };
 
@@ -135,18 +133,18 @@ pub(crate) fn to_number(agent: &JSAgent, arg: JSValue) -> CompletionRecord<JSNum
     debug_assert!(arg.is_object());
 
     // 8. Let primValue be ? ToPrimitive(argument, number).
-    let prim_value = to_primitive(agent, arg, PreferredPrimType::Number)?;
+    let prim_value = to_primitive(arg, PreferredPrimType::Number)?;
 
     // 9. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
 
     // 10. Return ? ToNumber(primValue).
-    to_number(agent, prim_value)
+    to_number(prim_value)
 }
 
 /// 7.1.4.1.1 StringToNumber ( str )
 /// https://262.ecma-international.org/16.0/#sec-stringtonumber
-pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
+pub(crate) fn string_to_number(str: &JSString) -> JSNumber {
     // 1. Let text be StringToCodePoints(str).
     // 2. Let literal be ParseText(text, StringNumericLiteral).
     // TODO Implement the below exactly.
@@ -161,12 +159,9 @@ pub(crate) fn string_to_number(_agent: &JSAgent, str: &JSString) -> JSNumber {
     JSNumber::from(literal)
 }
 /// https://262.ecma-international.org/16.0/#sec-tointegerorinfinity
-pub(crate) fn to_integer_or_infinity(
-    agent: &JSAgent,
-    argument: JSValue,
-) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_integer_or_infinity(argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let number be ? ToNumber(argument).
-    let number = to_number(agent, argument)?;
+    let number = to_number(argument)?;
 
     // 2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.
     if number.is_nan() || number.is_zero() {
@@ -189,9 +184,9 @@ pub(crate) fn to_integer_or_infinity(
 
 /// 7.1.6 ToInt32 ( argument )
 /// https://262.ecma-international.org/16.0/#sec-toint32
-pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_int32(argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let number be ? ToNumber(argument).
-    let number = to_number(agent, argument)?;
+    let number = to_number(argument)?;
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
     // 3. Let int be truncate(ℝ(number)).
@@ -202,9 +197,9 @@ pub(crate) fn to_int32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<J
 
 /// 7.1.7 ToUint32 ( argument )
 /// https://262.ecma-international.org/16.0/#sec-touint32
-pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_uint32(argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let number be ? ToNumber(argument).
-    let number = to_number(agent, argument)?;
+    let number = to_number(argument)?;
 
     // 2. If number is not finite or number is either +0𝔽 or -0𝔽, return +0𝔽.
     // 3. Let int be truncate(ℝ(number)).
@@ -215,7 +210,7 @@ pub(crate) fn to_uint32(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 
 /// 7.1.17 ToString ( argument )
 /// https://262.ecma-international.org/16.0/#sec-tostring
-pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSString> {
+pub(crate) fn to_string(argument: JSValue) -> CompletionRecord<JSString> {
     // 1. If argument is a String, return argument.
     if let Some(string) = argument.as_string() {
         return Ok(string.clone());
@@ -260,13 +255,13 @@ pub(crate) fn to_string(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
     debug_assert!(argument.is_object());
 
     // 10. Let primValue be ? ToPrimitive(argument, string).
-    let prim_value = to_primitive(agent, argument, PreferredPrimType::String)?;
+    let prim_value = to_primitive(argument, PreferredPrimType::String)?;
 
     // 11. Assert: primValue is not an Object.
     debug_assert!(!prim_value.is_object());
 
     // 12. Return ? ToString(primValue).
-    to_string(agent, prim_value)
+    to_string(prim_value)
 }
 
 /// 7.1.18 ToObject ( argument )
@@ -292,18 +287,15 @@ pub(crate) fn to_object(arg: &JSValue) -> JSObjAddr {
         // Return a new BigInt object whose [[BigIntData]] internal slot is set to argument.
         JSValue::BigInt(_value) => todo!(),
         // If argument is an Object, return argument.
-        JSValue::Object(addr) => *addr,
+        JSValue::Object(addr) => addr.clone(),
     }
 }
 
 /// 7.1.19 ToPropertyKey ( argument )
 /// https://262.ecma-international.org/16.0/#sec-topropertykey
-pub(crate) fn to_property_key(
-    agent: &JSAgent,
-    argument: JSValue,
-) -> CompletionRecord<JSObjectPropKey> {
+pub(crate) fn to_property_key(argument: JSValue) -> CompletionRecord<JSObjectPropKey> {
     // 1. Let key be ? ToPrimitive(argument, string).
-    let key = to_primitive(agent, argument, PreferredPrimType::String)?;
+    let key = to_primitive(argument, PreferredPrimType::String)?;
 
     // 2. If key is a Symbol, then
     if let Some(symbol) = key.as_symbol() {
@@ -312,14 +304,14 @@ pub(crate) fn to_property_key(
     }
 
     // 3. Return ! ToString(key).
-    Ok(JSObjectPropKey::String(to_string(agent, key)?))
+    Ok(JSObjectPropKey::String(to_string(key)?))
 }
 
 /// 7.1.20 ToLength ( argument )
 /// https://262.ecma-international.org/16.0/#sec-tolength
-pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_length(argument: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let len be ? ToIntegerOrInfinity(argument).
-    let len = to_integer_or_infinity(agent, argument)?;
+    let len = to_integer_or_infinity(argument)?;
 
     // 2. If len ≤ 0, return +0𝔽.
     if len.lt(&JSNumber::ZERO) {
@@ -334,22 +326,19 @@ pub(crate) fn to_length(agent: &JSAgent, argument: JSValue) -> CompletionRecord<
 
 /// 7.1.21 CanonicalNumericIndexString ( argument )
 /// https://262.ecma-international.org/16.0/#sec-canonicalnumericindexstring
-pub(crate) fn canonical_numeric_index_string(
-    agent: &JSAgent,
-    argument: &JSString,
-) -> Option<JSNumber> {
+pub(crate) fn canonical_numeric_index_string(argument: &JSString) -> Option<JSNumber> {
     // 1. If argument is "-0", return -0𝔽.
     if argument.0 == "-0" {
         return Some(JSNumber::NEG_ZERO);
     }
 
     // 2. Let n be ! ToNumber(argument).
-    let Ok(n) = to_number(agent, JSValue::from(argument.clone())) else {
+    let Ok(n) = to_number(JSValue::from(argument.clone())) else {
         return None;
     };
 
     // 3. If ! ToString(n) is argument, return n.
-    let Ok(string) = to_string(agent, JSValue::from(n.clone())) else {
+    let Ok(string) = to_string(JSValue::from(n.clone())) else {
         return None;
     };
 
@@ -363,9 +352,9 @@ pub(crate) fn canonical_numeric_index_string(
 
 /// 7.1.22 ToIndex ( value )
 /// https://262.ecma-international.org/16.0/#sec-toindex
-pub(crate) fn to_index(agent: &JSAgent, value: JSValue) -> CompletionRecord<JSNumber> {
+pub(crate) fn to_index(value: JSValue) -> CompletionRecord<JSNumber> {
     // 1. Let integer be ? ToIntegerOrInfinity(value).
-    let integer = to_integer_or_infinity(agent, value)?;
+    let integer = to_integer_or_infinity(value)?;
 
     // 2. If integer is not in the inclusive interval from 0 to 2^53 - 1, throw a RangeError exception.
     if integer < JSNumber::ZERO || integer > JSNumber::from(JSNumber::MAX_SAFE_INTEGER as f64) {

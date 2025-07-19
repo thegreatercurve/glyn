@@ -1,3 +1,6 @@
+use crate::abstract_ops::object_operations::{
+    define_property_or_throw, has_property, make_basic_object,
+};
 use crate::runtime::agent::JSAgent;
 use crate::runtime::realm::RealmAddr;
 use crate::value::{
@@ -10,22 +13,15 @@ use crate::value::{
     JSValue,
 };
 
-use crate::abstract_ops::object_operations::{
-    define_property_or_throw, has_property, make_basic_object,
-};
-
 /// 10.2.9 SetFunctionName ( F, name [ , prefix ] )
 /// https://262.ecma-international.org/16.0/#sec-setfunctionname
 pub(crate) fn set_function_name(
-    agent: &mut JSAgent,
     func: JSObjAddr,
     name: JSObjectPropKey,
     opt_prefix: Option<String>,
 ) {
     // 1. Assert: F is an extensible object that does not have a "name" own property.
-    debug_assert!(
-        agent.heap.obj(&func).extensible() && !has_property(agent, &func, &name).unwrap_or(true)
-    );
+    debug_assert!(func.borrow().extensible() && !has_property(func.clone(), &name).unwrap_or(true));
 
     let mut name_str = match name {
         // 2. If name is a Symbol, then
@@ -55,13 +51,9 @@ pub(crate) fn set_function_name(
 
     // 4. If F has an [[InitialName]] internal slot, then
 
-    if agent.heap.obj(&func).slots.initial_name().is_some() {
+    if func.borrow().slots.initial_name().is_some() {
         // a. Set F.[[InitialName]] to name.
-        agent
-            .heap
-            .obj_mut(&func)
-            .slots
-            .set_initial_name(name_str.clone());
+        func.borrow_mut().slots.set_initial_name(name_str.clone());
     }
 
     // 5. If prefix is present, then
@@ -71,20 +63,15 @@ pub(crate) fn set_function_name(
 
         name_str = JSString::from(new_name);
         // b. If F has an [[InitialName]] internal slot, then
-        if agent.heap.obj(&func).slots.initial_name().is_some() {
+        if func.borrow().slots.initial_name().is_some() {
             // i. Optionally, set F.[[InitialName]] to name.
-            agent
-                .heap
-                .obj_mut(&func)
-                .slots
-                .set_initial_name(name_str.clone());
+            func.borrow_mut().slots.set_initial_name(name_str.clone());
         }
     }
 
     // 6. Perform ! DefinePropertyOrThrow(F, "name", PropertyDescriptor { [[Value]]: name, [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: true }).
     let _ = define_property_or_throw(
-        agent,
-        &func,
+        func,
         &JSObjectPropKey::String("name".into()),
         JSObjectPropDescriptor {
             value: Some(name_str.into()),
@@ -100,19 +87,17 @@ pub(crate) fn set_function_name(
 
 /// 10.2.10 SetFunctionLength ( F, length )
 /// https://262.ecma-international.org/16.0/#sec-setfunctionlength
-pub(crate) fn set_function_length(agent: &mut JSAgent, func: JSObjAddr, length: usize) {
+pub(crate) fn set_function_length(func: JSObjAddr, length: usize) {
     let length_prop_key = JSObjectPropKey::String("length".into());
 
     // Assert: F is an extensible object that does not have a "length" own property.
     debug_assert!(
-        agent.heap.obj(&func).extensible()
-            && !has_property(agent, &func, &length_prop_key).unwrap_or(true)
+        func.borrow().extensible() && !has_property(func.clone(), &length_prop_key).unwrap_or(true)
     );
 
     // 2. Perform ! DefinePropertyOrThrow(F, "length", PropertyDescriptor { [[Value]]: 𝔽(length), [[Writable]]: false, [[Enumerable]]: false, [[Configurable]]: true }).
     let _ = define_property_or_throw(
-        agent,
-        &func,
+        func,
         &length_prop_key,
         JSObjectPropDescriptor {
             value: Some(JSValue::from(length as f64)),
@@ -142,7 +127,7 @@ pub(crate) fn create_builtin_function(
     let realm = opt_realm_addr.unwrap_or_else(|| agent.current_realm());
 
     // 2. If prototype is not present, set prototype to realm.[[Intrinsics]].[[%Function.prototype%]].
-    let prototype = prototype.or(agent.heap.realm(realm).intrinsics.function_prototype);
+    let prototype = prototype.or(realm.borrow().intrinsics.function_prototype.clone());
 
     // 3. Let internalSlotsList be a List containing the names of all the internal slots that 10.3 requires for the built-in function object that is about to be created.
     let mut internal_slots_list = vec![
@@ -156,29 +141,29 @@ pub(crate) fn create_builtin_function(
     internal_slots_list.extend(additional_internal_slots);
 
     // 5. Let func be a new built-in function object that, when called, performs the action described by behaviour using the provided arguments as the values of the corresponding parameters specified by behaviour. The new function object has internal slots whose names are the elements of internalSlotsList, and an [[InitialName]] internal slot.
-    let func = make_basic_object(agent, internal_slots_list);
+    let func = make_basic_object(internal_slots_list);
 
-    agent.heap.obj_mut(&func).slots.set_behaviour_fn(behaviour);
+    func.borrow_mut().slots.set_behaviour_fn(behaviour);
 
     // 6. Set func.[[Prototype]] to prototype.
-    agent.heap.obj_mut(&func).slots.set_prototype(prototype);
+    func.borrow_mut().slots.set_prototype(prototype);
 
     // 7. Set func.[[Extensible]] to true.
     // NOTE: This is the default.
 
     // 8. Set func.[[Realm]] to realm.
-    agent.heap.obj_mut(&func).slots.set_realm(realm);
+    func.borrow_mut().slots.set_realm(realm);
 
     // 9. Set func.[[InitialName]] to null.
     // NOTE: This is the default.
 
     // 10. Perform SetFunctionLength(func, length).
-    set_function_length(agent, func, length);
+    set_function_length(func.clone(), length);
 
     // 11. If prefix is not present, then
     // a. Perform SetFunctionName(func, name).
     // a. Perform SetFunctionName(func, name, prefix).
-    set_function_name(agent, func, name, prefix);
+    set_function_name(func.clone(), name, prefix);
 
     // 13. Return func.
     func

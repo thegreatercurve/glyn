@@ -18,7 +18,6 @@ pub(crate) struct VM<'a> {
     stack: Vec<JSValue>,
     references: Vec<Reference>,
     program: &'a ExecutableProgram,
-    locals: Vec<JSValue>,
     ip: usize,
     running: bool,
 }
@@ -42,7 +41,6 @@ impl<'a> VM<'a> {
             agent,
             stack: Vec::with_capacity(32),
             references: Vec::with_capacity(32),
-            locals: Vec::with_capacity(32),
             program,
             ip: 0,
             running: false,
@@ -156,7 +154,7 @@ impl<'a> VM<'a> {
     fn exec_bin_add(&mut self) -> VMResult {
         let (a, b) = self.pop_two()?;
 
-        let result = apply_string_or_numeric_binary_operator(self.agent, a, b)
+        let result = apply_string_or_numeric_binary_operator(a, b)
             .map_err(|_| VMError::BinOperationError)?;
 
         self.push(result);
@@ -167,7 +165,7 @@ impl<'a> VM<'a> {
     fn exec_numeric_bin_op(&mut self, operator: Token) -> VMResult {
         let (a, b) = self.pop_two()?;
 
-        let result = apply_numeric_binary_operator(self.agent, a, operator, b)
+        let result = apply_numeric_binary_operator(a, operator, b)
             .map_err(|_| VMError::BinOperationError)?;
 
         self.push(result);
@@ -198,7 +196,7 @@ impl<'a> VM<'a> {
         let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
-        let result = is_less_than(self.agent, a, b, true)
+        let result = is_less_than(a, b, true)
             .map_err(|_| VMError::LessThanComparisonError)?
             // 6. If r is undefined, return false. Otherwise, return r.
             .unwrap_or(false);
@@ -215,7 +213,7 @@ impl<'a> VM<'a> {
         let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
-        let result = is_less_than(self.agent, b, a, false)
+        let result = is_less_than(b, a, false)
             .map_err(|_| VMError::LessThanComparisonError)?
             // 6. If r is undefined, return false. Otherwise, return r.
             .unwrap_or(false);
@@ -232,7 +230,7 @@ impl<'a> VM<'a> {
         let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
-        let result = !is_less_than(self.agent, b, a, false)
+        let result = !is_less_than(b, a, false)
             .map_err(|_| VMError::LessThanComparisonError)?
             // 6. If r is either true or undefined, return false. Otherwise, return true.
             .unwrap_or(true);
@@ -249,7 +247,7 @@ impl<'a> VM<'a> {
         let (a, b) = self.pop_two()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
-        let result = !is_less_than(self.agent, a, b, true)
+        let result = !is_less_than(a, b, true)
             .map_err(|_| VMError::LessThanComparisonError)?
             // 6. If r is either true or undefined, return false. Otherwise, return true.
             .unwrap_or(true);
@@ -266,8 +264,7 @@ impl<'a> VM<'a> {
     fn exec_loosely_equal(&mut self, check_equal: bool) -> VMResult {
         let (a, b) = self.pop_two()?;
 
-        let result =
-            is_loosely_equal(self.agent, a, b).map_err(|_| VMError::LooselyEqualComparisonError)?;
+        let result = is_loosely_equal(a, b).map_err(|_| VMError::LooselyEqualComparisonError)?;
 
         self.push(JSValue::from(if check_equal { result } else { !result }));
 
@@ -297,7 +294,10 @@ impl<'a> VM<'a> {
         let binding = resolve_binding(
             self.agent,
             &JSString::from(value),
-            self.agent.running_execution_context().lexical_environment,
+            self.agent
+                .running_execution_context()
+                .lexical_environment
+                .clone(),
         )
         .map_err(|_| VMError::ReferenceError)?;
 
@@ -310,7 +310,7 @@ impl<'a> VM<'a> {
         let reference = self.pop_reference()?;
         let value = self.pop()?;
 
-        initialize_referenced_binding(self.agent, reference, value)
+        initialize_referenced_binding(reference, value)
             .map_err(|_| VMError::InitializeReferencedBindingError)?;
 
         Ok(())

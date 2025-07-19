@@ -6,13 +6,11 @@ use crate::{
     lexer::Token,
     runtime::{agent::type_error, completion::CompletionRecord},
     value::{string::JSString, JSValue},
-    JSAgent,
 };
 
 /// 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
 /// https://262.ecma-international.org/16.0/#sec-applystringornumericbinaryoperator
 pub(crate) fn apply_string_or_numeric_binary_operator(
-    agent: &JSAgent,
     lval: JSValue,
     rval: JSValue,
 ) -> CompletionRecord<JSValue> {
@@ -20,18 +18,18 @@ pub(crate) fn apply_string_or_numeric_binary_operator(
     // NOTE: Implemented in the VM.
 
     // a. Let lprim be ? ToPrimitive(lval).
-    let lprim = to_primitive(agent, lval, PreferredPrimType::Default)?;
+    let lprim = to_primitive(lval, PreferredPrimType::Default)?;
 
     // b. Let rprim be ? ToPrimitive(rval).
-    let rprim = to_primitive(agent, rval, PreferredPrimType::Default)?;
+    let rprim = to_primitive(rval, PreferredPrimType::Default)?;
 
     // c. If lprim is a String or rprim is a String, then
     if lprim.is_string() || rprim.is_string() {
         // i. Let lstr be ? ToString(lprim).
-        let lstr = to_string(agent, lprim)?;
+        let lstr = to_string(lprim)?;
 
         // ii. Let rstr be ? ToString(rprim).
-        let rstr = to_string(agent, rprim)?;
+        let rstr = to_string(rprim)?;
 
         // iii. Return the string-concatenation of lstr and rstr.
         return Ok(JSValue::String(JSString::from(lstr.0 + &rstr.0)));
@@ -39,23 +37,22 @@ pub(crate) fn apply_string_or_numeric_binary_operator(
 
     // d. Set lval to lprim.
     // e. Set rval to rprim.
-    apply_numeric_binary_operator(agent, lprim, Token::Plus, rprim)
+    apply_numeric_binary_operator(lprim, Token::Plus, rprim)
 }
 
 /// 13.15.3 ApplyStringOrNumericBinaryOperator ( lval, opText, rval )
 /// https://262.ecma-international.org/16.0/#sec-applystringornumericbinaryoperator
 pub(crate) fn apply_numeric_binary_operator(
-    agent: &JSAgent,
     lval: JSValue,
     op_text: Token,
     rval: JSValue,
 ) -> CompletionRecord<JSValue> {
     // 2. NOTE: At this point, it must be a numeric operation.
     // 3. Let lnum be ? ToNumeric(lval).
-    let lnum = to_numeric(agent, lval)?;
+    let lnum = to_numeric(lval)?;
 
     // 4. Let rnum be ? ToNumeric(rval).
-    let rnum = to_numeric(agent, rval)?;
+    let rnum = to_numeric(rval)?;
 
     // 5. If SameType(lNum, rNum) is false, throw a TypeError exception.
     if !same_type(&lnum, &rnum) {

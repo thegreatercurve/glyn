@@ -7,7 +7,7 @@ use crate::{
         environment::{EnvironmentAddr, EnvironmentMethods},
     },
     value::{object::JSObjAddr, string::JSString},
-    JSAgent, JSValue,
+    JSValue,
 };
 
 #[derive(Debug)]
@@ -67,28 +67,25 @@ impl DeclEnvironment {
     /// 9.1.1.1.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hasbinding-n
     pub(crate) fn has_binding(
-        agent: &JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
         // 1. If envRec has a binding for N, return true.
         // 2. Return false.
-        Ok(agent.heap.env(env_addr).decl_env().has_binding_impl(name))
+        Ok(env_addr.borrow().decl_env().has_binding_impl(name))
     }
 
     /// 9.1.1.1.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-createmutablebinding-n-d
     pub(crate) fn create_mutable_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         deletable: bool,
     ) -> CompletionRecord {
         // 1. Assert: envRec does not already have a binding for N.
         // 2. Create a mutable binding in envRec for N and record that it is uninitialized. If D is true, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
-        agent
-            .heap
-            .env_mut(env_addr)
+        env_addr
+            .borrow_mut()
             .decl_env_mut()
             .add_binding_impl(name, true, deletable, true);
 
@@ -99,16 +96,14 @@ impl DeclEnvironment {
     /// 9.1.1.1.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-createimmutablebinding-n-s
     pub(crate) fn create_immutable_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         strict: bool,
     ) -> CompletionRecord {
         // 1. Assert: envRec does not already have a binding for N.
         // Create an immutable binding in envRec for N and record that it is uninitialized. If S is true, record that the newly created binding is a strict binding.
-        agent
-            .heap
-            .env_mut(env_addr)
+        env_addr
+            .borrow_mut()
             .decl_env_mut()
             .add_binding_impl(name, false, false, strict);
 
@@ -119,16 +114,14 @@ impl DeclEnvironment {
     /// 9.1.1.1.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-initializebinding-n-v
     pub(crate) fn initialize_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         value: JSValue,
     ) -> CompletionRecord {
         // 1. Assert: envRec must have an uninitialized binding for N.
         // 2. Set the bound value for N in envRec to V.
-        agent
-            .heap
-            .env_mut(env_addr)
+        env_addr
+            .borrow_mut()
             .decl_env_mut()
             .initialize_binding_impl(name, value);
 
@@ -142,47 +135,52 @@ impl DeclEnvironment {
     /// 9.1.1.1.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-setmutablebinding-n-v-s
     pub(crate) fn set_mutable_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         value: JSValue,
         mut strict: bool,
     ) -> CompletionRecord {
-        let decl_env = agent.heap.env_mut(env_addr).decl_env_mut();
-
         // 1. If envRec does not have a binding for N, then
-        if !decl_env.has_binding_impl(&name) {
+        if !env_addr.borrow().decl_env().has_binding_impl(&name) {
             // a. If S is true, throw a ReferenceError exception.
             if strict {
                 reference_error(&format!("Property {name:?} is not defined"));
             }
 
             // b. Perform ! envRec.CreateMutableBinding(N, true).
-            decl_env.add_binding_impl(name.clone(), true, true, true);
+            env_addr
+                .borrow_mut()
+                .decl_env_mut()
+                .add_binding_impl(name.clone(), true, true, true);
 
             // c. Perform ! envRec.InitializeBinding(N, V).
-            decl_env.initialize_binding_impl(name, value);
+            env_addr
+                .borrow_mut()
+                .decl_env_mut()
+                .initialize_binding_impl(name, value);
 
             // d. Return unused.
             return Ok(());
         }
 
-        let binding = decl_env.binding_mut(&name);
-
         // 2. If the binding for N in envRec is a strict binding, set S to true.
-        if binding.strict {
+        if env_addr.borrow().decl_env().binding(&name).strict {
             strict = true;
         }
 
         // 3. If the binding for N in envRec has not yet been initialized, then
-        if binding.value.is_none() {
+        if env_addr.borrow().decl_env().binding(&name).value.is_none() {
             // a. Throw a ReferenceError exception.
             reference_error(&format!("Property {name:?} is not defined"));
         }
         // 4. Else if the binding for N in envRec is a mutable binding, then
-        else if binding.mutable {
+        else if env_addr.borrow().decl_env().binding(&name).mutable {
             // a. Change its bound value to V.
-            binding.value = Some(value);
+            env_addr
+                .borrow_mut()
+                .decl_env_mut()
+                .binding_mut(&name)
+                .value = Some(value);
         }
         // 5. Else,
         else {
@@ -202,19 +200,16 @@ impl DeclEnvironment {
     /// 9.1.1.1.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-getbindingvalue-n-s
     pub(crate) fn get_binding_value(
-        agent: &JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
         _strict: bool,
     ) -> CompletionRecord<JSValue> {
-        let decl_env = agent.heap.env(env_addr).decl_env();
-
         // 1. Assert: envRec has a binding for N.
-        debug_assert!(decl_env.has_binding_impl(name));
+        debug_assert!(env_addr.borrow().decl_env().has_binding_impl(name));
 
         // 2. If the binding for N in envRec is an uninitialized binding, throw a ReferenceError exception.
         // 3. Return the value currently bound to N in envRec.
-        if let Some(value) = &decl_env.binding(name).value {
+        if let Some(value) = &env_addr.borrow().decl_env().binding(name).value {
             Ok(value.clone())
         } else {
             reference_error(&format!("Property {name:?} is not initialized"))
@@ -224,22 +219,22 @@ impl DeclEnvironment {
     /// 9.1.1.1.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-deletebinding-n
     pub(crate) fn delete_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let decl_env = agent.heap.env_mut(env_addr).decl_env_mut();
-
         // 1. Assert: envRec has a binding for N.
-        debug_assert!(decl_env.has_binding_impl(name));
+        debug_assert!(env_addr.borrow().decl_env().has_binding_impl(name));
 
         // 2. If the binding for N in envRec cannot be deleted, return false.
-        if !decl_env.binding(name).deletable {
+        if !env_addr.borrow().decl_env().binding(name).deletable {
             return Ok(false);
         }
 
         // 3. Remove the binding for N from envRec.
-        decl_env.remove_binding_impl(name);
+        env_addr
+            .borrow_mut()
+            .decl_env_mut()
+            .remove_binding_impl(name);
 
         // 4. Return true.
         Ok(true)
@@ -247,24 +242,21 @@ impl DeclEnvironment {
 
     /// 9.1.1.1.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hasthisbinding
-    pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+    pub(crate) fn has_this_binding(_env_addr: EnvironmentAddr) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.1.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hassuperbinding
-    pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+    pub(crate) fn has_super_binding(_env_addr: EnvironmentAddr) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.1.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-withbaseobject
-    pub(crate) fn with_base_object(
-        _agent: &JSAgent,
-        _env_addr: EnvironmentAddr,
-    ) -> Option<JSObjAddr> {
+    pub(crate) fn with_base_object(_env_addr: EnvironmentAddr) -> Option<JSObjAddr> {
         // 1. Return undefined.
         None
     }

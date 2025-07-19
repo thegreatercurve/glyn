@@ -40,6 +40,7 @@ pub(crate) fn resolve_binding(
         None => agent
             .running_execution_context()
             .lexical_environment
+            .clone()
             .unwrap(),
     };
 
@@ -49,5 +50,5 @@ pub(crate) fn resolve_binding(
     let strict = true;
 
     // 4. Return ? GetIdentifierReference(env, name, strict).
-    get_identifier_reference(agent, Some(env), name, strict)
+    get_identifier_reference(Some(env), name, strict)
 }

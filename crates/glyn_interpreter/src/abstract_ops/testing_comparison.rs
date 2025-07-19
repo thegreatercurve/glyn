@@ -56,9 +56,9 @@ pub(crate) fn is_constructor(arg: JSValue) -> bool {
 
 ///  7.2.5 IsExtensible ( O )
 /// https://262.ecma-international.org/16.0/#sec-isextensible-o
-pub(crate) fn is_extensible(agent: &JSAgent, obj_addr: &JSObjAddr) -> bool {
+pub(crate) fn is_extensible(obj_addr: JSObjAddr) -> bool {
     // 1. Return O.[[Extensible]].
-    agent.heap.obj(obj_addr).extensible()
+    obj_addr.borrow().extensible()
 }
 
 /// 7.2.8 SameType ( x, y )
@@ -129,7 +129,6 @@ fn same_value_non_number(x: &JSValue, y: &JSValue) -> bool {
 /// 7.2.12 IsLessThan ( x, y, LeftFirst )
 /// https://262.ecma-international.org/16.0/#sec-islessthan
 pub(crate) fn is_less_than(
-    agent: &JSAgent,
     x: JSValue,
     y: JSValue,
     left_first: bool,
@@ -140,19 +139,19 @@ pub(crate) fn is_less_than(
     // 1. If LeftFirst is true, then
     if left_first {
         // a. Let px be ? ToPrimitive(x, number).
-        px = to_primitive(agent, x, PreferredPrimType::Number)?;
+        px = to_primitive(x, PreferredPrimType::Number)?;
 
         // b. Let py be ? ToPrimitive(y, number).
-        py = to_primitive(agent, y, PreferredPrimType::Number)?;
+        py = to_primitive(y, PreferredPrimType::Number)?;
     }
     // 2. Else,
     else {
         // a. NOTE: The order of evaluation needs to be reversed to preserve left to right evaluation.
         // b. Let py be ? ToPrimitive(y, number).
-        py = to_primitive(agent, y, PreferredPrimType::Number)?;
+        py = to_primitive(y, PreferredPrimType::Number)?;
 
         // c. Let px be ? ToPrimitive(x, number).
-        px = to_primitive(agent, x, PreferredPrimType::Number)?;
+        px = to_primitive(x, PreferredPrimType::Number)?;
     }
 
     // 3. If px is a String and py is a String, then
@@ -208,10 +207,10 @@ pub(crate) fn is_less_than(
 
         // c. NOTE: Because px and py are primitive values, evaluation order is not important.
         // d. Let nx be ? ToNumeric(px).
-        let nx = to_numeric(agent, px)?;
+        let nx = to_numeric(px)?;
 
         // e. Let ny be ? ToNumeric(py).
-        let ny = to_numeric(agent, py)?;
+        let ny = to_numeric(py)?;
 
         // f. If SameType(nx, ny) is true, then
         if same_type(&nx, &ny) {
@@ -256,7 +255,7 @@ pub(crate) fn is_less_than(
 
 /// 7.2.13 IsLooselyEqual ( x, y )
 /// https://262.ecma-international.org/16.0/#sec-islooselyequal
-pub(crate) fn is_loosely_equal(agent: &JSAgent, x: JSValue, y: JSValue) -> CompletionRecord<bool> {
+pub(crate) fn is_loosely_equal(x: JSValue, y: JSValue) -> CompletionRecord<bool> {
     // 1. If SameType(x, y) is true, then
     if same_type(&x, &y) {
         // a. Return IsStrictlyEqual(x, y).
@@ -281,16 +280,16 @@ pub(crate) fn is_loosely_equal(agent: &JSAgent, x: JSValue, y: JSValue) -> Compl
 
     // 5. If x is a Number and y is a String, return ! IsLooselyEqual(x, ! ToNumber(y)).
     if x.is_number() && y.is_string() {
-        let y_num = to_number(agent, y)?.into();
+        let y_num = to_number(y)?.into();
 
-        return is_loosely_equal(agent, x, y_num);
+        return is_loosely_equal(x, y_num);
     }
 
     // 6. If x is a String and y is a Number, return ! IsLooselyEqual(! ToNumber(x), y).
     if x.is_string() && y.is_number() {
-        let x_num = to_number(agent, x)?.into();
+        let x_num = to_number(x)?.into();
 
-        return is_loosely_equal(agent, x_num, y);
+        return is_loosely_equal(x_num, y);
     }
 
     // 7. If x is a BigInt and y is a String, then
@@ -303,35 +302,35 @@ pub(crate) fn is_loosely_equal(agent: &JSAgent, x: JSValue, y: JSValue) -> Compl
 
     // 8. If x is a String and y is a BigInt, return ! IsLooselyEqual(y, x).
     if x.is_string() && y.is_big_int() {
-        return is_loosely_equal(agent, y, x);
+        return is_loosely_equal(y, x);
     }
 
     // 9. If x is a Boolean, return ! IsLooselyEqual(! ToNumber(x), y).
     if x.is_boolean() {
-        let x_num = to_number(agent, x)?.into();
+        let x_num = to_number(x)?.into();
 
-        return is_loosely_equal(agent, x_num, y);
+        return is_loosely_equal(x_num, y);
     }
 
     // 10. If y is a Boolean, return ! IsLooselyEqual(x, ! ToNumber(y)).
     if y.is_boolean() {
-        let y_num = to_number(agent, y)?.into();
+        let y_num = to_number(y)?.into();
 
-        return is_loosely_equal(agent, x, y_num);
+        return is_loosely_equal(x, y_num);
     }
 
     // 11. If x is either a String, a Number, a BigInt, or a Symbol and y is an Object, return ! IsLooselyEqual(x, ? ToPrimitive(y)).
     if (x.is_string() || x.is_number() || x.is_big_int() || x.is_symbol()) && y.is_object() {
-        let y_prim = to_primitive(agent, y, PreferredPrimType::Default)?;
+        let y_prim = to_primitive(y, PreferredPrimType::Default)?;
 
-        return is_loosely_equal(agent, x, y_prim);
+        return is_loosely_equal(x, y_prim);
     }
 
     // 12. If x is an Object and y is either a String, a Number, a BigInt, or a Symbol, return ! IsLooselyEqual(? ToPrimitive(x), y).
     if x.is_object() && (y.is_string() || y.is_number() || y.is_big_int() || y.is_symbol()) {
-        let x_prim = to_primitive(agent, x, PreferredPrimType::Default)?;
+        let x_prim = to_primitive(x, PreferredPrimType::Default)?;
 
-        return is_loosely_equal(agent, x_prim, y);
+        return is_loosely_equal(x_prim, y);
     }
 
     // 13. If x is a BigInt and y is a Number, or if x is a Number and y is a BigInt, then

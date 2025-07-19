@@ -1,4 +1,4 @@
-use crate::gc::{Gc, Trace, Tracer};
+use crate::gc::Gc;
 use crate::runtime::environment::EnvironmentAddr;
 use crate::runtime::intrinsics::Intrinsics;
 use crate::value::object::JSObjAddr;
@@ -17,16 +17,4 @@ pub(crate) struct Realm {
 
     /// [[GlobalEnv]]
     pub(crate) global_env: Option<EnvironmentAddr>,
-}
-
-impl Trace for Realm {
-    fn trace(&self, tracer: &mut Tracer) {
-        if let Some(global_object) = self.global_object {
-            tracer.edge(global_object);
-        }
-
-        if let Some(global_env) = self.global_env {
-            tracer.edge(global_env);
-        }
-    }
 }

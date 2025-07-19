@@ -15,7 +15,7 @@ pub(crate) struct FunctionPrototype;
 impl FunctionPrototype {
     pub(crate) fn create(agent: &mut JSAgent, realm_addr: RealmAddr) -> JSObjAddr {
         // accepts any arguments and returns undefined when invoked.
-        let behaviour_fn = |_agent: &mut JSAgent, _args: Vec<JSValue>| JSValue::Undefined;
+        let behaviour_fn = |_args: Vec<JSValue>| JSValue::Undefined;
 
         // is itself a built-in function object.
         create_builtin_function(
@@ -27,13 +27,9 @@ impl FunctionPrototype {
             JSObjectPropKey::String("".into()),
             // does not have a [[Construct]] internal method; it cannot be used as a constructor with the new operator.
             vec![],
-            Some(realm_addr),
+            Some(realm_addr.clone()),
             // has a [[Prototype]] internal slot whose value is %Object.prototype%.
-            agent
-                .heap
-                .realm(realm_addr)
-                .intrinsics
-                .object_prototype,
+            realm_addr.borrow().intrinsics.object_prototype.clone(),
             None,
         )
     }

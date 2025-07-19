@@ -108,7 +108,7 @@ impl JSValue {
 
     pub(crate) fn as_object(&self) -> Option<JSObjAddr> {
         match self {
-            JSValue::Object(object) => Some(*object),
+            JSValue::Object(object) => Some(object.clone()),
             _ => None,
         }
     }

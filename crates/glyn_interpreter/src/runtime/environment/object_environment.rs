@@ -15,7 +15,7 @@ use crate::{
         },
         string::JSString,
     },
-    JSAgent, JSValue,
+    JSValue,
 };
 
 /// 9.1.1.2 Object Environment Records
@@ -31,7 +31,7 @@ pub(crate) struct ObjEnvironment {
 
 impl ObjEnvironment {
     pub(crate) fn binding_object(&self) -> JSObjAddr {
-        self.binding_object.unwrap()
+        self.binding_object.clone().unwrap()
     }
 }
 
@@ -39,18 +39,15 @@ impl ObjEnvironment {
     /// 9.1.1.2.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasbinding-n
     pub(crate) fn has_binding(
-        agent: &JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object_addr = obj_env.binding_object();
+        let binding_object_addr = env_addr.borrow().obj_env().binding_object();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
         let found_binding =
-            has_property(agent, &binding_object_addr, &JSObjectPropKey::from(name))?;
+            has_property(binding_object_addr.clone(), &JSObjectPropKey::from(name))?;
 
         // 3. If foundBinding is false, return false.
         if !found_binding {
@@ -58,24 +55,22 @@ impl ObjEnvironment {
         }
 
         // 4. If envRec.[[IsWithEnvironment]] is false, return true.
-        if !obj_env.is_with_environment {
+        if !env_addr.borrow().obj_env().is_with_environment {
             return Ok(true);
         }
 
         // 5. Let unscopables be ? Get(bindingObject, %Symbol.unscopables%).
         let unscopables = get(
-            agent,
-            &binding_object_addr,
+            binding_object_addr.clone(),
             &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_UNSCOPABLES),
-            &JSValue::from(binding_object_addr),
+            &JSValue::from(binding_object_addr.clone()),
         )?;
 
         // 6. If unscopables is an Object, then
         if let Some(unscopables_obj) = unscopables.as_object() {
             // a. Let blocked be ToBoolean(? Get(unscopables, N)).
             let blocked = to_boolean(get(
-                agent,
-                &unscopables_obj,
+                unscopables_obj.clone(),
                 &JSObjectPropKey::from(name),
                 &JSValue::from(unscopables_obj),
             )?);
@@ -93,20 +88,16 @@ impl ObjEnvironment {
     /// 9.1.1.2.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createmutablebinding-n-d
     pub(crate) fn create_mutable_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         configurable: bool,
     ) -> CompletionRecord {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object();
+        let binding_object = env_addr.borrow().obj_env().binding_object();
 
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
-            agent,
-            &binding_object,
+            binding_object,
             &JSObjectPropKey::from(name),
             JSObjectPropDescriptor {
                 value: None,
@@ -124,7 +115,6 @@ impl ObjEnvironment {
     /// 9.1.1.2.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createimmutablebinding-n-s
     pub(crate) fn create_immutable_binding(
-        _agent: &mut JSAgent,
         _env_addr: EnvironmentAddr,
         _name: JSString,
         _strict: bool,
@@ -136,13 +126,12 @@ impl ObjEnvironment {
     /// 9.1.1.2.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-initializebinding-n-v
     pub(crate) fn initialize_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         value: JSValue,
     ) -> CompletionRecord {
         // 1. Perform ? envRec.SetMutableBinding(N, V, false).
-        ObjEnvironment::set_mutable_binding(agent, env_addr, name, value, false)?;
+        ObjEnvironment::set_mutable_binding(env_addr, name, value, false)?;
 
         // 2. Return unused.
         Ok(())
@@ -151,19 +140,16 @@ impl ObjEnvironment {
     /// 9.1.1.2.5 SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-setmutablebinding-n-v-s
     pub(crate) fn set_mutable_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object();
+        let binding_object = env_addr.borrow().obj_env().binding_object();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
-        let still_exists = has_property(agent, &binding_object, &JSObjectPropKey::from(&name))?;
+        let still_exists = has_property(binding_object.clone(), &JSObjectPropKey::from(&name))?;
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {
@@ -171,13 +157,7 @@ impl ObjEnvironment {
         }
 
         // 4. Perform ? Set(bindingObject, N, V, S).
-        set(
-            agent,
-            &binding_object,
-            &JSObjectPropKey::from(name),
-            value,
-            strict,
-        )?;
+        set(binding_object, &JSObjectPropKey::from(name), value, strict)?;
 
         // 5. Return unused.
         Ok(())
@@ -186,18 +166,15 @@ impl ObjEnvironment {
     /// 9.1.1.2.6 GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-getbindingvalue-n-s
     pub(crate) fn get_binding_value(
-        agent: &JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
         strict: bool,
     ) -> CompletionRecord<JSValue> {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object();
+        let binding_object = env_addr.borrow().obj_env().binding_object();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
-        let value = has_property(agent, &binding_object, &JSObjectPropKey::from(name))?;
+        let value = has_property(binding_object.clone(), &JSObjectPropKey::from(name))?;
 
         // 3. If value is false, then
         if !value {
@@ -211,8 +188,7 @@ impl ObjEnvironment {
 
         // 4. Return ? Get(bindingObject, N).
         get(
-            agent,
-            &binding_object,
+            binding_object.clone(),
             &JSObjectPropKey::from(name),
             &JSValue::from(binding_object),
         )
@@ -221,44 +197,36 @@ impl ObjEnvironment {
     /// 9.1.1.2.7 DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-deletebinding-n
     pub(crate) fn delete_binding(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: &JSString,
     ) -> CompletionRecord<bool> {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object = obj_env.binding_object();
+        let binding_object = env_addr.borrow().obj_env().binding_object();
 
         // 2. Return ? bindingObject.[[Delete]](N).
-        binding_object.delete(agent, &JSObjectPropKey::from(name))
+        binding_object.delete(&JSObjectPropKey::from(name))
     }
 
     /// 9.1.1.2.8 HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasthisbinding
-    pub(crate) fn has_this_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+    pub(crate) fn has_this_binding(_env_addr: EnvironmentAddr) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.2.9 HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hassuperbinding
-    pub(crate) fn has_super_binding(_agent: &JSAgent, _env_addr: EnvironmentAddr) -> bool {
+    pub(crate) fn has_super_binding(_env_addr: EnvironmentAddr) -> bool {
         // 1. Return false.
         false
     }
 
     /// 9.1.1.2.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-withbaseobject
-    pub(crate) fn with_base_object(
-        agent: &JSAgent,
-        env_addr: EnvironmentAddr,
-    ) -> Option<JSObjAddr> {
-        let obj_env = agent.heap.env(env_addr).obj_env();
-
+    pub(crate) fn with_base_object(env_addr: EnvironmentAddr) -> Option<JSObjAddr> {
         // 1. If envRec.[[IsWithEnvironment]] is true, return envRec.[[BindingObject]].
-        if obj_env.is_with_environment {
-            return Some(obj_env.binding_object());
+        if env_addr.borrow().obj_env().is_with_environment {
+            return Some(env_addr.borrow().obj_env().binding_object());
         }
 
         // 2. Otherwise, return undefined.

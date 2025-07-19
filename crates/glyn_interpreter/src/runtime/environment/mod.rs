@@ -4,7 +4,7 @@ pub(crate) mod global_environment;
 pub(crate) mod object_environment;
 
 use crate::{
-    gc::{Gc, Trace, Tracer},
+    gc::Gc,
     runtime::{
         completion::CompletionRecord,
         environment::{
@@ -15,7 +15,6 @@ use crate::{
         },
     },
     value::{object::JSObjAddr, string::JSString, JSValue},
-    JSAgent,
 };
 
 #[derive(Debug)]
@@ -42,39 +41,26 @@ pub(crate) struct EnvironmentMethods {
     /// HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
     pub(crate) has_binding:
-        fn(agent: &JSAgent, env_addr: EnvironmentAddr, name: &JSString) -> CompletionRecord<bool>,
+        fn(env_addr: EnvironmentAddr, name: &JSString) -> CompletionRecord<bool>,
 
     /// CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) create_mutable_binding: fn(
-        agent: &mut JSAgent,
-        env_addr: EnvironmentAddr,
-        name: JSString,
-        deletable: bool,
-    ) -> CompletionRecord,
+    pub(crate) create_mutable_binding:
+        fn(env_addr: EnvironmentAddr, name: JSString, deletable: bool) -> CompletionRecord,
 
     /// CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) create_immutable_binding: fn(
-        agent: &mut JSAgent,
-        env_addr: EnvironmentAddr,
-        name: JSString,
-        strict: bool,
-    ) -> CompletionRecord,
+    pub(crate) create_immutable_binding:
+        fn(env_addr: EnvironmentAddr, name: JSString, strict: bool) -> CompletionRecord,
 
     /// InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) initialize_binding: fn(
-        agent: &mut JSAgent,
-        env_addr: EnvironmentAddr,
-        name: JSString,
-        value: JSValue,
-    ) -> CompletionRecord,
+    pub(crate) initialize_binding:
+        fn(env_addr: EnvironmentAddr, name: JSString, value: JSValue) -> CompletionRecord,
 
     /// SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
     pub(crate) set_mutable_binding: fn(
-        agent: &mut JSAgent,
         env_addr: EnvironmentAddr,
         name: JSString,
         value: JSValue,
@@ -83,33 +69,25 @@ pub(crate) struct EnvironmentMethods {
 
     /// GetBindingValue ( N, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) get_binding_value: fn(
-        agent: &JSAgent,
-        env_addr: EnvironmentAddr,
-        name: &JSString,
-        strict: bool,
-    ) -> CompletionRecord<JSValue>,
+    pub(crate) get_binding_value:
+        fn(env_addr: EnvironmentAddr, name: &JSString, strict: bool) -> CompletionRecord<JSValue>,
 
     /// DeleteBinding ( N )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) delete_binding: fn(
-        agent: &mut JSAgent,
-        env_addr: EnvironmentAddr,
-        name: &JSString,
-    ) -> CompletionRecord<bool>,
+    pub(crate) delete_binding:
+        fn(env_addr: EnvironmentAddr, name: &JSString) -> CompletionRecord<bool>,
 
     /// HasThisBinding ( )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) has_this_binding: fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> bool,
+    pub(crate) has_this_binding: fn(env_addr: EnvironmentAddr) -> bool,
 
     /// HasSuperBinding ( )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) has_super_binding: fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> bool,
+    pub(crate) has_super_binding: fn(env_addr: EnvironmentAddr) -> bool,
 
     /// WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    pub(crate) with_base_object:
-        fn(agent: &JSAgent, env_addr: EnvironmentAddr) -> Option<JSObjAddr>,
+    pub(crate) with_base_object: fn(env_addr: EnvironmentAddr) -> Option<JSObjAddr>,
 }
 
 pub(crate) type EnvironmentAddr = Gc<Environment>;
@@ -126,10 +104,6 @@ pub(crate) struct Environment {
     func_env: Option<FuncEnvironment>,
     obj_env: Option<ObjEnvironment>,
     global_env: Option<GlobalEnvironment>,
-}
-
-impl Trace for Environment {
-    fn trace(&self, _tracer: &mut Tracer) {}
 }
 
 impl Environment {
