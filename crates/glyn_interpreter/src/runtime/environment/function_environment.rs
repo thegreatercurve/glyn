@@ -5,7 +5,7 @@ use crate::{
             declarative_environment::DeclEnvironment, EnvironmentAddr, EnvironmentMethods,
         },
     },
-    value::{object::JSObjAddr, string::JSString},
+    value::{object::ObjectAddr, string::JSString},
     JSValue,
 };
 
@@ -35,11 +35,11 @@ pub(crate) struct FuncEnvironment {
 
     /// [[FunctionObject]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    pub(crate) function_object: Option<JSObjAddr>,
+    pub(crate) function_object: Option<ObjectAddr>,
 
     /// [[NewTarget]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
-    pub(crate) new_target: Option<JSObjAddr>,
+    pub(crate) new_target: Option<ObjectAddr>,
 }
 
 impl EnvironmentMethods for FuncEnvironment {
@@ -85,7 +85,7 @@ impl EnvironmentMethods for FuncEnvironment {
         self.decl_env.has_super_binding()
     }
 
-    fn with_base_object(&self) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<ObjectAddr> {
         self.decl_env.with_base_object()
     }
 }

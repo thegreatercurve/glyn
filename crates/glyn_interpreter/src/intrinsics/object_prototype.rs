@@ -2,7 +2,8 @@ use crate::{
     abstract_ops::{
         immutable_prototype_objects::set_immutable_prototype, object_operations::make_basic_object,
     },
-    value::object::{internal_slots::InternalSlotName, JSObjAddr, JSObjectInternalMethods},
+    gc::Gc,
+    value::object::{internal_slots::InternalSlots, ObjectAddr, ObjectData, ObjectKind},
 };
 
 /// 20.1.3 Properties of the Object Prototype Object
@@ -11,18 +12,14 @@ use crate::{
 pub(crate) struct JSObjectPrototype;
 
 impl JSObjectPrototype {
-    pub(crate) fn create() -> JSObjAddr {
+    pub(crate) fn create() -> ObjectAddr {
+        // is %Object.prototype%.
         // has an [[Extensible]] internal slot whose value is true.
         // has the internal methods defined for ordinary objects, except for the [[SetPrototypeOf]] method, which is as defined in 10.4.7.1. (Thus, it is an immutable prototype exotic object.)
-
-        // has an internal slot named [[Prototype]] whose value is null.
-        let obj_addr = make_basic_object(vec![
-            InternalSlotName::Prototype,
-            InternalSlotName::Extensible,
-        ]);
-
-        obj_addr.v_table().set_prototype_of = set_immutable_prototype;
-
-        obj_addr
+        // has a [[Prototype]] internal slot whose value is null.
+        Gc::new(ObjectData::new(
+            ObjectKind::ImmutablePrototype,
+            InternalSlots::default(),
+        ))
     }
 }

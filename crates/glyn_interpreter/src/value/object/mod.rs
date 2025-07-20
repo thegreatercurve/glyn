@@ -1,71 +1,315 @@
 pub(crate) mod internal_slots;
 pub(crate) mod property;
+pub(crate) mod subtypes;
+
+use std::cell::{Ref, RefMut};
 
 use crate::{
     gc::Gc,
     runtime::completion::CompletionRecord,
     value::{
         object::{
-            internal_slots::JSObjectInternalSlots,
+            internal_slots::InternalSlots,
             property::{JSObjectPropDescriptor, JSObjectPropKey},
+            subtypes::{FunctionObject, ImmutablePrototypeExoticObject, OrdinaryObject},
         },
         JSValue,
     },
 };
 
-pub(crate) type JSObjAddr = Gc<JSObject>;
+#[derive(Clone, Debug, Default)]
+pub(crate) enum ObjectKind {
+    #[default]
+    Ordinary,
+    Function,
+    ImmutablePrototype,
+}
 
-pub(crate) struct JSObjectInternalMethodsVTable {
-    pub(crate) get_prototype_of: fn(obj_addr: JSObjAddr) -> Option<JSObjAddr>,
+/// 6.1.7 The Object Type
+/// https://262.ecma-international.org/16.0/#sec-object-type
+#[derive(Debug)]
+pub(crate) struct ObjectData {
+    // [[Prototype]]
+    prototype: Option<ObjectAddr>,
 
-    pub(crate) set_prototype_of: fn(obj_addr: JSObjAddr, value_addr: Option<JSObjAddr>) -> bool,
+    // [[Extensible]]
+    pub(crate) extensible: bool,
 
-    pub(crate) is_extensible: fn(obj_addr: JSObjAddr) -> bool,
+    kind: ObjectKind,
+    slots: InternalSlots,
+    keys: Vec<JSObjectPropKey>,
+    values: Vec<JSObjectPropDescriptor>,
+}
 
-    pub(crate) prevent_extensions: fn(obj_addr: JSObjAddr) -> bool,
+impl ObjectData {
+    pub(crate) fn new(kind: ObjectKind, slots: InternalSlots) -> Self {
+        Self {
+            kind,
+            slots,
+            ..Self::default()
+        }
+    }
 
-    pub(crate) get_own_property: fn(
-        obj_addr: JSObjAddr,
+    // [[Prototype]]
+    pub(crate) fn prototype(&self) -> Option<ObjectAddr> {
+        self.prototype.clone()
+    }
+
+    /// [[Prototype]]
+    pub(crate) fn set_prototype(&mut self, prototype: Option<ObjectAddr>) {
+        self.prototype = prototype;
+    }
+
+    pub(crate) fn kind(&self) -> &ObjectKind {
+        &self.kind
+    }
+
+    pub(crate) fn slots(&self) -> &InternalSlots {
+        &self.slots
+    }
+
+    pub(crate) fn slots_mut(&mut self) -> &mut InternalSlots {
+        &mut self.slots
+    }
+
+    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
+        &self.keys
+    }
+
+    pub(crate) fn values(&self) -> &[JSObjectPropDescriptor] {
+        &self.values
+    }
+
+    pub(crate) fn get_property(&self, index: usize) -> Option<&JSObjectPropDescriptor> {
+        self.values.get(index)
+    }
+
+    pub(crate) fn has_property(&self, key: &JSObjectPropKey) -> bool {
+        self.keys.iter().any(|k| k == key)
+    }
+
+    pub(crate) fn set_property(
+        &mut self,
         key: &JSObjectPropKey,
-    ) -> CompletionRecord<Option<JSObjectPropDescriptor>>,
+        value: JSObjectPropDescriptor,
+    ) -> usize {
+        self.keys.push(key.clone());
+        self.values.push(value);
 
-    pub(crate) define_own_property: fn(
-        obj_addr: JSObjAddr,
+        self.keys.len() - 1
+    }
+
+    pub(crate) fn delete_property(&mut self, index: usize) -> bool {
+        self.keys.remove(index);
+        self.values.remove(index);
+
+        true
+    }
+
+    pub(crate) fn find_property_index(&self, key: &JSObjectPropKey) -> Option<usize> {
+        self.keys.iter().position(|k| k == key)
+    }
+}
+
+impl Default for ObjectData {
+    fn default() -> Self {
+        Self {
+            prototype: None,
+            extensible: true,
+            kind: ObjectKind::Ordinary,
+            slots: InternalSlots::default(),
+            keys: vec![],
+            values: vec![],
+        }
+    }
+}
+
+pub(crate) type ObjectAddr = Gc<ObjectData>;
+
+impl ObjectAddr {
+    pub(crate) fn as_ordinary_object(&self) -> OrdinaryObject {
+        OrdinaryObject(self.clone())
+    }
+
+    pub(crate) fn as_function_object(&self) -> FunctionObject {
+        FunctionObject(self.clone())
+    }
+
+    pub(crate) fn as_immutable_prototype_object(&self) -> ImmutablePrototypeExoticObject {
+        ImmutablePrototypeExoticObject(self.clone())
+    }
+
+    pub(crate) fn kind(&self) -> ObjectKind {
+        self.borrow().kind.clone()
+    }
+}
+
+impl ObjectMeta for ObjectAddr {
+    fn addr(&self) -> ObjectAddr {
+        self.clone()
+    }
+
+    fn data(&self) -> RefMut<ObjectData> {
+        self.borrow_mut()
+    }
+
+    fn data_mut(&self) -> RefMut<ObjectData> {
+        self.borrow_mut()
+    }
+}
+
+impl ObjectEssentialInternalMethods for ObjectAddr {
+    fn get_prototype_of(&self) -> Option<ObjectAddr> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().get_prototype_of(),
+            ObjectKind::Function => self.as_function_object().get_prototype_of(),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().get_prototype_of()
+            }
+        }
+    }
+
+    fn set_prototype_of(&self, prototype: Option<ObjectAddr>) -> bool {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().set_prototype_of(prototype),
+            ObjectKind::Function => self.as_function_object().set_prototype_of(prototype),
+            ObjectKind::ImmutablePrototype => self
+                .as_immutable_prototype_object()
+                .set_prototype_of(prototype),
+        }
+    }
+
+    fn is_extensible(&self) -> bool {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().is_extensible(),
+            ObjectKind::Function => self.as_function_object().is_extensible(),
+            ObjectKind::ImmutablePrototype => self.as_immutable_prototype_object().is_extensible(),
+        }
+    }
+
+    fn prevent_extensions(&self) -> bool {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().prevent_extensions(),
+            ObjectKind::Function => self.as_function_object().prevent_extensions(),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().prevent_extensions()
+            }
+        }
+    }
+
+    fn get_own_property(
+        &self,
+        key: &JSObjectPropKey,
+    ) -> CompletionRecord<Option<JSObjectPropDescriptor>> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().get_own_property(key),
+            ObjectKind::Function => self.as_function_object().get_own_property(key),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().get_own_property(key)
+            }
+        }
+    }
+
+    fn define_own_property(
+        &self,
         key: &JSObjectPropKey,
         descriptor: JSObjectPropDescriptor,
-    ) -> CompletionRecord<bool>,
+    ) -> CompletionRecord<bool> {
+        match self.kind() {
+            ObjectKind::Ordinary => self
+                .as_ordinary_object()
+                .define_own_property(key, descriptor),
+            ObjectKind::Function => self
+                .as_function_object()
+                .define_own_property(key, descriptor),
+            ObjectKind::ImmutablePrototype => self
+                .as_immutable_prototype_object()
+                .define_own_property(key, descriptor),
+        }
+    }
 
-    pub(crate) has_property:
-        fn(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
+    fn has_property(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().has_property(key),
+            ObjectKind::Function => self.as_function_object().has_property(key),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().has_property(key)
+            }
+        }
+    }
 
-    pub(crate) get: fn(
-        obj_addr: JSObjAddr,
-        key: &JSObjectPropKey,
-        receiver: &JSValue,
-    ) -> CompletionRecord<JSValue>,
+    fn get(&self, key: &JSObjectPropKey, receiver: &JSValue) -> CompletionRecord<JSValue> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().get(key, receiver),
+            ObjectKind::Function => self.as_function_object().get(key, receiver),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().get(key, receiver)
+            }
+        }
+    }
 
-    pub(crate) set: fn(
-        obj_addr: JSObjAddr,
+    fn set(
+        &self,
         key: &JSObjectPropKey,
         value: JSValue,
         receiver: JSValue,
-    ) -> CompletionRecord<bool>,
+    ) -> CompletionRecord<bool> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().set(key, value, receiver),
+            ObjectKind::Function => self.as_function_object().set(key, value, receiver),
+            ObjectKind::ImmutablePrototype => self
+                .as_immutable_prototype_object()
+                .set(key, value, receiver),
+        }
+    }
 
-    pub(crate) delete: fn(obj_addr: JSObjAddr, key: &JSObjectPropKey) -> CompletionRecord<bool>,
+    fn delete(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().delete(key),
+            ObjectKind::Function => self.as_function_object().delete(key),
+            ObjectKind::ImmutablePrototype => self.as_immutable_prototype_object().delete(key),
+        }
+    }
 
-    pub(crate) own_property_keys: fn(obj_addr: JSObjAddr) -> Vec<JSObjectPropKey>,
+    fn own_property_keys(&self) -> Vec<JSObjectPropKey> {
+        match self.kind() {
+            ObjectKind::Ordinary => self.as_ordinary_object().own_property_keys(),
+            ObjectKind::Function => self.as_function_object().own_property_keys(),
+            ObjectKind::ImmutablePrototype => {
+                self.as_immutable_prototype_object().own_property_keys()
+            }
+        }
+    }
+}
+
+pub(crate) trait ObjectMeta {
+    fn addr(&self) -> ObjectAddr;
+
+    fn data(&self) -> RefMut<ObjectData>;
+
+    fn data_mut(&self) -> RefMut<ObjectData>;
+
+    fn has_ordinary_get_prototype_of(&self) -> bool {
+        true
+    }
+
+    fn is_callable(&self) -> bool {
+        false
+    }
+
+    fn is_constructor(&self) -> bool {
+        false
+    }
 }
 
 /// Essential Internal Methods
 /// https://262.ecma-international.org/16.0/#table-essential-internal-methods
-pub(crate) trait JSObjectInternalMethods {
-    fn v_table(&self) -> JSObjectInternalMethodsVTable;
-
+pub(crate) trait ObjectEssentialInternalMethods {
     /// [[GetPrototypeOf]]
-    fn get_prototype_of(&self) -> Option<JSObjAddr>;
+    fn get_prototype_of(&self) -> Option<ObjectAddr>;
 
     /// [[SetPrototypeOf]]
-    fn set_prototype_of(&self, prototype: Option<JSObjAddr>) -> bool;
+    fn set_prototype_of(&self, prototype: Option<ObjectAddr>) -> bool;
 
     /// [[IsExtensible]]
     fn is_extensible(&self) -> bool;
@@ -107,84 +351,16 @@ pub(crate) trait JSObjectInternalMethods {
     fn own_property_keys(&self) -> Vec<JSObjectPropKey>;
 }
 
-pub(crate) struct JSObjectExtraInternalMethodsVTable {
-    pub(crate) call: Option<
-        fn(
-            obj_addr: JSObjAddr,
-            this_value: &JSValue,
-            args: &[JSValue],
-        ) -> CompletionRecord<JSValue>,
-    >,
-
-    pub(crate) construct: Option<fn(obj_addr: JSObjAddr, args: &[JSValue]) -> JSObjAddr>,
-}
-
 /// Additional Essential Internal Methods of Function Objects
 /// https://262.ecma-international.org/16.0/#table-additional-essential-internal-methods-of-function-objects
-pub(crate) trait JSObjectExtraInternalMethods {
-    fn v_table_extra(&self) -> JSObjectExtraInternalMethodsVTable;
-
+pub(crate) trait ObjectExtraInternalMethods {
     /// [[Call]]
     fn call(&self, this_value: &JSValue, args: &[JSValue]) -> CompletionRecord<JSValue>;
 
     /// [[Construct]]
-    fn construct(&self, args: &[JSValue], obj_addr: JSObjAddr) -> CompletionRecord<JSObjAddr>;
-}
-
-pub(crate) struct PropertyIndex(usize);
-
-/// 6.1.7 The Object Type
-/// https://262.ecma-international.org/16.0/#sec-object-type
-#[derive(Debug)]
-pub(crate) struct JSObject {
-    pub(crate) slots: JSObjectInternalSlots,
-    pub(crate) keys: Vec<JSObjectPropKey>,
-    pub(crate) values: Vec<JSObjectPropDescriptor>,
-}
-
-impl JSObject {
-    /// All ordinary objects have an internal slot called [[Prototype]].
-    pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
-        self.slots.prototype()
-    }
-
-    /// Every ordinary object has a Boolean-valued [[Extensible]] internal slot.
-    pub(crate) fn extensible(&self) -> bool {
-        self.slots.extensible()
-    }
-
-    // Utility methods for getting and setting properties.
-    pub(crate) fn keys(&self) -> &[JSObjectPropKey] {
-        &self.keys
-    }
-
-    pub(crate) fn get_property(&self, index: PropertyIndex) -> Option<&JSObjectPropDescriptor> {
-        self.values.get(index.0)
-    }
-
-    pub(crate) fn has_property(&self, key: &JSObjectPropKey) -> bool {
-        self.keys.iter().any(|k| k == key)
-    }
-
-    pub(crate) fn set_property(
-        &mut self,
-        key: &JSObjectPropKey,
-        value: JSObjectPropDescriptor,
-    ) -> PropertyIndex {
-        self.keys.push(key.clone());
-        self.values.push(value);
-
-        PropertyIndex(self.keys.len() - 1)
-    }
-
-    pub(crate) fn delete_property(&mut self, index: PropertyIndex) -> bool {
-        self.keys.remove(index.0);
-        self.values.remove(index.0);
-
-        true
-    }
-
-    pub(crate) fn find_property_index(&self, key: &JSObjectPropKey) -> Option<PropertyIndex> {
-        self.keys.iter().position(|k| k == key).map(PropertyIndex)
-    }
+    fn construct(
+        &self,
+        args: &[JSValue],
+        new_target: &impl ObjectExtraInternalMethods,
+    ) -> CompletionRecord<ObjectAddr>;
 }

@@ -3,8 +3,8 @@ use crate::abstract_ops::type_conversion::{
 };
 use crate::runtime::agent::type_error;
 use crate::runtime::completion::CompletionRecord;
-use crate::value::object::JSObjectExtraInternalMethods;
-use crate::value::{object::JSObjAddr, JSValue};
+use crate::value::object::ObjectMeta;
+use crate::value::JSValue;
 
 // 7.2 Testing and Comparison Operations
 // https://262.ecma-international.org/16.0/#sec-testing-and-comparison-operations
@@ -24,12 +24,12 @@ pub(crate) fn require_object_coercible(arg: JSValue) -> CompletionRecord<JSValue
 /// https://262.ecma-international.org/16.0/#sec-iscallable
 pub(crate) fn is_callable(arg: &JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(obj_addr) = arg.as_object() else {
+    let Some(object) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Call]] internal method, return true.
-    if obj_addr.v_table_extra().call.is_some() {
+    if object.is_callable() {
         return true;
     }
 
@@ -41,12 +41,12 @@ pub(crate) fn is_callable(arg: &JSValue) -> bool {
 /// https://262.ecma-international.org/16.0/#sec-isconstructor
 pub(crate) fn is_constructor(arg: JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(obj_addr) = arg.as_object() else {
+    let Some(object) = arg.as_object() else {
         return false;
     };
 
     // 2. If argument has a [[Construct]] internal method, return true.
-    if obj_addr.v_table_extra().construct.is_some() {
+    if object.is_constructor() {
         return true;
     }
 
@@ -56,9 +56,9 @@ pub(crate) fn is_constructor(arg: JSValue) -> bool {
 
 ///  7.2.5 IsExtensible ( O )
 /// https://262.ecma-international.org/16.0/#sec-isextensible-o
-pub(crate) fn is_extensible(obj_addr: JSObjAddr) -> bool {
+pub(crate) fn is_extensible<T: ObjectMeta>(object: &T) -> bool {
     // 1. Return O.[[Extensible]].
-    obj_addr.borrow().extensible()
+    object.data().extensible
 }
 
 /// 7.2.8 SameType ( x, y )

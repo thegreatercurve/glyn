@@ -14,7 +14,7 @@ use crate::{
             global_environment::GlobalEnvironment, object_environment::ObjEnvironment,
         },
     },
-    value::{object::JSObjAddr, string::JSString, JSValue},
+    value::{object::ObjectAddr, string::JSString, JSValue},
 };
 
 pub(crate) trait EnvironmentMethods {
@@ -61,7 +61,7 @@ pub(crate) trait EnvironmentMethods {
 
     /// WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    fn with_base_object(&self) -> Option<JSObjAddr>;
+    fn with_base_object(&self) -> Option<ObjectAddr>;
 }
 
 /// 9.1.1 The Environment Record Type Hierarchy
@@ -221,7 +221,7 @@ impl EnvironmentMethods for EnvironmentAddr {
         }
     }
 
-    fn with_base_object(&self) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<ObjectAddr> {
         todo!()
     }
 }

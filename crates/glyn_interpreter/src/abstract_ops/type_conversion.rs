@@ -5,7 +5,7 @@ use crate::runtime::agent::{range_error, type_error, WELL_KNOWN_SYMBOLS_TO_PRIMI
 use crate::runtime::completion::CompletionRecord;
 use crate::value::{
     number::JSNumber,
-    object::{property::JSObjectPropKey, JSObjAddr},
+    object::{property::JSObjectPropKey, ObjectAddr},
     string::JSString,
     JSValue,
 };
@@ -28,7 +28,7 @@ pub(crate) fn to_primitive(
     let mut preferred_type = preferred_type;
 
     // 1. If input is an Object, then
-    if let Some(obj_addr) = input.as_object() {
+    if let Some(object) = input.as_object() {
         // a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
         let exotic_to_prim = get_method(
             &input,
@@ -266,7 +266,7 @@ pub(crate) fn to_string(argument: JSValue) -> CompletionRecord<JSString> {
 
 /// 7.1.18 ToObject ( argument )
 /// https://262.ecma-international.org/16.0/#sec-toobject
-pub(crate) fn to_object(arg: &JSValue) -> JSObjAddr {
+pub(crate) fn to_object(arg: &JSValue) -> ObjectAddr {
     match arg {
         JSValue::Undefined => {
             // Throw a TypeError exception.

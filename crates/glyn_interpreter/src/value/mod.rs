@@ -1,6 +1,6 @@
 use crate::value::big_int::JSBigInt;
 use crate::value::number::JSNumber;
-use crate::value::object::JSObjAddr;
+use crate::value::object::ObjectAddr;
 use crate::value::string::JSString;
 use crate::value::symbol::JSSymbol;
 
@@ -25,7 +25,7 @@ pub enum JSValue {
     Number(JSNumber),
     BigInt(JSBigInt),
     Symbol(JSSymbol),
-    Object(JSObjAddr),
+    Object(ObjectAddr),
 }
 
 impl JSValue {
@@ -106,7 +106,7 @@ impl JSValue {
         matches!(self, JSValue::Object(_))
     }
 
-    pub(crate) fn as_object(&self) -> Option<JSObjAddr> {
+    pub(crate) fn as_object(&self) -> Option<ObjectAddr> {
         match self {
             JSValue::Object(object) => Some(object.clone()),
             _ => None,
@@ -185,14 +185,14 @@ impl From<JSString> for JSValue {
     }
 }
 
-impl From<JSObjAddr> for JSValue {
-    fn from(value: JSObjAddr) -> Self {
+impl From<ObjectAddr> for JSValue {
+    fn from(value: ObjectAddr) -> Self {
         JSValue::Object(value)
     }
 }
 
-impl From<&JSObjAddr> for JSValue {
-    fn from(value: &JSObjAddr) -> Self {
+impl From<&ObjectAddr> for JSValue {
+    fn from(value: &ObjectAddr) -> Self {
         JSValue::Object(value.clone())
     }
 }

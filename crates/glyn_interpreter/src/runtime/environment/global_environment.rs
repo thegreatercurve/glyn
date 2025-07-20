@@ -9,7 +9,7 @@ use crate::{
         },
     },
     value::{
-        object::{property::JSObjectPropKey, JSObjAddr},
+        object::{property::JSObjectPropKey, ObjectAddr},
         string::JSString,
     },
     JSValue,
@@ -30,7 +30,7 @@ pub(crate) struct GlobalEnvironment {
 
     /// [[GlobalThisValue]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-global-environment-records
-    pub(crate) global_this_value: Option<JSObjAddr>,
+    pub(crate) global_this_value: Option<ObjectAddr>,
 }
 
 impl EnvironmentMethods for GlobalEnvironment {
@@ -145,7 +145,7 @@ impl EnvironmentMethods for GlobalEnvironment {
         let global_object = self.object_record.binding_object.clone();
 
         // 5. Let existingProp be ? HasOwnProperty(globalObject, N).
-        let existing_prop = has_property(global_object, &JSObjectPropKey::from(name))?;
+        let existing_prop = has_property(&global_object, &JSObjectPropKey::from(name))?;
 
         // 6. If existingProp is true, then
         if existing_prop {
@@ -173,7 +173,7 @@ impl EnvironmentMethods for GlobalEnvironment {
 
     /// 9.1.1.4.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-withbaseobject
-    fn with_base_object(&self) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<ObjectAddr> {
         // 1. Return undefined.
         None
     }

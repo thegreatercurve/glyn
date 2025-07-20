@@ -6,7 +6,7 @@ use crate::{
         completion::CompletionRecord,
         environment::{EnvironmentAddr, EnvironmentMethods},
     },
-    value::{object::JSObjAddr, string::JSString},
+    value::{object::ObjectAddr, string::JSString},
     JSValue,
 };
 
@@ -216,7 +216,7 @@ impl EnvironmentMethods for DeclEnvironment {
 
     /// 9.1.1.1.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-withbaseobject
-    fn with_base_object(&self) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<ObjectAddr> {
         // 1. Return undefined.
         None
     }

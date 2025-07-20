@@ -11,7 +11,10 @@ use crate::{
         },
         reference::{Reference, ReferenceBase, ReferenceName},
     },
-    value::{object::JSObjAddr, string::JSString},
+    value::{
+        object::{ObjectAddr, ObjectEssentialInternalMethods, ObjectMeta},
+        string::JSString,
+    },
 };
 
 /// 9.1.2.1 GetIdentifierReference ( env, name, strict )
@@ -70,14 +73,14 @@ pub(crate) fn new_declarative_environment(outer_env: Option<EnvironmentAddr>) ->
 /// 9.1.2.3 NewObjectEnvironment ( O, W, E )
 /// https://262.ecma-international.org/16.0/#sec-newobjectenvironment
 pub(crate) fn new_object_environment(
-    binding_object: JSObjAddr,
+    binding_object: &(impl ObjectMeta + ObjectEssentialInternalMethods),
     is_with_environment: bool,
     outer_env: Option<EnvironmentAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Object Environment Record.
     let env = ObjEnvironment {
         // 2. Set env.[[BindingObject]] to O.
-        binding_object,
+        binding_object: binding_object.addr(),
 
         // 3. Set env.[[IsWithEnvironment]] to W.
         is_with_environment,
@@ -93,13 +96,13 @@ pub(crate) fn new_object_environment(
 /// 9.1.2.4 NewFunctionEnvironment ( F, newTarget )
 /// https://262.ecma-international.org/16.0/#sec-newfunctionenvironment
 pub(crate) fn new_function_environment(
-    function_object_addr: JSObjAddr,
-    new_target: Option<JSObjAddr>,
+    function_obj: &(impl ObjectMeta + ObjectEssentialInternalMethods),
+    new_target: Option<ObjectAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Function Environment Record containing no bindings.
     let env = FuncEnvironment {
         // 2. Set env.[[FunctionObject]] to F.
-        function_object: Some(function_object_addr.clone()),
+        function_object: Some(function_obj.addr()),
 
         // 3. If F.[[ThisMode]] is lexical, set env.[[ThisBindingStatus]] to lexical.
         // TODO: Implement this using the function object's [[ThisMode]]
@@ -110,7 +113,7 @@ pub(crate) fn new_function_environment(
         new_target,
 
         // 6. Set env.[[OuterEnv]] to F.[[Environment]].
-        outer_env: function_object_addr.borrow().slots.environment(),
+        outer_env: function_obj.data().slots().environment(),
 
         decl_env: DeclEnvironment::default(),
 
@@ -124,12 +127,12 @@ pub(crate) fn new_function_environment(
 /// 9.1.2.5 NewGlobalEnvironment ( G, thisValue )
 /// https://262.ecma-international.org/16.0/#sec-newglobalenvironment
 pub(crate) fn new_global_environment(
-    global_object: JSObjAddr,
-    this_value: JSObjAddr,
+    global_object: &ObjectAddr,
+    this_value: &ObjectAddr,
 ) -> EnvironmentAddr {
     // Let objRec be NewObjectEnvironment(G, false, null).
     let obj_env = ObjEnvironment {
-        binding_object: global_object,
+        binding_object: global_object.addr(),
         is_with_environment: false,
         outer_env: None,
     };
@@ -143,7 +146,7 @@ pub(crate) fn new_global_environment(
         object_record: obj_env,
 
         // 5. Set env.[[GlobalThisValue]] to thisValue.
-        global_this_value: Some(this_value),
+        global_this_value: Some(this_value.addr()),
 
         // 6. Set env.[[DeclarativeRecord]] to dclRec.
         declarative_record: decl_env,

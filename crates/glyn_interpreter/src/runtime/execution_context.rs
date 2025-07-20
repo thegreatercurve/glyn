@@ -1,7 +1,7 @@
 use crate::runtime::environment::EnvironmentAddr;
 use crate::runtime::realm::RealmAddr;
 use crate::runtime::script::ScriptRecord;
-use crate::value::object::JSObjAddr;
+use crate::value::object::ObjectAddr;
 
 #[derive(Debug)]
 pub(crate) enum ScriptOrModule {
@@ -14,7 +14,7 @@ pub(crate) enum ScriptOrModule {
 #[derive(Debug)]
 pub(crate) struct ExecutionContext {
     /// Function
-    pub(crate) function: Option<JSObjAddr>,
+    pub(crate) function: Option<ObjectAddr>,
 
     // Realm
     pub(crate) realm: RealmAddr,

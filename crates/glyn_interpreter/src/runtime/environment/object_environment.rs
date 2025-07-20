@@ -11,7 +11,7 @@ use crate::{
     value::{
         object::{
             property::{JSObjectPropDescriptor, JSObjectPropKey},
-            JSObjAddr, JSObjectInternalMethods,
+            ObjectAddr, ObjectEssentialInternalMethods,
         },
         string::JSString,
     },
@@ -26,7 +26,7 @@ pub(crate) struct ObjEnvironment {
     pub(crate) outer_env: Option<EnvironmentAddr>,
 
     /// [[BindingObject]]
-    pub(crate) binding_object: JSObjAddr,
+    pub(crate) binding_object: ObjectAddr,
 
     /// [[IsWithEnvironment]]
     pub(crate) is_with_environment: bool,
@@ -37,11 +37,10 @@ impl EnvironmentMethods for ObjEnvironment {
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasbinding-n
     fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
         // 1. Let bindingObject be envRec.[[BindingObject]].
-        let binding_object_addr = self.binding_object.clone();
+        let binding_object = self.binding_object.clone();
 
         // 2. Let foundBinding be ? HasProperty(bindingObject, N).
-        let found_binding =
-            has_property(binding_object_addr.clone(), &JSObjectPropKey::from(name))?;
+        let found_binding = has_property(&binding_object, &JSObjectPropKey::from(name))?;
 
         // 3. If foundBinding is false, return false.
         if !found_binding {
@@ -55,18 +54,18 @@ impl EnvironmentMethods for ObjEnvironment {
 
         // 5. Let unscopables be ? Get(bindingObject, %Symbol.unscopables%).
         let unscopables = get(
-            binding_object_addr.clone(),
+            &binding_object,
             &JSObjectPropKey::from(WELL_KNOWN_SYMBOLS_UNSCOPABLES),
-            &JSValue::from(binding_object_addr.clone()),
+            &JSValue::from(self.binding_object.clone()),
         )?;
 
         // 6. If unscopables is an Object, then
         if let Some(unscopables_obj) = unscopables.as_object() {
             // a. Let blocked be ToBoolean(? Get(unscopables, N)).
             let blocked = to_boolean(get(
-                unscopables_obj.clone(),
+                &unscopables_obj,
                 &JSObjectPropKey::from(name),
-                &JSValue::from(unscopables_obj),
+                &JSValue::from(unscopables_obj.clone()),
             )?);
 
             // b. If blocked is true, return false.
@@ -87,7 +86,7 @@ impl EnvironmentMethods for ObjEnvironment {
 
         // 2. Perform ? DefinePropertyOrThrow(bindingObject, N, PropertyDescriptor { [[Value]]: undefined, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }).
         define_property_or_throw(
-            binding_object,
+            &binding_object,
             &JSObjectPropKey::from(name),
             JSObjectPropDescriptor {
                 value: None,
@@ -132,7 +131,7 @@ impl EnvironmentMethods for ObjEnvironment {
         let binding_object = self.binding_object.clone();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
-        let still_exists = has_property(binding_object.clone(), &JSObjectPropKey::from(&name))?;
+        let still_exists = has_property(&binding_object, &JSObjectPropKey::from(&name))?;
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {
@@ -140,7 +139,7 @@ impl EnvironmentMethods for ObjEnvironment {
         }
 
         // 4. Perform ? Set(bindingObject, N, V, S).
-        set(binding_object, &JSObjectPropKey::from(name), value, strict)?;
+        set(&binding_object, &JSObjectPropKey::from(name), value, strict)?;
 
         // 5. Return unused.
         Ok(())
@@ -153,7 +152,7 @@ impl EnvironmentMethods for ObjEnvironment {
         let binding_object = self.binding_object.clone();
 
         // 2. Let value be ? HasProperty(bindingObject, N).
-        let value = has_property(binding_object.clone(), &JSObjectPropKey::from(name))?;
+        let value = has_property(&binding_object, &JSObjectPropKey::from(name))?;
 
         // 3. If value is false, then
         if !value {
@@ -167,9 +166,9 @@ impl EnvironmentMethods for ObjEnvironment {
 
         // 4. Return ? Get(bindingObject, N).
         get(
-            binding_object.clone(),
+            &binding_object,
             &JSObjectPropKey::from(name),
-            &JSValue::from(binding_object),
+            &JSValue::from(self.binding_object.clone()),
         )
     }
 
@@ -199,7 +198,7 @@ impl EnvironmentMethods for ObjEnvironment {
 
     /// 9.1.1.2.10 WithBaseObject ( )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-withbaseobject
-    fn with_base_object(&self) -> Option<JSObjAddr> {
+    fn with_base_object(&self) -> Option<ObjectAddr> {
         // 1. If envRec.[[IsWithEnvironment]] is true, return envRec.[[BindingObject]].
         if self.is_with_environment {
             return Some(self.binding_object.clone());

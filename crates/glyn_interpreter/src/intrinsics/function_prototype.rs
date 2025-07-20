@@ -2,7 +2,7 @@ use crate::{
     abstract_ops::function_operations::create_builtin_function,
     runtime::{agent::JSAgent, realm::RealmAddr},
     value::{
-        object::{property::JSObjectPropKey, JSObjAddr},
+        object::{property::JSObjectPropKey, ObjectAddr},
         JSValue,
     },
 };
@@ -13,7 +13,7 @@ use crate::{
 pub(crate) struct FunctionPrototype;
 
 impl FunctionPrototype {
-    pub(crate) fn create(agent: &mut JSAgent, realm_addr: RealmAddr) -> JSObjAddr {
+    pub(crate) fn create(agent: &mut JSAgent, realm_addr: RealmAddr) -> ObjectAddr {
         // accepts any arguments and returns undefined when invoked.
         let behaviour_fn = |_args: Vec<JSValue>| JSValue::Undefined;
 

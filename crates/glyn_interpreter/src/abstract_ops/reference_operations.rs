@@ -4,7 +4,7 @@ use crate::{
         environment::EnvironmentMethods,
         reference::{Reference, ReferenceBase},
     },
-    JSAgent, JSValue,
+    JSValue,
 };
 
 /// 6.2.5.2 IsUnresolvableReference ( V )

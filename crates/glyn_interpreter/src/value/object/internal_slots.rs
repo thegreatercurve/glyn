@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     runtime::{environment::EnvironmentAddr, realm::RealmAddr},
-    value::{object::JSObjAddr, string::JSString, JSValue},
+    value::{string::JSString, JSValue},
 };
 
 pub(crate) type BehaviourFn = fn(Vec<JSValue>) -> JSValue;
@@ -10,9 +10,7 @@ pub(crate) type BehaviourFn = fn(Vec<JSValue>) -> JSValue;
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) enum InternalSlotName {
     BehaviourFn,
-    Extensible,
     InitialName,
-    Prototype,
     Realm,
     Environment,
 }
@@ -35,9 +33,9 @@ impl From<JSValue> for InternalSlotValue {
 /// 6.1.7.2 Object Internal Methods and Internal Slots
 /// https://262.ecma-international.org/16.0/#sec-object-internal-methods-and-internal-slots
 #[derive(Debug, Default)]
-pub(crate) struct JSObjectInternalSlots(HashMap<InternalSlotName, InternalSlotValue>);
+pub(crate) struct InternalSlots(HashMap<InternalSlotName, InternalSlotValue>);
 
-impl JSObjectInternalSlots {
+impl InternalSlots {
     fn new() -> Self {
         Self(HashMap::new())
     }
@@ -48,34 +46,6 @@ impl JSObjectInternalSlots {
 
     fn get(&self, name: &InternalSlotName) -> Option<&InternalSlotValue> {
         self.0.get(name)
-    }
-
-    pub(crate) fn prototype(&self) -> Option<JSObjAddr> {
-        match self.get(&InternalSlotName::Prototype) {
-            Some(InternalSlotValue::Value(JSValue::Object(addr))) => Some(addr.clone()),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn set_prototype(&mut self, prototype: Option<JSObjAddr>) {
-        self.0.insert(
-            InternalSlotName::Prototype,
-            prototype.map_or(InternalSlotValue::NotSet, |p| JSValue::Object(p).into()),
-        );
-    }
-
-    pub(crate) fn extensible(&self) -> bool {
-        match self.get(&InternalSlotName::Extensible) {
-            Some(InternalSlotValue::Value(JSValue::Bool(value))) => *value,
-            _ => true,
-        }
-    }
-
-    pub(crate) fn set_extensible(&mut self, extensible: bool) {
-        self.0.insert(
-            InternalSlotName::Extensible,
-            JSValue::Bool(extensible).into(),
-        );
     }
 
     pub(crate) fn realm(&self) -> Option<&RealmAddr> {
@@ -133,9 +103,9 @@ impl JSObjectInternalSlots {
     }
 }
 
-impl From<Vec<InternalSlotName>> for JSObjectInternalSlots {
+impl From<Vec<InternalSlotName>> for InternalSlots {
     fn from(slots: Vec<InternalSlotName>) -> Self {
-        let mut internal_slots = JSObjectInternalSlots::new();
+        let mut internal_slots = InternalSlots::new();
 
         for slot in slots {
             internal_slots.insert(slot, InternalSlotValue::NotSet);

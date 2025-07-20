@@ -70,7 +70,7 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
     realm_addr.borrow_mut().global_object = Some(global.clone());
 
     // 15. Set realm.[[GlobalEnv]] to NewGlobalEnvironment(global, thisValue).
-    realm_addr.borrow_mut().global_env = Some(new_global_environment(global, this_value));
+    realm_addr.borrow_mut().global_env = Some(new_global_environment(&global, &this_value));
 
     // 16. Perform ? SetDefaultGlobalBindings(realm).
     set_default_global_bindings(&realm_addr)?;
@@ -102,7 +102,7 @@ pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> I
 
 /// 9.3.3 SetDefaultGlobalBindings ( realm )
 /// https://262.ecma-international.org/16.0/#sec-setdefaultglobalbindings
-fn set_default_global_bindings(realm: &RealmAddr) -> CompletionRecord {
+fn set_default_global_bindings(_realm: &RealmAddr) -> CompletionRecord {
     // TODO: Implement
     Ok(())
 }
