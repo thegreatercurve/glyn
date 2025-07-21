@@ -1,7 +1,10 @@
 use crate::{
-    abstract_ops::object_operations::has_property,
+    abstract_ops::{
+        object_operations::{define_property_or_throw, has_own_property, has_property, set},
+        testing_comparison::is_extensible,
+    },
     runtime::{
-        agent::type_error,
+        agent::{type_error, WELL_KNOWN_SYMBOLS_ASYNC_ITERATOR},
         completion::CompletionRecord,
         environment::{
             declarative_environment::DeclEnvironment, object_environment::ObjEnvironment,
@@ -9,7 +12,10 @@ use crate::{
         },
     },
     value::{
-        object::{property::JSObjectPropKey, ObjectAddr},
+        object::{
+            property::{JSObjectPropDescriptor, JSObjectPropKey},
+            ObjectAddr, ObjectEssentialInternalMethods,
+        },
         string::JSString,
     },
     JSValue,
@@ -176,5 +182,192 @@ impl EnvironmentMethods for GlobalEnvironment {
     fn with_base_object(&self) -> Option<ObjectAddr> {
         // 1. Return undefined.
         None
+    }
+}
+
+impl GlobalEnvironment {
+    /// 9.1.1.4.11 GetThisBinding ( )
+    /// https://262.ecma-international.org/16.0/#sec-global-environment-records-getthisbinding
+    pub(crate) fn get_this_binding(&self) -> Option<ObjectAddr> {
+        // 1. Return envRec.[[GlobalThisValue]].
+        self.global_this_value.clone()
+    }
+
+    /// 9.1.1.4.12 HasLexicalDeclaration ( envRec, N )
+    /// https://262.ecma-international.org/16.0/#sec-haslexicaldeclaration
+    pub(crate) fn has_lexical_declaration(&self, name: &JSString) -> bool {
+        // 1. Let DclRec be envRec.[[DeclarativeRecord]].
+        let dcl_rec = &self.declarative_record;
+
+        // 2. Return ! DclRec.HasBinding(N).
+        dcl_rec.has_binding(name).unwrap_or(false)
+    }
+
+    /// 9.1.1.4.13 HasRestrictedGlobalProperty ( envRec, N )
+    /// https://262.ecma-international.org/16.0/#sec-hasrestrictedglobalproperty
+    pub(crate) fn has_restricted_global_property(&self, name: &JSString) -> CompletionRecord<bool> {
+        // 1. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_rec = &self.object_record;
+
+        // 2. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_rec.binding_object.clone();
+
+        // 3. Let existingProp be ? globalObject.[[GetOwnProperty]](N).
+        let existing_prop_opt = global_object.get_own_property(&JSObjectPropKey::from(name))?;
+
+        // 4. If existingProp is undefined, return false.
+        let Some(existing_prop) = existing_prop_opt else {
+            return Ok(false);
+        };
+
+        // 5. If existingProp.[[Configurable]] is true, return false.
+        if existing_prop.configurable == Some(true) {
+            return Ok(false);
+        }
+
+        // 6. Return true.
+        Ok(true)
+    }
+
+    /// 9.1.1.4.14 CanDeclareGlobalVar ( envRec, N )
+    /// https://262.ecma-international.org/16.0/#sec-candeclareglobalvar
+    pub(crate) fn can_declare_global_var(&self, name: &JSString) -> CompletionRecord<bool> {
+        // 1. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_rec = &self.object_record;
+
+        // 2. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_rec.binding_object.clone();
+
+        // 3. Let existingProp be ? globalObject.[[GetOwnProperty]](N).
+        let existing_prop_opt = global_object.get_own_property(&JSObjectPropKey::from(name))?;
+
+        // 4. If existingProp is undefined, return true.
+        let Some(existing_prop) = existing_prop_opt else {
+            return Ok(true);
+        };
+
+        // 5. If existingProp.[[Configurable]] is true, return true.
+        if existing_prop.configurable == Some(true) {
+            return Ok(true);
+        }
+
+        // 6. Return false.
+        Ok(false)
+    }
+
+    /// 9.1.1.4.15 CanDeclareGlobalFunction ( envRec, N )
+    /// https://262.ecma-international.org/16.0/#sec-candeclareglobalfunction
+    pub(crate) fn can_declare_global_function(&self, name: &JSString) -> CompletionRecord<bool> {
+        // 1. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_rec = &self.object_record;
+
+        // 2. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_rec.binding_object.clone();
+
+        // 3. Let existingProp be ? globalObject.[[GetOwnProperty]](N).
+        let existing_prop_opt = global_object.get_own_property(&JSObjectPropKey::from(name))?;
+
+        // 4. If existingProp is undefined, return ? IsExtensible(globalObject).
+        let Some(existing_prop) = existing_prop_opt else {
+            return Ok(is_extensible(&global_object));
+        };
+
+        // 5. If existingProp.[[Configurable]] is true, return true.
+        if existing_prop.configurable == Some(true) {
+            return Ok(true);
+        }
+
+        // 6. If IsDataDescriptor(existingProp) is true and existingProp has attribute values { [[Writable]]: true, [[Enumerable]]: true }, return true.
+        if existing_prop.is_data_descriptor()
+            && existing_prop.writable == Some(true)
+            && existing_prop.enumerable == Some(true)
+        {
+            return Ok(true);
+        }
+
+        // 7. Return false.
+        Ok(false)
+    }
+
+    /// 9.1.1.4.16 CreateGlobalVarBinding ( envRec, N, D )
+    /// https://262.ecma-international.org/16.0/#sec-createglobalvarbinding
+    pub(crate) fn create_global_var_binding(
+        &mut self,
+        name: JSString,
+        deletable: bool,
+    ) -> CompletionRecord {
+        // 1. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_rec = &mut self.object_record;
+
+        // 2. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_rec.binding_object.clone();
+
+        // 3. Let hasProperty be ? HasOwnProperty(globalObject, N).
+        let has_property = has_own_property(&global_object, &JSObjectPropKey::from(&name))?;
+
+        // 4. Let extensible be ? IsExtensible(globalObject).
+        let extensible = is_extensible(&global_object);
+
+        // 5. If hasProperty is false and extensible is true, then
+        if !has_property && extensible {
+            // a. Perform ? ObjRec.CreateMutableBinding(N, D).
+            obj_rec.create_mutable_binding(name.clone(), deletable)?;
+
+            // b. Perform ? ObjRec.InitializeBinding(N, undefined).
+            obj_rec.initialize_binding(name, JSValue::Undefined)?;
+        }
+
+        // 6. Return unused.
+        Ok(())
+    }
+
+    /// 9.1.1.4.17 CreateGlobalFunctionBinding ( envRec, N, V, D )
+    /// https://262.ecma-international.org/16.0/#sec-createglobalfunctionbinding
+    pub(crate) fn create_global_function_binding(
+        &mut self,
+        name: JSString,
+        value: JSValue,
+        deletable: bool,
+    ) -> CompletionRecord {
+        // 1. Let ObjRec be envRec.[[ObjectRecord]].
+        let obj_rec = &self.object_record;
+
+        // 2. Let globalObject be ObjRec.[[BindingObject]].
+        let global_object = obj_rec.binding_object.clone();
+
+        // 3. Let existingProp be ? globalObject.[[GetOwnProperty]](N).
+        let existing_prop_opt = global_object.get_own_property(&JSObjectPropKey::from(&name))?;
+
+        // 4. If existingProp is undefined or existingProp.[[Configurable]] is true, then
+        let desc = if existing_prop_opt.is_none()
+            || existing_prop_opt
+                .is_some_and(|existing_prop| existing_prop.configurable == Some(true))
+        {
+            // a. Let desc be the PropertyDescriptor { [[Value]]: V, [[Writable]]: true, [[Enumerable]]: true, [[Configurable]]: D }.
+            JSObjectPropDescriptor {
+                value: Some(value.clone()),
+                writable: Some(true),
+                enumerable: Some(true),
+                configurable: Some(deletable),
+                ..JSObjectPropDescriptor::default()
+            }
+        }
+        // 5. Else,
+        else {
+            // a. Let desc be the PropertyDescriptor { [[Value]]: V }.
+            JSObjectPropDescriptor {
+                value: Some(value.clone()),
+                ..JSObjectPropDescriptor::default()
+            }
+        };
+
+        // 6. Perform ? DefinePropertyOrThrow(globalObject, N, desc).
+        define_property_or_throw(&global_object, &JSObjectPropKey::from(&name), desc)?;
+
+        // 7. Perform ? Set(globalObject, N, V, false).
+        set(&global_object, &JSObjectPropKey::from(&name), value, false)?;
+
+        // 8. Return unused.
+        Ok(())
     }
 }
