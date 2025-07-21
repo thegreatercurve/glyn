@@ -17,7 +17,7 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) enum ObjectKind {
     #[default]
     Ordinary,

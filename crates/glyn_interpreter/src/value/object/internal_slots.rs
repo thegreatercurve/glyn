@@ -5,11 +5,14 @@ use crate::{
     value::{string::JSString, JSValue},
 };
 
+use super::ObjectAddr;
+
 pub(crate) type BehaviourFn = fn(Vec<JSValue>) -> JSValue;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) enum InternalSlotName {
     BehaviourFn,
+    HomeObject,
     InitialName,
     Realm,
     Environment,
@@ -99,6 +102,20 @@ impl InternalSlots {
         self.0.insert(
             InternalSlotName::Environment,
             InternalSlotValue::Environment(env_addr),
+        );
+    }
+
+    pub(crate) fn home_object(&self) -> Option<ObjectAddr> {
+        match self.get(&InternalSlotName::HomeObject) {
+            Some(InternalSlotValue::Value(JSValue::Object(addr))) => Some(addr.clone()),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn set_home_object(&mut self, addr: ObjectAddr) {
+        self.0.insert(
+            InternalSlotName::HomeObject,
+            InternalSlotValue::Value(JSValue::Object(addr)),
         );
     }
 }

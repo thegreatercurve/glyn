@@ -4,7 +4,7 @@ use crate::{
         testing_comparison::is_extensible,
     },
     runtime::{
-        agent::{type_error, WELL_KNOWN_SYMBOLS_ASYNC_ITERATOR},
+        agent::type_error,
         completion::CompletionRecord,
         environment::{
             declarative_environment::DeclEnvironment, object_environment::ObjEnvironment,
