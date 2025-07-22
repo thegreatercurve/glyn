@@ -88,7 +88,8 @@ impl EnvironmentMethods for GlobalEnvironment {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, then
         if self.declarative_record.has_binding(&name)? {
-            // a. Return
+            // a. Return ! DclRec.InitializeBinding(N, V).
+            return self.declarative_record.initialize_binding(name, value);
         }
 
         // 3. Assert: If the binding exists, it must be in the Object Environment Record.

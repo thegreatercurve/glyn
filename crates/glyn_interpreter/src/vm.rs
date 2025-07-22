@@ -7,7 +7,10 @@ use crate::{
         },
         testing_comparison::{is_less_than, is_loosely_equal, is_strictly_equal},
     },
-    codegen::bytecode::{generator::ExecutableProgram, instruction::Instruction},
+    codegen::bytecode::{
+        generator::{ExecutableProgram, Identifier},
+        instruction::Instruction,
+    },
     lexer::Token,
     runtime::{agent::JSAgent, reference::Reference},
     value::{string::JSString, JSValue},
@@ -114,8 +117,8 @@ impl<'a> VM<'a> {
         self.program.constants[index as usize].clone()
     }
 
-    fn get_identifier(&mut self, index: u8) -> String {
-        self.program.identifiers[index as usize].clone()
+    fn get_identifier(&mut self, index: u8) -> &Identifier {
+        &self.program.identifiers[index as usize]
     }
 
     fn push(&mut self, value: JSValue) {
@@ -289,7 +292,7 @@ impl<'a> VM<'a> {
     fn exec_resolve_binding(&mut self) -> VMResult {
         let index = self.read_byte();
 
-        let value = self.get_identifier(index);
+        let value = String::from(self.get_identifier(index));
 
         let binding = resolve_binding(
             self.agent,

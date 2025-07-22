@@ -86,17 +86,18 @@ pub(crate) fn initialize_host_defined_realm(agent: &mut JSAgent) -> CompletionRe
 /// https://262.ecma-international.org/16.0/#sec-createintrinsics
 pub(crate) fn create_intrinsics(agent: &mut JSAgent, realm_addr: RealmAddr) -> Intrinsics {
     // 1. Set realmRec.[[Intrinsics]] to a new Record.
-    let mut intrinsics = Intrinsics::default();
+    let intrinsics = Intrinsics {
+        // Iniitalize the base object prototype first so it can be used in other intrinsics.
+        object_prototype: Some(JSObjectPrototype::create()),
 
-    // Iniitalize the base object prototype first so it can be used in other intrinsics.
-    intrinsics.object_prototype = Some(JSObjectPrototype::create());
+        // 2. Set fields of realmRec.[[Intrinsics]] with the values listed in Table 6. The field names are the names listed in column one of the table. The value of each field is a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 19 through 28. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(steps, length, name, slots, realmRec, prototype) where steps is the definition of that function provided by this specification, name is the initial value of the function's "name" property, length is the initial value of the function's "length" property, slots is a list of the names, if any, of the function's specified internal slots, and prototype is the specified value of the function's [[Prototype]] internal slot. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created.
+        function_prototype: Some(FunctionPrototype::create(agent, realm_addr)),
 
-    // 2. Set fields of realmRec.[[Intrinsics]] with the values listed in Table 6. The field names are the names listed in column one of the table. The value of each field is a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 19 through 28. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(steps, length, name, slots, realmRec, prototype) where steps is the definition of that function provided by this specification, name is the initial value of the function's "name" property, length is the initial value of the function's "length" property, slots is a list of the names, if any, of the function's specified internal slots, and prototype is the specified value of the function's [[Prototype]] internal slot. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created.
-    intrinsics.function_prototype = Some(FunctionPrototype::create(agent, realm_addr));
+        ..Intrinsics::default()
+    };
 
     // 3. Perform AddRestrictedFunctionProperties(realmRec.[[Intrinsics]].[[%Function.prototype%]], realmRec).
     // 4. Return unused.
-
     intrinsics
 }
 

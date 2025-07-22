@@ -61,6 +61,7 @@ pub(crate) enum Instruction {
     Pop,
 
     // Reference operations
+    CreateReference,
     ResolveBinding,
     InitializeReferencedBinding,
 
@@ -119,6 +120,7 @@ impl Display for Instruction {
             Instruction::Call => f.pad("CALL"),
             Instruction::Return => f.pad("RETURN"),
             Instruction::Pop => f.pad("POP"),
+            Instruction::CreateReference => f.pad("CREATE_REFERENCE"),
             Instruction::ResolveBinding => f.pad("RESOLVE_BINDING"),
             Instruction::InitializeReferencedBinding => f.pad("INITIALIZE_REFERENCED_BINDING"),
             Instruction::Print => f.pad("PRINT"),

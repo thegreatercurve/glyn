@@ -85,6 +85,15 @@ pub(crate) enum Environment {
     Global(GlobalEnvironment),
 }
 
+impl Environment {
+    pub(crate) fn as_global_mut(&mut self) -> Option<&mut GlobalEnvironment> {
+        match self {
+            Environment::Global(global_environment) => Some(global_environment),
+            _ => None,
+        }
+    }
+}
+
 pub(crate) type EnvironmentAddr = Gc<Environment>;
 
 impl EnvironmentAddr {
@@ -222,6 +231,11 @@ impl EnvironmentMethods for EnvironmentAddr {
     }
 
     fn with_base_object(&self) -> Option<ObjectAddr> {
-        todo!()
+        match self.borrow().deref() {
+            Environment::Declarative(decl_environment) => decl_environment.with_base_object(),
+            Environment::Object(obj_environment) => obj_environment.with_base_object(),
+            Environment::Function(func_environment) => func_environment.with_base_object(),
+            Environment::Global(global_environment) => global_environment.with_base_object(),
+        }
     }
 }

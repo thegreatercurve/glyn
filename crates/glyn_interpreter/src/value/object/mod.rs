@@ -2,7 +2,7 @@ pub(crate) mod internal_slots;
 pub(crate) mod property;
 pub(crate) mod subtypes;
 
-use std::cell::{Ref, RefMut};
+use std::cell::RefMut;
 
 use crate::{
     gc::Gc,

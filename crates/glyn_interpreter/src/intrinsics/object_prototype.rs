@@ -1,7 +1,4 @@
 use crate::{
-    abstract_ops::{
-        immutable_prototype_objects::set_immutable_prototype, object_operations::make_basic_object,
-    },
     gc::Gc,
     value::object::{internal_slots::InternalSlots, ObjectAddr, ObjectData, ObjectKind},
 };

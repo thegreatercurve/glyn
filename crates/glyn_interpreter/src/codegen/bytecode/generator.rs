@@ -14,18 +14,55 @@ pub(crate) enum LiteralType {
     String(String),
 }
 
+#[derive(Clone, Debug)]
+pub(crate) enum Identifier {
+    Var(String),
+    Let(String),
+    Const(String),
+}
+
+impl Identifier {
+    pub(crate) fn is_lexical_declaration(&self) -> bool {
+        matches!(self, Identifier::Let(_) | Identifier::Const(_))
+    }
+
+    pub(crate) fn is_constant_declaration(&self) -> bool {
+        matches!(self, Identifier::Const(_))
+    }
+
+    pub(crate) fn is_variable_declaration(&self) -> bool {
+        matches!(self, Identifier::Var(_))
+    }
+}
+
+impl From<&Identifier> for String {
+    fn from(identifier: &Identifier) -> String {
+        match identifier {
+            Identifier::Var(name) => name.clone(),
+            Identifier::Let(name) => name.clone(),
+            Identifier::Const(name) => name.clone(),
+        }
+    }
+}
+
+impl From<&Identifier> for JSString {
+    fn from(identifier: &Identifier) -> JSString {
+        JSString(String::from(identifier))
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ExecutableProgram {
     pub(crate) instructions: Vec<u8>,
     pub(crate) constants: Vec<JSValue>,
-    pub(crate) identifiers: Vec<String>,
+    pub(crate) identifiers: Vec<Identifier>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct BytecodeGenerator {
     instructions: Vec<u8>,
     constants: Vec<JSValue>,
-    identifiers: Vec<String>,
+    identifiers: Vec<Identifier>,
 }
 
 impl BytecodeGenerator {
@@ -41,14 +78,18 @@ impl BytecodeGenerator {
         self.instructions.push(instruction);
     }
 
-    pub(crate) fn emit_identifier(&mut self, identifier: JSString) -> u8 {
-        self.identifiers.push(identifier.0);
+    pub(crate) fn add_identifier(&mut self, identifier: Identifier) -> u8 {
+        self.identifiers.push(identifier);
 
         (self.identifiers.len() - 1) as u8
     }
 
+    pub(crate) fn add_constant(&mut self, constant: JSValue) {
+        self.constants.push(constant);
+    }
+
     pub(crate) fn emit_constant(&mut self, value: JSValue) {
-        self.constants.push(value);
+        self.add_constant(value);
 
         self.push(Instruction::Const as u8);
         self.push(self.constants.len() as u8 - 1);
@@ -162,7 +203,7 @@ impl BytecodeGenerator {
             todo!()
         } else {
             // 1. Let lhs be ! ResolveBinding(StringValue of BindingIdentifier).
-            let binding_id = self.emit_identifier(binding_id);
+            let binding_id = self.add_identifier(Identifier::Let(binding_id.0));
             self.emit_resolve_binding(binding_id);
 
             // 2. Perform ! InitializeReferencedBinding(lhs, undefined).

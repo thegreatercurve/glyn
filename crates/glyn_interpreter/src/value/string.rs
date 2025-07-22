@@ -25,6 +25,12 @@ impl From<String> for JSString {
     }
 }
 
+impl From<&String> for JSString {
+    fn from(value: &String) -> Self {
+        JSString(value.clone())
+    }
+}
+
 impl From<&str> for JSString {
     fn from(value: &str) -> Self {
         JSString(value.to_string())
