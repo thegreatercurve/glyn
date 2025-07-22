@@ -17,14 +17,6 @@ impl JSObjectPropKey {
         matches!(self, JSObjectPropKey::String(_))
     }
 
-    pub(crate) fn as_string(&self) -> Option<&JSString> {
-        if let JSObjectPropKey::String(value) = self {
-            Some(value)
-        } else {
-            None
-        }
-    }
-
     pub(crate) fn is_symbol(&self) -> bool {
         matches!(self, JSObjectPropKey::Symbol(_))
     }

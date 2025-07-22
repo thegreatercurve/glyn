@@ -1,3 +1,11 @@
+use crate::{
+    runtime::{
+        completion::{throw_completion, ThrowCompletion},
+        reference::ReferenceName,
+    },
+    JSValue,
+};
+
 /// 6.1.4 The String Type
 /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-types-string-type
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Hash)]
@@ -34,5 +42,18 @@ impl From<&String> for JSString {
 impl From<&str> for JSString {
     fn from(value: &str) -> Self {
         JSString(value.to_string())
+    }
+}
+
+impl TryFrom<&ReferenceName> for JSString {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: &ReferenceName) -> Result<Self, Self::Error> {
+        match value {
+            ReferenceName::Value(JSValue::String(value)) => Ok(value.clone()),
+            _ => throw_completion(
+                "Expected a ReferenceName::Value with JSValue::String for conversion to JSString",
+            ),
+        }
     }
 }

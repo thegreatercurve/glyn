@@ -1,10 +1,12 @@
-use crate::abstract_ops::type_conversion::{
-    to_number, to_numeric, to_primitive, PreferredPrimType,
+use crate::{
+    abstract_ops::type_conversion::{to_number, to_numeric, to_primitive, PreferredPrimType},
+    runtime::{agent::type_error, completion::CompletionRecord},
+    value::{
+        number::JSNumber,
+        object::{ObjectAddr, ObjectMeta},
+    },
+    JSValue,
 };
-use crate::runtime::agent::type_error;
-use crate::runtime::completion::CompletionRecord;
-use crate::value::object::ObjectMeta;
-use crate::value::JSValue;
 
 // 7.2 Testing and Comparison Operations
 // https://262.ecma-international.org/16.0/#sec-testing-and-comparison-operations
@@ -24,7 +26,7 @@ pub(crate) fn require_object_coercible(arg: JSValue) -> CompletionRecord<JSValue
 /// https://262.ecma-international.org/16.0/#sec-iscallable
 pub(crate) fn is_callable(arg: &JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(object) = arg.as_object() else {
+    let Ok(object) = ObjectAddr::try_from(arg) else {
         return false;
     };
 
@@ -41,7 +43,7 @@ pub(crate) fn is_callable(arg: &JSValue) -> bool {
 /// https://262.ecma-international.org/16.0/#sec-isconstructor
 pub(crate) fn is_constructor(arg: JSValue) -> bool {
     // If argument is not an Object, return false.
-    let Some(object) = arg.as_object() else {
+    let Ok(object) = ObjectAddr::try_from(arg) else {
         return false;
     };
 
@@ -87,7 +89,7 @@ pub(crate) fn same_value(x: &JSValue, y: &JSValue) -> bool {
     // 2. If x is a Number, then
     if let JSValue::Number(x) = x {
         // a. Return Number::sameValue(x, y).
-        return x.same_value(y.as_number().unwrap_or_else(|| unreachable!()));
+        return x.same_value(&JSNumber::try_from(y).unwrap_or_else(|_| unreachable!()));
     }
 
     // 3. Return SameValueNonNumber(x, y).
@@ -215,9 +217,9 @@ pub(crate) fn is_less_than(
         // f. If SameType(nx, ny) is true, then
         if same_type(&nx, &ny) {
             // i. If nx is a Number, then
-            if let (Some(nx_num), Some(ny_num)) = (nx.as_number(), ny.as_number()) {
+            if let (Ok(nx_num), Ok(ny_num)) = (JSNumber::try_from(&nx), JSNumber::try_from(&ny)) {
                 // 1. Return Number::lessThan(nx, ny).
-                return Ok(nx_num.less_than(ny_num));
+                return Ok(nx_num.less_than(&ny_num));
             }
             // ii. Else,
             else {
@@ -246,10 +248,11 @@ pub(crate) fn is_less_than(
         }
 
         // k. If ℝ(nx) < ℝ(ny), return true; otherwise return false.
-        Ok(Some(
-            nx.as_number().unwrap_or_else(|| unreachable!()).0
-                < ny.as_number().unwrap_or_else(|| unreachable!()).0,
-        ))
+        let (Ok(nx_num), Ok(ny_num)) = (JSNumber::try_from(&nx), JSNumber::try_from(&ny)) else {
+            return Ok(Some(false));
+        };
+
+        Ok(Some(nx_num < ny_num))
     }
 }
 
@@ -357,9 +360,9 @@ pub(crate) fn is_strictly_equal(x: &JSValue, y: &JSValue) -> bool {
     }
 
     // 2. If x is a Number, then
-    if let (Some(x_num), Some(y_num)) = (x.as_number(), y.as_number()) {
+    if let (Ok(x_num), Ok(y_num)) = (JSNumber::try_from(x), JSNumber::try_from(y)) {
         // a. Return Number::equal(x, y).
-        return x_num.equal(y_num);
+        return x_num.equal(&y_num);
     }
 
     // 3. Return SameValueNonNumber(x, y).

@@ -6,7 +6,7 @@ use std::cell::RefMut;
 
 use crate::{
     gc::Gc,
-    runtime::completion::CompletionRecord,
+    runtime::completion::{throw_completion, CompletionRecord, ThrowCompletion},
     value::{
         object::{
             internal_slots::InternalSlots,
@@ -127,18 +127,6 @@ impl Default for ObjectData {
 pub(crate) type ObjectAddr = Gc<ObjectData>;
 
 impl ObjectAddr {
-    pub(crate) fn as_ordinary_object(&self) -> OrdinaryObject {
-        OrdinaryObject(self.clone())
-    }
-
-    pub(crate) fn as_function_object(&self) -> FunctionObject {
-        FunctionObject(self.clone())
-    }
-
-    pub(crate) fn as_immutable_prototype_object(&self) -> ImmutablePrototypeExoticObject {
-        ImmutablePrototypeExoticObject(self.clone())
-    }
-
     pub(crate) fn kind(&self) -> ObjectKind {
         self.borrow().kind.clone()
     }
@@ -161,38 +149,40 @@ impl ObjectMeta for ObjectAddr {
 impl ObjectEssentialInternalMethods for ObjectAddr {
     fn get_prototype_of(&self) -> Option<ObjectAddr> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().get_prototype_of(),
-            ObjectKind::Function => self.as_function_object().get_prototype_of(),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).get_prototype_of(),
+            ObjectKind::Function => FunctionObject::from(self).get_prototype_of(),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().get_prototype_of()
+                ImmutablePrototypeExoticObject::from(self).get_prototype_of()
             }
         }
     }
 
     fn set_prototype_of(&self, prototype: Option<ObjectAddr>) -> bool {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().set_prototype_of(prototype),
-            ObjectKind::Function => self.as_function_object().set_prototype_of(prototype),
-            ObjectKind::ImmutablePrototype => self
-                .as_immutable_prototype_object()
-                .set_prototype_of(prototype),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).set_prototype_of(prototype),
+            ObjectKind::Function => FunctionObject::from(self).set_prototype_of(prototype),
+            ObjectKind::ImmutablePrototype => {
+                ImmutablePrototypeExoticObject::from(self).set_prototype_of(prototype)
+            }
         }
     }
 
     fn is_extensible(&self) -> bool {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().is_extensible(),
-            ObjectKind::Function => self.as_function_object().is_extensible(),
-            ObjectKind::ImmutablePrototype => self.as_immutable_prototype_object().is_extensible(),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).is_extensible(),
+            ObjectKind::Function => FunctionObject::from(self).is_extensible(),
+            ObjectKind::ImmutablePrototype => {
+                ImmutablePrototypeExoticObject::from(self).is_extensible()
+            }
         }
     }
 
     fn prevent_extensions(&self) -> bool {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().prevent_extensions(),
-            ObjectKind::Function => self.as_function_object().prevent_extensions(),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).prevent_extensions(),
+            ObjectKind::Function => FunctionObject::from(self).prevent_extensions(),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().prevent_extensions()
+                ImmutablePrototypeExoticObject::from(self).prevent_extensions()
             }
         }
     }
@@ -202,10 +192,10 @@ impl ObjectEssentialInternalMethods for ObjectAddr {
         key: &JSObjectPropKey,
     ) -> CompletionRecord<Option<JSObjectPropDescriptor>> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().get_own_property(key),
-            ObjectKind::Function => self.as_function_object().get_own_property(key),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).get_own_property(key),
+            ObjectKind::Function => FunctionObject::from(self).get_own_property(key),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().get_own_property(key)
+                ImmutablePrototypeExoticObject::from(self).get_own_property(key)
             }
         }
     }
@@ -216,34 +206,30 @@ impl ObjectEssentialInternalMethods for ObjectAddr {
         descriptor: JSObjectPropDescriptor,
     ) -> CompletionRecord<bool> {
         match self.kind() {
-            ObjectKind::Ordinary => self
-                .as_ordinary_object()
-                .define_own_property(key, descriptor),
-            ObjectKind::Function => self
-                .as_function_object()
-                .define_own_property(key, descriptor),
-            ObjectKind::ImmutablePrototype => self
-                .as_immutable_prototype_object()
-                .define_own_property(key, descriptor),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).define_own_property(key, descriptor),
+            ObjectKind::Function => FunctionObject::from(self).define_own_property(key, descriptor),
+            ObjectKind::ImmutablePrototype => {
+                ImmutablePrototypeExoticObject::from(self).define_own_property(key, descriptor)
+            }
         }
     }
 
     fn has_property(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().has_property(key),
-            ObjectKind::Function => self.as_function_object().has_property(key),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).has_property(key),
+            ObjectKind::Function => FunctionObject::from(self).has_property(key),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().has_property(key)
+                ImmutablePrototypeExoticObject::from(self).has_property(key)
             }
         }
     }
 
     fn get(&self, key: &JSObjectPropKey, receiver: &JSValue) -> CompletionRecord<JSValue> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().get(key, receiver),
-            ObjectKind::Function => self.as_function_object().get(key, receiver),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).get(key, receiver),
+            ObjectKind::Function => FunctionObject::from(self).get(key, receiver),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().get(key, receiver)
+                ImmutablePrototypeExoticObject::from(self).get(key, receiver)
             }
         }
     }
@@ -255,30 +241,72 @@ impl ObjectEssentialInternalMethods for ObjectAddr {
         receiver: JSValue,
     ) -> CompletionRecord<bool> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().set(key, value, receiver),
-            ObjectKind::Function => self.as_function_object().set(key, value, receiver),
-            ObjectKind::ImmutablePrototype => self
-                .as_immutable_prototype_object()
-                .set(key, value, receiver),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).set(key, value, receiver),
+            ObjectKind::Function => FunctionObject::from(self).set(key, value, receiver),
+            ObjectKind::ImmutablePrototype => {
+                ImmutablePrototypeExoticObject::from(self).set(key, value, receiver)
+            }
         }
     }
 
     fn delete(&self, key: &JSObjectPropKey) -> CompletionRecord<bool> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().delete(key),
-            ObjectKind::Function => self.as_function_object().delete(key),
-            ObjectKind::ImmutablePrototype => self.as_immutable_prototype_object().delete(key),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).delete(key),
+            ObjectKind::Function => FunctionObject::from(self).delete(key),
+            ObjectKind::ImmutablePrototype => {
+                ImmutablePrototypeExoticObject::from(self).delete(key)
+            }
         }
     }
 
     fn own_property_keys(&self) -> Vec<JSObjectPropKey> {
         match self.kind() {
-            ObjectKind::Ordinary => self.as_ordinary_object().own_property_keys(),
-            ObjectKind::Function => self.as_function_object().own_property_keys(),
+            ObjectKind::Ordinary => OrdinaryObject::from(self).own_property_keys(),
+            ObjectKind::Function => FunctionObject::from(self).own_property_keys(),
             ObjectKind::ImmutablePrototype => {
-                self.as_immutable_prototype_object().own_property_keys()
+                ImmutablePrototypeExoticObject::from(self).own_property_keys()
             }
         }
+    }
+}
+
+impl TryFrom<JSValue> for ObjectAddr {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: JSValue) -> Result<Self, Self::Error> {
+        match value {
+            JSValue::Object(obj) => Ok(obj),
+            _ => throw_completion("Expected JSValue::Object for conversion to ObjectAddr"),
+        }
+    }
+}
+
+impl TryFrom<&JSValue> for ObjectAddr {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: &JSValue) -> Result<Self, Self::Error> {
+        match value {
+            JSValue::Object(obj) => Ok(obj.clone()),
+            _ => throw_completion("Expected JSValue::Object for conversion to ObjectAddr"),
+        }
+    }
+}
+
+impl From<&ObjectAddr> for OrdinaryObject {
+    fn from(value: &ObjectAddr) -> Self {
+        OrdinaryObject(value.clone())
+    }
+}
+
+impl From<&ObjectAddr> for FunctionObject {
+    fn from(value: &ObjectAddr) -> Self {
+        FunctionObject(value.clone())
+    }
+}
+
+impl From<&ObjectAddr> for ImmutablePrototypeExoticObject {
+    fn from(value: &ObjectAddr) -> Self {
+        ImmutablePrototypeExoticObject(value.clone())
     }
 }
 

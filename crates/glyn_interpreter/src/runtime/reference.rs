@@ -16,15 +16,6 @@ pub(crate) enum ReferenceName {
     PrivateName(String),
 }
 
-impl ReferenceName {
-    pub(crate) fn as_string(&self) -> Option<JSString> {
-        match self {
-            ReferenceName::Value(JSValue::String(value)) => Some(value.clone()),
-            _ => None,
-        }
-    }
-}
-
 impl From<JSString> for ReferenceName {
     fn from(value: JSString) -> Self {
         ReferenceName::Value(JSValue::String(value))

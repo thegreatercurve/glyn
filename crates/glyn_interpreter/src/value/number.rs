@@ -403,6 +403,18 @@ impl TryFrom<JSString> for JSNumber {
     }
 }
 
+impl TryFrom<JSValue> for JSNumber {
+    type Error = JSValue;
+
+    fn try_from(value: JSValue) -> Result<Self, Self::Error> {
+        if let JSValue::Number(number) = value {
+            Ok(number)
+        } else {
+            Err(value)
+        }
+    }
+}
+
 impl TryFrom<&JSValue> for JSNumber {
     type Error = JSValue;
 

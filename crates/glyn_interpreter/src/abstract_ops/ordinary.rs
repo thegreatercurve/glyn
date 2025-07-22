@@ -485,7 +485,7 @@ pub(crate) fn ordinary_set_with_own_descriptor<T: ObjectMeta + ObjectEssentialIn
         }
 
         // c. Let existingDescriptor be ? Receiver.[[GetOwnProperty]](P).
-        let receiver = receiver.as_object().unwrap_or_else(|| unreachable!());
+        let receiver = ObjectAddr::try_from(&receiver)?;
 
         let existing_desc = receiver.get_own_property(key)?;
 

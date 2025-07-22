@@ -32,16 +32,11 @@ pub(crate) fn set_function_name(
             // a. Let description be name's [[Description]] value.
             let description = symbol_name.description;
 
-            // a. If description is undefined, set name to the empty String.
-            if description.is_none() {
-                JSString::from("")
-            }
-            // b. Else, set name to the string-concatenation of "[", description, and "]".
-            else {
-                JSString::from(format!(
-                    "[{}]",
-                    description.unwrap_or_else(|| unreachable!())
-                ))
+            match description {
+                // c. Else, set name to the string-concatenation of "[", description, and "]".
+                Some(description) => JSString::from(format!("[{}]", description)),
+                // b. If description is undefined, set name to the empty String.
+                None => JSString::from(""),
             }
         }
         // 3. Else if name is a Private Name, then

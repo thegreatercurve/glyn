@@ -31,6 +31,8 @@ impl From<JSValue> for NormalCompletion {
 /// 6.2.4.2 ThrowCompletion ( value )
 /// https://262.ecma-international.org/16.0/#sec-throwcompletion    
 #[derive(Debug)]
-pub(crate) enum ThrowCompletion {
-    Throw(JSValue),
+pub(crate) struct ThrowCompletion(pub String);
+
+pub(crate) fn throw_completion<T>(message: &str) -> CompletionRecord<T> {
+    Err(ThrowCompletion(message.to_string()))
 }

@@ -60,7 +60,7 @@ impl EnvironmentMethods for ObjEnvironment {
         )?;
 
         // 6. If unscopables is an Object, then
-        if let Some(unscopables_obj) = unscopables.as_object() {
+        if let Ok(unscopables_obj) = ObjectAddr::try_from(unscopables) {
             // a. Let blocked be ToBoolean(? Get(unscopables, N)).
             let blocked = to_boolean(get(
                 &unscopables_obj,

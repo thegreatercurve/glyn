@@ -28,7 +28,7 @@ pub(crate) fn to_primitive(
     let mut preferred_type = preferred_type;
 
     // 1. If input is an Object, then
-    if let Some(object) = input.as_object() {
+    if let Ok(object) = ObjectAddr::try_from(&input) {
         // a. Let exoticToPrim be ? GetMethod(input, @@toPrimitive).
         let exotic_to_prim = get_method(
             &input,
@@ -74,8 +74,8 @@ pub(crate) fn to_primitive(
 /// https://262.ecma-international.org/16.0/#sec-toboolean
 pub(crate) fn to_boolean(arg: JSValue) -> bool {
     // 1. If argument is a Boolean, return argument.
-    if let Some(value) = arg.as_boolean() {
-        return *value;
+    if let JSValue::Bool(value) = arg {
+        return value;
     }
 
     // 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.

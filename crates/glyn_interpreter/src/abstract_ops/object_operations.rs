@@ -253,10 +253,7 @@ pub(crate) fn call(
     }
 
     // 3. Return ? F.[[Call]](V, argumentsList).
-    let function_object = function_value
-        .as_object()
-        .unwrap_or_else(|| unreachable!())
-        .as_function_object();
+    let function_object = FunctionObject::from(&ObjectAddr::try_from(&function_value)?);
 
     function_object.call(this_value, &args)
 }

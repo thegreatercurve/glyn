@@ -13,7 +13,7 @@ use crate::{
     },
     lexer::Token,
     runtime::{agent::JSAgent, reference::Reference},
-    value::{string::JSString, JSValue},
+    value::{number::JSNumber, string::JSString, JSValue},
 };
 
 pub(crate) struct VM<'a> {
@@ -182,9 +182,8 @@ impl<'a> VM<'a> {
     fn exec_unary_minus(&mut self) -> VMResult {
         let value = self.pop()?;
 
-        let number = value
-            .as_number()
-            .ok_or(VMError::UnaryOperationError)?
+        let number = JSNumber::try_from(value)
+            .map_err(|_| VMError::UnaryOperationError)?
             .unary_minus();
 
         self.push(JSValue::Number(number));
