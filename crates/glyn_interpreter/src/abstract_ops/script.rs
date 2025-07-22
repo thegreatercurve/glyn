@@ -110,7 +110,7 @@ pub(crate) fn global_declaration_instantiation(
     script: &ExecutableProgram,
     env_opt: Option<EnvironmentAddr>,
 ) -> CompletionRecord {
-    let env = env_opt.unwrap_or_else(|| unreachable!());
+    let env = env_opt.unwrap();
 
     // TODO: These are not correct and will require refinement.
     // 1. Let lexNames be the LexicallyDeclaredNames of script.
@@ -133,7 +133,7 @@ pub(crate) fn global_declaration_instantiation(
         if env
             .borrow_mut()
             .as_global_mut()
-            .unwrap_or_else(|| unreachable!())
+            .unwrap()
             .has_lexical_declaration(&JSString::from(name.to_owned()))
         {
             syntax_error("Lexical declaration already exists on the global environment.");
@@ -184,7 +184,7 @@ pub(crate) fn global_declaration_instantiation(
                 // 1. Perform ? env.CreateImmutableBinding(dn, true).
                 env.borrow_mut()
                     .as_global_mut()
-                    .unwrap_or_else(|| unreachable!())
+                    .unwrap()
                     .create_immutable_binding(JSString::from(d.to_owned()), true)?;
             }
             // ii. Else,
@@ -192,7 +192,7 @@ pub(crate) fn global_declaration_instantiation(
                 // 1. Perform ? env.CreateMutableBinding(dn, false).
                 env.borrow_mut()
                     .as_global_mut()
-                    .unwrap_or_else(|| unreachable!())
+                    .unwrap()
                     .create_mutable_binding(JSString::from(d.to_owned()), false)?;
             }
         }

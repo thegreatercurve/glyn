@@ -62,9 +62,7 @@ impl JSAgent {
         debug_assert!(!self.execution_contexts.is_empty());
 
         // An execution context is a specification device that is used to track the runtime evaluation of code by an ECMAScript implementation. At any point in time, there is at most one execution context per agent that is actually executing code. This is known as the agent's running execution context.
-        self.execution_contexts
-            .last()
-            .unwrap_or_else(|| unreachable!())
+        self.execution_contexts.last().unwrap()
     }
 
     pub(crate) fn current_realm(&self) -> RealmAddr {
@@ -76,9 +74,7 @@ impl JSAgent {
     }
 
     pub(crate) fn pop_execution_context(&mut self) -> ExecutionContext {
-        self.execution_contexts
-            .pop()
-            .unwrap_or_else(|| unreachable!())
+        self.execution_contexts.pop().unwrap()
     }
 }
 

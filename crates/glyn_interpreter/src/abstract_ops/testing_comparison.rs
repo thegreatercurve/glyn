@@ -89,7 +89,7 @@ pub(crate) fn same_value(x: &JSValue, y: &JSValue) -> bool {
     // 2. If x is a Number, then
     if let JSValue::Number(x) = x {
         // a. Return Number::sameValue(x, y).
-        return x.same_value(&JSNumber::try_from(y).unwrap_or_else(|_| unreachable!()));
+        return x.same_value(&JSNumber::try_from(y).unwrap());
     }
 
     // 3. Return SameValueNonNumber(x, y).

@@ -248,8 +248,8 @@ pub(crate) fn validate_and_apply_property_descriptor<T: ObjectMeta>(
             // i. If Desc has a [[Get]] field and SameValue(Desc.[[Get]], current.[[Get]]) is false, return false.
             if descriptor.get.is_some()
                 && !same_value(
-                    descriptor.get.as_ref().unwrap_or_else(|| unreachable!()),
-                    current.get.as_ref().unwrap_or_else(|| unreachable!()),
+                    descriptor.get.as_ref().unwrap(),
+                    current.get.as_ref().unwrap(),
                 )
             {
                 return false;
@@ -258,8 +258,8 @@ pub(crate) fn validate_and_apply_property_descriptor<T: ObjectMeta>(
             // ii. If Desc has a [[Set]] field and SameValue(Desc.[[Set]], current.[[Set]]) is false, return false.
             if descriptor.set.is_some()
                 && !same_value(
-                    descriptor.set.as_ref().unwrap_or_else(|| unreachable!()),
-                    current.set.as_ref().unwrap_or_else(|| unreachable!()),
+                    descriptor.set.as_ref().unwrap(),
+                    current.set.as_ref().unwrap(),
                 )
             {
                 return false;
@@ -275,8 +275,8 @@ pub(crate) fn validate_and_apply_property_descriptor<T: ObjectMeta>(
             // ii. If Desc has a [[Value]] field and SameValue(Desc.[[Value]], current.[[Value]]) is false, return false.
             if descriptor.value.is_some()
                 && !same_value(
-                    descriptor.value.as_ref().unwrap_or_else(|| unreachable!()),
-                    current.value.as_ref().unwrap_or_else(|| unreachable!()),
+                    descriptor.value.as_ref().unwrap(),
+                    current.value.as_ref().unwrap(),
                 )
             {
                 return false;
@@ -290,16 +290,16 @@ pub(crate) fn validate_and_apply_property_descriptor<T: ObjectMeta>(
         if current.is_data_descriptor() && descriptor.is_accessor_descriptor() {
             // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
             let configurable = if descriptor.configurable.is_some() {
-                descriptor.configurable.unwrap_or_else(|| unreachable!())
+                descriptor.configurable.unwrap()
             } else {
-                current.configurable.unwrap_or_else(|| unreachable!())
+                current.configurable.unwrap()
             };
 
             // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
             let enumerable = if descriptor.enumerable.is_some() {
-                descriptor.enumerable.unwrap_or_else(|| unreachable!())
+                descriptor.enumerable.unwrap()
             } else {
-                current.enumerable.unwrap_or_else(|| unreachable!())
+                current.enumerable.unwrap()
             };
 
             // iii. Replace the property named P of object O with an accessor property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Get]] and [[Set]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
@@ -318,16 +318,16 @@ pub(crate) fn validate_and_apply_property_descriptor<T: ObjectMeta>(
         else if current.is_accessor_descriptor() && descriptor.is_data_descriptor() {
             // i. If Desc has a [[Configurable]] field, let configurable be Desc.[[Configurable]]; else let configurable be current.[[Configurable]].
             let configurable = if descriptor.configurable.is_some() {
-                descriptor.configurable.unwrap_or_else(|| unreachable!())
+                descriptor.configurable.unwrap()
             } else {
-                current.configurable.unwrap_or_else(|| unreachable!())
+                current.configurable.unwrap()
             };
 
             // ii. If Desc has a [[Enumerable]] field, let enumerable be Desc.[[Enumerable]]; else let enumerable be current.[[Enumerable]].
             let enumerable = if descriptor.enumerable.is_some() {
-                descriptor.enumerable.unwrap_or_else(|| unreachable!())
+                descriptor.enumerable.unwrap()
             } else {
-                current.enumerable.unwrap_or_else(|| unreachable!())
+                current.enumerable.unwrap()
             };
 
             // iii. Replace the property named P of object O with a data property whose [[Configurable]] and [[Enumerable]] attributes are set to configurable and enumerable, respectively, and whose [[Value]] and [[Writable]] attributes are set to the value of the corresponding field in Desc if Desc has that field, or to the attribute's default value otherwise.
@@ -406,7 +406,7 @@ pub(crate) fn ordinary_get<T: ObjectMeta + ObjectEssentialInternalMethods>(
 
     // 3. If IsDataDescriptor(desc) is true, return desc.[[Value]].
     if desc.is_data_descriptor() {
-        return Ok(desc.value.unwrap_or_else(|| unreachable!()));
+        return Ok(desc.value.unwrap());
     }
 
     // 4. Assert: IsAccessorDescriptor(desc) is true.
@@ -421,7 +421,7 @@ pub(crate) fn ordinary_get<T: ObjectMeta + ObjectEssentialInternalMethods>(
     }
 
     // 7. Return ? Call(getter, Receiver).
-    call(getter.unwrap_or_else(|| unreachable!()), receiver, None)
+    call(getter.unwrap(), receiver, None)
 }
 
 /// 10.1.9.1 OrdinarySet ( O, P, V, Receiver )
@@ -532,11 +532,7 @@ pub(crate) fn ordinary_set_with_own_descriptor<T: ObjectMeta + ObjectEssentialIn
     }
 
     // 6. Perform ? Call(setter, Receiver, « V »).
-    call(
-        setter.unwrap_or_else(|| unreachable!()),
-        &receiver,
-        Some(vec![value]),
-    )?;
+    call(setter.unwrap(), &receiver, Some(vec![value]))?;
 
     // 7. Return true.
     Ok(true)
@@ -559,10 +555,7 @@ pub(crate) fn ordinary_delete<T: ObjectMeta + ObjectEssentialInternalMethods>(
     // 3. If desc.[[Configurable]] is true, then
     if desc.configurable.unwrap_or(false) {
         // a. Remove the own property with name P from O.
-        let property = object
-            .data()
-            .find_property_index(key)
-            .unwrap_or_else(|| unreachable!());
+        let property = object.data().find_property_index(key).unwrap();
 
         object.data_mut().delete_property(property);
 
@@ -589,7 +582,7 @@ pub(crate) fn ordinary_own_property_keys<T: ObjectMeta>(object: &T) -> Vec<JSObj
     }
 
     // Ascending numeric index order.
-    keys.sort_by_key(|key| key.as_array_index().unwrap_or_else(|| unreachable!()));
+    keys.sort_by_key(|key| key.as_array_index().unwrap());
 
     // 3. For each own property key P of O such that P is a String and P is not an array index, in ascending chronological order of property creation, do
     for key in object.data().keys() {
