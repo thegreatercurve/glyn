@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use crate::{
     runtime::{
         agent::{reference_error, type_error},
-        completion::CompletionRecord,
-        environment::{EnvironmentAddr, EnvironmentMethods},
+        completion::{throw_completion, CompletionRecord, ThrowCompletion},
+        environment::{Environment, EnvironmentAddr, EnvironmentMethods},
     },
     value::{object::ObjectAddr, string::JSString},
     JSValue,
 };
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Binding {
     value: Option<JSValue>,
     mutable: bool,
@@ -20,7 +20,7 @@ pub(crate) struct Binding {
 
 /// 9.1.1.1 Declarative Environment Records
 /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct DeclEnvironment {
     /// [[OuterEnv]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-declarative-environment-records
@@ -219,5 +219,18 @@ impl EnvironmentMethods for DeclEnvironment {
     fn with_base_object(&self) -> Option<ObjectAddr> {
         // 1. Return undefined.
         None
+    }
+}
+
+impl TryFrom<EnvironmentAddr> for DeclEnvironment {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
+        match value.borrow_mut().clone() {
+            Environment::Declarative(decl_env) => Ok(decl_env),
+            _ => throw_completion(
+                "Expected Environment::Declarative for conversion to DeclarativeEnvironment",
+            ),
+        }
     }
 }

@@ -1,4 +1,3 @@
-use crate::runtime::completion::ThrowCompletion;
 use crate::value::big_int::JSBigInt;
 use crate::value::number::JSNumber;
 use crate::value::object::ObjectAddr;
@@ -46,20 +45,6 @@ impl JSValue {
         matches!(self, JSValue::String(_))
     }
 
-    pub(crate) fn as_string(&self) -> Option<&JSString> {
-        match self {
-            JSValue::String(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn as_string_mut(&mut self) -> Option<&mut JSString> {
-        match self {
-            JSValue::String(value) => Some(value),
-            _ => None,
-        }
-    }
-
     pub(crate) fn is_number(&self) -> bool {
         matches!(self, JSValue::Number(_))
     }
@@ -68,33 +53,12 @@ impl JSValue {
         matches!(self, JSValue::BigInt(_))
     }
 
-    pub(crate) fn as_big_int(&self) -> Option<&JSBigInt> {
-        match self {
-            JSValue::BigInt(value) => Some(value),
-            _ => None,
-        }
-    }
-
-    pub(crate) fn as_big_int_mut(&mut self) -> Option<&mut JSBigInt> {
-        match self {
-            JSValue::BigInt(value) => Some(value),
-            _ => None,
-        }
-    }
-
     pub(crate) fn is_object(&self) -> bool {
         matches!(self, JSValue::Object(_))
     }
 
     pub(crate) fn is_symbol(&self) -> bool {
         matches!(self, JSValue::Symbol(_))
-    }
-
-    pub(crate) fn as_symbol(&self) -> Option<&JSSymbol> {
-        match self {
-            JSValue::Symbol(value) => Some(value),
-            _ => None,
-        }
     }
 }
 

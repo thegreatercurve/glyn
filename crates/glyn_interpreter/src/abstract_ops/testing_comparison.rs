@@ -2,8 +2,10 @@ use crate::{
     abstract_ops::type_conversion::{to_number, to_numeric, to_primitive, PreferredPrimType},
     runtime::{agent::type_error, completion::CompletionRecord},
     value::{
+        big_int::JSBigInt,
         number::JSNumber,
         object::{ObjectAddr, ObjectMeta},
+        string::JSString,
     },
     JSValue,
 };
@@ -157,7 +159,7 @@ pub(crate) fn is_less_than(
     }
 
     // 3. If px is a String and py is a String, then
-    if let (Some(px_str), Some(py_str)) = (px.as_string(), py.as_string()) {
+    if let (Ok(px_str), Ok(py_str)) = (JSString::try_from(&px), JSString::try_from(&py)) {
         // a. Let lx be the length of px.
         let lx = px_str.utf16_len();
 
@@ -192,7 +194,7 @@ pub(crate) fn is_less_than(
     // 4. Else,
     else {
         // a. If px is a BigInt and py is a String, then
-        if let (Some(px_bigint), Some(py_str)) = (px.as_big_int(), py.as_string()) {
+        if let (Ok(px_bigint), Ok(py_str)) = (JSBigInt::try_from(&px), JSString::try_from(&py)) {
             // i. Let ny be StringToBigInt(py).
             // ii. If ny is undefined, return undefined.
             // iii. Return BigInt::lessThan(px, ny).
@@ -200,7 +202,7 @@ pub(crate) fn is_less_than(
         }
 
         // b. If px is a String and py is a BigInt, then
-        if let (Some(px_str), Some(py_bigint)) = (px.as_string(), py.as_big_int()) {
+        if let (Ok(px_str), Ok(py_bigint)) = (JSString::try_from(&px), JSBigInt::try_from(&py)) {
             // i. Let nx be StringToBigInt(px).
             // ii. If nx is undefined, return undefined.
             // iii. Return BigInt::lessThan(nx, py).

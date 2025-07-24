@@ -5,8 +5,8 @@ use crate::{
     },
     runtime::{
         agent::{reference_error, WELL_KNOWN_SYMBOLS_UNSCOPABLES},
-        completion::CompletionRecord,
-        environment::{EnvironmentAddr, EnvironmentMethods},
+        completion::{throw_completion, CompletionRecord, ThrowCompletion},
+        environment::{Environment, EnvironmentAddr, EnvironmentMethods},
     },
     value::{
         object::{
@@ -20,7 +20,7 @@ use crate::{
 
 /// 9.1.1.2 Object Environment Records
 /// https://262.ecma-international.org/16.0/#sec-object-environment-records
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct ObjEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -206,5 +206,18 @@ impl EnvironmentMethods for ObjEnvironment {
 
         // 2. Otherwise, return undefined.
         None
+    }
+}
+
+impl TryFrom<EnvironmentAddr> for ObjEnvironment {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
+        match value.borrow_mut().clone() {
+            Environment::Object(object_env) => Ok(object_env),
+            _ => {
+                throw_completion("Expected Environment::Object for conversion to ObjectEnvironment")
+            }
+        }
     }
 }

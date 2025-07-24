@@ -2,10 +2,9 @@ use std::collections::HashMap;
 
 use crate::{
     runtime::{environment::EnvironmentAddr, realm::RealmAddr},
+    value::object::ObjectAddr,
     value::{string::JSString, JSValue},
 };
-
-use super::ObjectAddr;
 
 pub(crate) type BehaviourFn = fn(Vec<JSValue>) -> JSValue;
 

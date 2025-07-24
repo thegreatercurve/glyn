@@ -5,10 +5,10 @@ use crate::{
     },
     runtime::{
         agent::type_error,
-        completion::CompletionRecord,
+        completion::{throw_completion, CompletionRecord, ThrowCompletion},
         environment::{
             declarative_environment::DeclEnvironment, object_environment::ObjEnvironment,
-            EnvironmentAddr, EnvironmentMethods,
+            Environment, EnvironmentAddr, EnvironmentMethods,
         },
     },
     value::{
@@ -23,7 +23,7 @@ use crate::{
 
 /// 9.1.1.4 Global Environment Records
 /// https://262.ecma-international.org/16.0/#sec-global-environment-records
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct GlobalEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -370,5 +370,18 @@ impl GlobalEnvironment {
 
         // 8. Return unused.
         Ok(())
+    }
+}
+
+impl TryFrom<EnvironmentAddr> for GlobalEnvironment {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
+        match value.borrow_mut().clone() {
+            Environment::Global(global_object) => Ok(global_object),
+            _ => {
+                throw_completion("Expected Environment::Global for conversion to GlobalEnvironment")
+            }
+        }
     }
 }

@@ -66,7 +66,7 @@ pub(crate) trait EnvironmentMethods {
 
 /// 9.1.1 The Environment Record Type Hierarchy
 /// https://262.ecma-international.org/16.0/#sec-the-environment-record-type-hierarchy
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum Environment {
     /// 9.1.1.1 Declarative Environment Records
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
@@ -83,15 +83,6 @@ pub(crate) enum Environment {
     /// 9.1.1.4 Global Environment Records
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records
     Global(GlobalEnvironment),
-}
-
-impl Environment {
-    pub(crate) fn as_global_mut(&mut self) -> Option<&mut GlobalEnvironment> {
-        match self {
-            Environment::Global(global_environment) => Some(global_environment),
-            _ => None,
-        }
-    }
 }
 
 pub(crate) type EnvironmentAddr = Gc<Environment>;

@@ -1,9 +1,10 @@
 use crate::{
     runtime::{
         agent::reference_error,
-        completion::CompletionRecord,
+        completion::{throw_completion, CompletionRecord, ThrowCompletion},
         environment::{
-            declarative_environment::DeclEnvironment, EnvironmentAddr, EnvironmentMethods,
+            declarative_environment::DeclEnvironment, Environment, EnvironmentAddr,
+            EnvironmentMethods,
         },
     },
     value::{
@@ -13,7 +14,7 @@ use crate::{
     JSValue,
 };
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub enum ThisBindingStatus {
     Lexical,
     Initialized,
@@ -21,9 +22,9 @@ pub enum ThisBindingStatus {
     Uninitialized,
 }
 
-/// 9.1.1.2 Function Environment Records
+/// 9.1.1.3 Function Environment Records
 /// https://262.ecma-international.org/16.0/#sec-function-environment-records
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct FuncEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -173,5 +174,18 @@ impl FuncEnvironment {
 
         // 4. Return ! home.[[GetPrototypeOf]]().
         home.get_prototype_of()
+    }
+}
+
+impl TryFrom<EnvironmentAddr> for FuncEnvironment {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
+        match value.borrow_mut().clone() {
+            Environment::Function(function_env) => Ok(function_env),
+            _ => {
+                throw_completion("Expected Environment::Function for conversion to FuncEnvironment")
+            }
+        }
     }
 }

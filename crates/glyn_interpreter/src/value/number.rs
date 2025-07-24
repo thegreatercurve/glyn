@@ -1,4 +1,8 @@
-use crate::{value::string::JSString, JSValue};
+use crate::{
+    runtime::completion::{throw_completion, ThrowCompletion},
+    value::string::JSString,
+    JSValue,
+};
 
 /// 6.1.6.1 The Number Type
 /// https://262.ecma-international.org/16.0/#sec-numeric-types-number
@@ -392,37 +396,34 @@ impl JSNumber {
 }
 
 impl TryFrom<JSString> for JSNumber {
-    type Error = JSString;
+    type Error = ThrowCompletion;
 
     fn try_from(value: JSString) -> Result<Self, Self::Error> {
-        if let Ok(number) = value.0.parse::<f64>() {
-            Ok(JSNumber(number))
-        } else {
-            Err(format!("Invalid number: {}", value.0).into())
+        match value.0.parse::<f64>() {
+            Ok(number) => Ok(JSNumber(number)),
+            Err(_) => throw_completion(&format!("Invalid number conversion: {}", value.0)),
         }
     }
 }
 
 impl TryFrom<JSValue> for JSNumber {
-    type Error = JSValue;
+    type Error = ThrowCompletion;
 
     fn try_from(value: JSValue) -> Result<Self, Self::Error> {
-        if let JSValue::Number(number) = value {
-            Ok(number)
-        } else {
-            Err(value)
+        match value {
+            JSValue::Number(number) => Ok(number),
+            _ => throw_completion("Expected JSValue::Number for conversion to JSNumber"),
         }
     }
 }
 
 impl TryFrom<&JSValue> for JSNumber {
-    type Error = JSValue;
+    type Error = ThrowCompletion;
 
     fn try_from(value: &JSValue) -> Result<Self, Self::Error> {
-        if let JSValue::Number(number) = value {
-            Ok(number.clone())
-        } else {
-            Err(value.clone())
+        match value {
+            JSValue::Number(number) => Ok(number.clone()),
+            _ => throw_completion("Expected JSValue::Number for conversion to JSNumber"),
         }
     }
 }

@@ -3,6 +3,7 @@ use std::cmp::min;
 use crate::abstract_ops::object_operations::get_method;
 use crate::runtime::agent::{range_error, type_error, WELL_KNOWN_SYMBOLS_TO_PRIMITIVE};
 use crate::runtime::completion::CompletionRecord;
+use crate::value::symbol::JSSymbol;
 use crate::value::{
     number::JSNumber,
     object::{property::JSObjectPropKey, ObjectAddr},
@@ -212,8 +213,8 @@ pub(crate) fn to_uint32(argument: JSValue) -> CompletionRecord<JSNumber> {
 /// https://262.ecma-international.org/16.0/#sec-tostring
 pub(crate) fn to_string(argument: JSValue) -> CompletionRecord<JSString> {
     // 1. If argument is a String, return argument.
-    if let Some(string) = argument.as_string() {
-        return Ok(string.clone());
+    if let Ok(string) = JSString::try_from(&argument) {
+        return Ok(string);
     }
 
     // 2. If argument is a Symbol, throw a TypeError exception.
@@ -298,9 +299,9 @@ pub(crate) fn to_property_key(argument: JSValue) -> CompletionRecord<JSObjectPro
     let key = to_primitive(argument, PreferredPrimType::String)?;
 
     // 2. If key is a Symbol, then
-    if let Some(symbol) = key.as_symbol() {
+    if let Ok(key) = JSSymbol::try_from(&key) {
         // a. Return key.
-        return Ok(JSObjectPropKey::Symbol(symbol.clone()));
+        return Ok(JSObjectPropKey::Symbol(key));
     }
 
     // 3. Return ! ToString(key).

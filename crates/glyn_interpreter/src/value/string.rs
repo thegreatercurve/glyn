@@ -45,6 +45,28 @@ impl From<&str> for JSString {
     }
 }
 
+impl TryFrom<JSValue> for JSString {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: JSValue) -> Result<Self, Self::Error> {
+        match value {
+            JSValue::String(value) => Ok(value),
+            _ => throw_completion("Expected a JSValue::String for conversion to JSString"),
+        }
+    }
+}
+
+impl TryFrom<&JSValue> for JSString {
+    type Error = ThrowCompletion;
+
+    fn try_from(value: &JSValue) -> Result<Self, Self::Error> {
+        match value {
+            JSValue::String(value) => Ok(value.clone()),
+            _ => throw_completion("Expected a JSValue::String for conversion to JSString"),
+        }
+    }
+}
+
 impl TryFrom<&ReferenceName> for JSString {
     type Error = ThrowCompletion;
 
