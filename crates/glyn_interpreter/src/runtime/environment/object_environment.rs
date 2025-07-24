@@ -21,7 +21,7 @@ use crate::{
 /// 9.1.1.2 Object Environment Records
 /// https://262.ecma-international.org/16.0/#sec-object-environment-records
 #[derive(Clone, Debug)]
-pub(crate) struct ObjEnvironment {
+pub(crate) struct ObjectEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
 
@@ -32,7 +32,7 @@ pub(crate) struct ObjEnvironment {
     pub(crate) is_with_environment: bool,
 }
 
-impl EnvironmentMethods for ObjEnvironment {
+impl EnvironmentMethods for ObjectEnvironment {
     /// 9.1.1.2.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-hasbinding-n
     fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
@@ -209,7 +209,7 @@ impl EnvironmentMethods for ObjEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for ObjEnvironment {
+impl TryFrom<EnvironmentAddr> for ObjectEnvironment {
     type Error = ThrowCompletion;
 
     fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {

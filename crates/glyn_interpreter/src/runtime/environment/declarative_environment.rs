@@ -21,7 +21,7 @@ pub(crate) struct Binding {
 /// 9.1.1.1 Declarative Environment Records
 /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
 #[derive(Clone, Debug, Default)]
-pub(crate) struct DeclEnvironment {
+pub(crate) struct DeclarativeEnvironment {
     /// [[OuterEnv]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-declarative-environment-records
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -29,7 +29,7 @@ pub(crate) struct DeclEnvironment {
     bindings: HashMap<JSString, Binding>,
 }
 
-impl DeclEnvironment {
+impl DeclarativeEnvironment {
     fn binding(&self, name: &JSString) -> &Binding {
         self.bindings.get(name).unwrap()
     }
@@ -67,7 +67,7 @@ impl DeclEnvironment {
     }
 }
 
-impl EnvironmentMethods for DeclEnvironment {
+impl EnvironmentMethods for DeclarativeEnvironment {
     /// 9.1.1.1.1 HasBinding ( N )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-hasbinding-n
     fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
@@ -222,7 +222,7 @@ impl EnvironmentMethods for DeclEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for DeclEnvironment {
+impl TryFrom<EnvironmentAddr> for DeclarativeEnvironment {
     type Error = ThrowCompletion;
 
     fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {

@@ -3,10 +3,10 @@ use crate::{
     runtime::{
         completion::CompletionRecord,
         environment::{
-            declarative_environment::DeclEnvironment,
-            function_environment::{FuncEnvironment, ThisBindingStatus},
+            declarative_environment::DeclarativeEnvironment,
+            function_environment::{FunctionEnvironment, ThisBindingStatus},
             global_environment::GlobalEnvironment,
-            object_environment::ObjEnvironment,
+            object_environment::ObjectEnvironment,
             Environment, EnvironmentAddr, EnvironmentMethods,
         },
         reference::{Reference, ReferenceBase, ReferenceName},
@@ -61,7 +61,7 @@ pub(crate) fn get_identifier_reference(
 /// https://262.ecma-international.org/16.0/#sec-newdeclarativeenvironment
 pub(crate) fn new_declarative_environment(outer_env: Option<EnvironmentAddr>) -> EnvironmentAddr {
     // 1. Let env be a new Declarative Environment Record containing no bindings.
-    let mut env = DeclEnvironment::default();
+    let mut env = DeclarativeEnvironment::default();
 
     // 2. Set env.[[OuterEnv]] to E.
     env.outer_env = outer_env;
@@ -78,7 +78,7 @@ pub(crate) fn new_object_environment(
     outer_env: Option<EnvironmentAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Object Environment Record.
-    let env = ObjEnvironment {
+    let env = ObjectEnvironment {
         // 2. Set env.[[BindingObject]] to O.
         binding_object: binding_object.addr(),
 
@@ -100,7 +100,7 @@ pub(crate) fn new_function_environment(
     new_target: Option<ObjectAddr>,
 ) -> EnvironmentAddr {
     // 1. Let env be a new Function Environment Record containing no bindings.
-    let env = FuncEnvironment {
+    let env = FunctionEnvironment {
         // 2. Set env.[[FunctionObject]] to F.
         function_object: Some(function_obj.addr()),
 
@@ -115,7 +115,7 @@ pub(crate) fn new_function_environment(
         // 6. Set env.[[OuterEnv]] to F.[[Environment]].
         outer_env: function_obj.data().slots().environment(),
 
-        decl_env: DeclEnvironment::default(),
+        decl_env: DeclarativeEnvironment::default(),
 
         this_value: None,
     };
@@ -131,19 +131,19 @@ pub(crate) fn new_global_environment(
     this_value: &ObjectAddr,
 ) -> EnvironmentAddr {
     // Let objRec be NewObjectEnvironment(G, false, null).
-    let obj_env = ObjEnvironment {
+    let obj_rec = ObjectEnvironment {
         binding_object: global_object.addr(),
         is_with_environment: false,
         outer_env: None,
     };
 
     // 2. Let dclRec be NewDeclarativeEnvironment(null).
-    let decl_env = DeclEnvironment::default();
+    let decl_env = DeclarativeEnvironment::default();
 
     // 3. Let env be a new Global Environment Record.
     let env = GlobalEnvironment {
         // 4. Set env.[[ObjectRecord]] to objRec.
-        object_record: obj_env,
+        object_record: obj_rec,
 
         // 5. Set env.[[GlobalThisValue]] to thisValue.
         global_this_value: Some(this_value.addr()),

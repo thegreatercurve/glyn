@@ -3,7 +3,7 @@ use crate::{
         agent::reference_error,
         completion::{throw_completion, CompletionRecord, ThrowCompletion},
         environment::{
-            declarative_environment::DeclEnvironment, Environment, EnvironmentAddr,
+            declarative_environment::DeclarativeEnvironment, Environment, EnvironmentAddr,
             EnvironmentMethods,
         },
     },
@@ -25,10 +25,10 @@ pub enum ThisBindingStatus {
 /// 9.1.1.3 Function Environment Records
 /// https://262.ecma-international.org/16.0/#sec-function-environment-records
 #[derive(Clone, Debug, Default)]
-pub(crate) struct FuncEnvironment {
+pub(crate) struct FunctionEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
-    pub(crate) decl_env: DeclEnvironment,
+    pub(crate) decl_env: DeclarativeEnvironment,
 
     /// [[ThisValue]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-function-environment-records
@@ -47,7 +47,7 @@ pub(crate) struct FuncEnvironment {
     pub(crate) new_target: Option<ObjectAddr>,
 }
 
-impl EnvironmentMethods for FuncEnvironment {
+impl EnvironmentMethods for FunctionEnvironment {
     fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
         self.decl_env.has_binding(name)
     }
@@ -95,7 +95,7 @@ impl EnvironmentMethods for FuncEnvironment {
     }
 }
 
-impl FuncEnvironment {
+impl FunctionEnvironment {
     /// 9.1.1.3.1 BindThisValue ( envRec, V )
     /// https://262.ecma-international.org/16.0/#sec-bindthisvalue
     pub(crate) fn bind_this_value(&mut self, value: JSValue) -> CompletionRecord {
@@ -177,7 +177,7 @@ impl FuncEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for FuncEnvironment {
+impl TryFrom<EnvironmentAddr> for FunctionEnvironment {
     type Error = ThrowCompletion;
 
     fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {

@@ -7,7 +7,7 @@ use crate::{
         agent::type_error,
         completion::{throw_completion, CompletionRecord, ThrowCompletion},
         environment::{
-            declarative_environment::DeclEnvironment, object_environment::ObjEnvironment,
+            declarative_environment::DeclarativeEnvironment, object_environment::ObjectEnvironment,
             Environment, EnvironmentAddr, EnvironmentMethods,
         },
     },
@@ -29,10 +29,10 @@ pub(crate) struct GlobalEnvironment {
     pub(crate) outer_env: Option<EnvironmentAddr>,
 
     /// [[DeclarativeRecord]]
-    pub(crate) declarative_record: DeclEnvironment,
+    pub(crate) declarative_record: DeclarativeEnvironment,
 
     /// [[ObjectRecord]]
-    pub(crate) object_record: ObjEnvironment,
+    pub(crate) object_record: ObjectEnvironment,
 
     /// [[GlobalThisValue]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-global-environment-records

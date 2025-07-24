@@ -10,8 +10,9 @@ use crate::{
     runtime::{
         completion::CompletionRecord,
         environment::{
-            declarative_environment::DeclEnvironment, function_environment::FuncEnvironment,
-            global_environment::GlobalEnvironment, object_environment::ObjEnvironment,
+            declarative_environment::DeclarativeEnvironment,
+            function_environment::FunctionEnvironment, global_environment::GlobalEnvironment,
+            object_environment::ObjectEnvironment,
         },
     },
     value::{object::ObjectAddr, string::JSString, JSValue},
@@ -70,15 +71,15 @@ pub(crate) trait EnvironmentMethods {
 pub(crate) enum Environment {
     /// 9.1.1.1 Declarative Environment Records
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
-    Declarative(DeclEnvironment),
+    Declarative(DeclarativeEnvironment),
 
     /// 9.1.1.2 Object Environment Records
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records
-    Object(ObjEnvironment),
+    Object(ObjectEnvironment),
 
     /// 9.1.1.3 Function Environment Records
     /// https://262.ecma-international.org/16.0/#sec-function-environment-records
-    Function(FuncEnvironment),
+    Function(FunctionEnvironment),
 
     /// 9.1.1.4 Global Environment Records
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records
@@ -90,10 +91,10 @@ pub(crate) type EnvironmentAddr = Gc<Environment>;
 impl EnvironmentAddr {
     pub(crate) fn outer(&self) -> Option<EnvironmentAddr> {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => decl_environment.outer_env.clone(),
-            Environment::Object(obj_environment) => obj_environment.outer_env.clone(),
-            Environment::Function(func_environment) => func_environment.outer_env.clone(),
-            Environment::Global(global_environment) => global_environment.outer_env.clone(),
+            Environment::Declarative(declarative_env) => declarative_env.outer_env.clone(),
+            Environment::Object(object_env) => object_env.outer_env.clone(),
+            Environment::Function(function_env) => function_env.outer_env.clone(),
+            Environment::Global(global_env) => global_env.outer_env.clone(),
         }
     }
 }
@@ -101,59 +102,47 @@ impl EnvironmentAddr {
 impl EnvironmentMethods for EnvironmentAddr {
     fn has_binding(&self, name: &JSString) -> CompletionRecord<bool> {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => decl_environment.has_binding(name),
-            Environment::Object(obj_environment) => obj_environment.has_binding(name),
-            Environment::Function(func_environment) => func_environment.has_binding(name),
-            Environment::Global(global_environment) => global_environment.has_binding(name),
+            Environment::Declarative(declarative_env) => declarative_env.has_binding(name),
+            Environment::Object(object_env) => object_env.has_binding(name),
+            Environment::Function(function_env) => function_env.has_binding(name),
+            Environment::Global(global_env) => global_env.has_binding(name),
         }
     }
 
     fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
-            Environment::Declarative(decl_environment) => {
-                decl_environment.create_mutable_binding(name, deletable)
+            Environment::Declarative(declarative_env) => {
+                declarative_env.create_mutable_binding(name, deletable)
             }
-            Environment::Object(obj_environment) => {
-                obj_environment.create_mutable_binding(name, deletable)
+            Environment::Object(object_env) => object_env.create_mutable_binding(name, deletable),
+            Environment::Function(function_env) => {
+                function_env.create_mutable_binding(name, deletable)
             }
-            Environment::Function(func_environment) => {
-                func_environment.create_mutable_binding(name, deletable)
-            }
-            Environment::Global(global_environment) => {
-                global_environment.create_mutable_binding(name, deletable)
-            }
+            Environment::Global(global_env) => global_env.create_mutable_binding(name, deletable),
         }
     }
 
     fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
-            Environment::Declarative(decl_environment) => {
-                decl_environment.create_immutable_binding(name, strict)
+            Environment::Declarative(declarative_env) => {
+                declarative_env.create_immutable_binding(name, strict)
             }
-            Environment::Object(obj_environment) => {
-                obj_environment.create_immutable_binding(name, strict)
+            Environment::Object(object_env) => object_env.create_immutable_binding(name, strict),
+            Environment::Function(function_env) => {
+                function_env.create_immutable_binding(name, strict)
             }
-            Environment::Function(func_environment) => {
-                func_environment.create_immutable_binding(name, strict)
-            }
-            Environment::Global(global_environment) => {
-                global_environment.create_immutable_binding(name, strict)
-            }
+            Environment::Global(global_env) => global_env.create_immutable_binding(name, strict),
         }
     }
 
     fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
-            Environment::Declarative(decl_environment) => {
-                decl_environment.initialize_binding(name, value)
+            Environment::Declarative(declarative_env) => {
+                declarative_env.initialize_binding(name, value)
             }
-            Environment::Object(obj_environment) => obj_environment.initialize_binding(name, value),
-            Environment::Function(func_environment) => {
-                func_environment.initialize_binding(name, value)
-            }
-            Environment::Global(global_environment) => {
-                global_environment.initialize_binding(name, value)
-            }
+            Environment::Object(object_env) => object_env.initialize_binding(name, value),
+            Environment::Function(function_env) => function_env.initialize_binding(name, value),
+            Environment::Global(global_env) => global_env.initialize_binding(name, value),
         }
     }
 
@@ -164,69 +153,61 @@ impl EnvironmentMethods for EnvironmentAddr {
         strict: bool,
     ) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
-            Environment::Declarative(decl_environment) => {
-                decl_environment.set_mutable_binding(name, value, strict)
+            Environment::Declarative(declarative_env) => {
+                declarative_env.set_mutable_binding(name, value, strict)
             }
-            Environment::Object(obj_environment) => {
-                obj_environment.set_mutable_binding(name, value, strict)
+            Environment::Object(object_env) => object_env.set_mutable_binding(name, value, strict),
+            Environment::Function(function_env) => {
+                function_env.set_mutable_binding(name, value, strict)
             }
-            Environment::Function(func_environment) => {
-                func_environment.set_mutable_binding(name, value, strict)
-            }
-            Environment::Global(global_environment) => {
-                global_environment.set_mutable_binding(name, value, strict)
-            }
+            Environment::Global(global_env) => global_env.set_mutable_binding(name, value, strict),
         }
     }
 
     fn get_binding_value(&self, name: &JSString, strict: bool) -> CompletionRecord<JSValue> {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => {
-                decl_environment.get_binding_value(name, strict)
+            Environment::Declarative(declarative_env) => {
+                declarative_env.get_binding_value(name, strict)
             }
-            Environment::Object(obj_environment) => obj_environment.get_binding_value(name, strict),
-            Environment::Function(func_environment) => {
-                func_environment.get_binding_value(name, strict)
-            }
-            Environment::Global(global_environment) => {
-                global_environment.get_binding_value(name, strict)
-            }
+            Environment::Object(object_env) => object_env.get_binding_value(name, strict),
+            Environment::Function(function_env) => function_env.get_binding_value(name, strict),
+            Environment::Global(global_env) => global_env.get_binding_value(name, strict),
         }
     }
 
     fn delete_binding(&mut self, name: &JSString) -> CompletionRecord<bool> {
         match self.borrow_mut().deref_mut() {
-            Environment::Declarative(decl_environment) => decl_environment.delete_binding(name),
-            Environment::Object(obj_environment) => obj_environment.delete_binding(name),
-            Environment::Function(func_environment) => func_environment.delete_binding(name),
-            Environment::Global(global_environment) => global_environment.delete_binding(name),
+            Environment::Declarative(declarative_env) => declarative_env.delete_binding(name),
+            Environment::Object(object_env) => object_env.delete_binding(name),
+            Environment::Function(function_env) => function_env.delete_binding(name),
+            Environment::Global(global_env) => global_env.delete_binding(name),
         }
     }
 
     fn has_this_binding(&self) -> bool {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => decl_environment.has_this_binding(),
-            Environment::Object(obj_environment) => obj_environment.has_this_binding(),
-            Environment::Function(func_environment) => func_environment.has_this_binding(),
-            Environment::Global(global_environment) => global_environment.has_this_binding(),
+            Environment::Declarative(declarative_env) => declarative_env.has_this_binding(),
+            Environment::Object(object_env) => object_env.has_this_binding(),
+            Environment::Function(function_env) => function_env.has_this_binding(),
+            Environment::Global(global_env) => global_env.has_this_binding(),
         }
     }
 
     fn has_super_binding(&self) -> bool {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => decl_environment.has_super_binding(),
-            Environment::Object(obj_environment) => obj_environment.has_super_binding(),
-            Environment::Function(func_environment) => func_environment.has_super_binding(),
-            Environment::Global(global_environment) => global_environment.has_super_binding(),
+            Environment::Declarative(declarative_env) => declarative_env.has_super_binding(),
+            Environment::Object(object_env) => object_env.has_super_binding(),
+            Environment::Function(function_env) => function_env.has_super_binding(),
+            Environment::Global(global_env) => global_env.has_super_binding(),
         }
     }
 
     fn with_base_object(&self) -> Option<ObjectAddr> {
         match self.borrow().deref() {
-            Environment::Declarative(decl_environment) => decl_environment.with_base_object(),
-            Environment::Object(obj_environment) => obj_environment.with_base_object(),
-            Environment::Function(func_environment) => func_environment.with_base_object(),
-            Environment::Global(global_environment) => global_environment.with_base_object(),
+            Environment::Declarative(declarative_env) => declarative_env.with_base_object(),
+            Environment::Object(object_env) => object_env.with_base_object(),
+            Environment::Function(function_env) => function_env.with_base_object(),
+            Environment::Global(global_env) => global_env.with_base_object(),
         }
     }
 }
