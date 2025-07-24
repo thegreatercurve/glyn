@@ -8,5 +8,5 @@ license.workspace = true
 glyn_unicode = { workspace = true }
 
 [[bin]]
-name = "eval_script"
-path = "src/bin/eval_script.rs"
+name = "cli"
+path = "src/bin/cli.rs"
