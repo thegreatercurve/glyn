@@ -23,7 +23,7 @@ use crate::{
 
 /// 9.1.1.4 Global Environment Records
 /// https://262.ecma-international.org/16.0/#sec-global-environment-records
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct GlobalEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -373,11 +373,11 @@ impl GlobalEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for GlobalEnvironment {
+impl<'a> TryFrom<&'a mut Environment> for &'a mut GlobalEnvironment {
     type Error = ThrowCompletion;
 
-    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
-        match value.borrow_mut().clone() {
+    fn try_from(value: &'a mut Environment) -> Result<&'a mut GlobalEnvironment, ThrowCompletion> {
+        match value {
             Environment::Global(global_object) => Ok(global_object),
             _ => {
                 throw_completion("Expected Environment::Global for conversion to GlobalEnvironment")

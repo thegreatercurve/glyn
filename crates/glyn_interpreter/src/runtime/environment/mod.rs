@@ -67,7 +67,7 @@ pub(crate) trait EnvironmentMethods {
 
 /// 9.1.1 The Environment Record Type Hierarchy
 /// https://262.ecma-international.org/16.0/#sec-the-environment-record-type-hierarchy
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) enum Environment {
     /// 9.1.1.1 Declarative Environment Records
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records

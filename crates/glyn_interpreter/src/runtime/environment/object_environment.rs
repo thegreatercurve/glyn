@@ -209,11 +209,11 @@ impl EnvironmentMethods for ObjectEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for ObjectEnvironment {
+impl<'a> TryFrom<&'a mut Environment> for &'a mut ObjectEnvironment {
     type Error = ThrowCompletion;
 
-    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
-        match value.borrow_mut().clone() {
+    fn try_from(value: &'a mut Environment) -> Result<&'a mut ObjectEnvironment, Self::Error> {
+        match value {
             Environment::Object(object_env) => Ok(object_env),
             _ => {
                 throw_completion("Expected Environment::Object for conversion to ObjectEnvironment")

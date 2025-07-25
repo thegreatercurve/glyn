@@ -6,8 +6,6 @@ use std::io::{self, Write};
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    run_eval("let i;");
-
     if args.len() == 1 {
         run_repl();
 

@@ -20,7 +20,7 @@ pub(crate) struct Binding {
 
 /// 9.1.1.1 Declarative Environment Records
 /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub(crate) struct DeclarativeEnvironment {
     /// [[OuterEnv]]
     /// https://262.ecma-international.org/16.0/#table-additional-fields-of-declarative-environment-records
@@ -222,11 +222,11 @@ impl EnvironmentMethods for DeclarativeEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for DeclarativeEnvironment {
+impl<'a> TryFrom<&'a mut Environment> for &'a mut DeclarativeEnvironment {
     type Error = ThrowCompletion;
 
-    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
-        match value.borrow_mut().clone() {
+    fn try_from(value: &'a mut Environment) -> Result<&'a mut DeclarativeEnvironment, Self::Error> {
+        match value {
             Environment::Declarative(decl_env) => Ok(decl_env),
             _ => throw_completion(
                 "Expected Environment::Declarative for conversion to DeclarativeEnvironment",

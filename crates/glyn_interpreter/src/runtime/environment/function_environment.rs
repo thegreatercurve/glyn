@@ -24,7 +24,7 @@ pub enum ThisBindingStatus {
 
 /// 9.1.1.3 Function Environment Records
 /// https://262.ecma-international.org/16.0/#sec-function-environment-records
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub(crate) struct FunctionEnvironment {
     /// [[OuterEnv]]
     pub(crate) outer_env: Option<EnvironmentAddr>,
@@ -177,15 +177,17 @@ impl FunctionEnvironment {
     }
 }
 
-impl TryFrom<EnvironmentAddr> for FunctionEnvironment {
+impl<'a> TryFrom<&'a mut Environment> for &'a mut FunctionEnvironment {
     type Error = ThrowCompletion;
 
-    fn try_from(value: EnvironmentAddr) -> Result<Self, Self::Error> {
-        match value.borrow_mut().clone() {
+    fn try_from(
+        value: &'a mut Environment,
+    ) -> Result<&'a mut FunctionEnvironment, ThrowCompletion> {
+        match value {
             Environment::Function(function_env) => Ok(function_env),
-            _ => {
-                throw_completion("Expected Environment::Function for conversion to FuncEnvironment")
-            }
+            _ => throw_completion(
+                "Expected Environment::Function for conversion to FunctionEnvironment",
+            ),
         }
     }
 }

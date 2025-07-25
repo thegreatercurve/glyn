@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use crate::{
     codegen::{bytecode::generator::ExecutableProgram, parser::Parser},
     lexer::Lexer,
@@ -84,7 +86,7 @@ pub(crate) fn script_evaluation(
     let script = &script_record.ecmascript_code;
 
     // 12. Let result be Completion(GlobalDeclarationInstantiation(script, globalEnv)).
-    global_declaration_instantiation(script, global_env)?;
+    global_declaration_instantiation(script, global_env.unwrap())?;
 
     // 13. If result is a normal completion, then
     // a. Set result to Completion(Evaluation of script).
@@ -108,9 +110,9 @@ pub(crate) fn script_evaluation(
 /// https://262.ecma-international.org/16.0/#sec-globaldeclarationinstantiation
 pub(crate) fn global_declaration_instantiation(
     script: &ExecutableProgram,
-    env_opt: Option<EnvironmentAddr>,
+    env_opt: EnvironmentAddr,
 ) -> CompletionRecord {
-    let env = env_opt.unwrap();
+    let mut env = env_opt.borrow_mut();
 
     // TODO: These are not correct and will require refinement.
     // 1. Let lexNames be the LexicallyDeclaredNames of script.
@@ -130,9 +132,8 @@ pub(crate) fn global_declaration_instantiation(
     // 3. For each element name of lexNames, do
     for name in &lex_names {
         // a. If HasLexicalDeclaration(env, name) is true, throw a SyntaxError exception.
-        if GlobalEnvironment::try_from(env.clone())?
-            .has_lexical_declaration(&JSString::from(name.to_owned()))
-        {
+        let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
+        if global_env.has_lexical_declaration(&JSString::from(name.to_owned())) {
             syntax_error("Lexical declaration already exists on the global environment.");
         }
 
@@ -179,14 +180,15 @@ pub(crate) fn global_declaration_instantiation(
             // i. If IsConstantDeclaration of d is true, then
             if d.is_constant_declaration() {
                 // 1. Perform ? env.CreateImmutableBinding(dn, true).
-                GlobalEnvironment::try_from(env.clone())?
-                    .create_immutable_binding(JSString::from(d.to_owned()), true)?;
+                // let env = &mut *env.borrow_mut();
+                let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
+                global_env.create_immutable_binding(JSString::from(d.to_owned()), true)?;
             }
             // ii. Else,
             else {
                 // 1. Perform ? env.CreateMutableBinding(dn, false).
-                GlobalEnvironment::try_from(env.clone())?
-                    .create_mutable_binding(JSString::from(d.to_owned()), false)?;
+                let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
+                global_env.create_mutable_binding(JSString::from(d.to_owned()), false)?;
             }
         }
     }
