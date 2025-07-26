@@ -102,6 +102,16 @@ impl<'a> VM<'a> {
             _ => return Err(VMError::UnexpectedInstruction),
         }?;
 
+        #[cfg(feature = "debug")]
+        {
+            println!("{}", instruction);
+            println!(
+                "Constants: {:?} | Identifiers: {:?} | Stack: {:?}",
+                self.program.constants, self.program.identifiers, self.stack
+            );
+            println!();
+        }
+
         Ok(())
     }
 
