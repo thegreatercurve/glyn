@@ -130,12 +130,12 @@ impl BytecodeGenerator {
 
     pub(crate) fn generate_binary_exp(&mut self, op_token: &Token) -> CodeGenResult {
         let instruction = match op_token {
-            Token::Plus => Instruction::Add,
-            Token::Minus => Instruction::Subtract,
-            Token::Multiply => Instruction::Multiply,
-            Token::Divide => Instruction::Divide,
-            Token::Exponent => Instruction::Exponent,
-            Token::Modulo => Instruction::Modulo,
+            Token::Plus => Instruction::BinAdd,
+            Token::Minus => Instruction::BinSubtract,
+            Token::Multiply => Instruction::BinMultiply,
+            Token::Divide => Instruction::BinDivide,
+            Token::Exponent => Instruction::BinExponent,
+            Token::Modulo => Instruction::BinModulo,
             Token::Equal => Instruction::Equal,
             Token::NotEqual => Instruction::NotEqual,
             Token::StrictEqual => Instruction::StrictEqual,
