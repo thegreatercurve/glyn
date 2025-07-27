@@ -1,20 +1,12 @@
 use crate::{
     codegen::{
-        bytecode::generator::LiteralType,
+        bytecode::instruction::Instruction,
         error::{CodeGenError, CodeGenResult},
         parser::Parser,
     },
     lexer::{BinOpPrecedence, Keyword, Token},
     value::string::JSString,
 };
-
-enum Literal {
-    True,
-    False,
-    Int64(f64),
-    String,
-    Null,
-}
 
 /// 13 ECMAScript Language: Expressions
 /// https://262.ecma-international.org/16.0/#sec-ecmascript-language-expressions
@@ -86,24 +78,42 @@ impl<'a> Parser<'a> {
     /// 13.2.3 Literals
     /// https://262.ecma-international.org/16.0/#prod-Literal
     fn js_parse_literal(&mut self) -> CodeGenResult {
-        let literal_type = match self.current_token {
-            Token::Keyword(Keyword::True) => LiteralType::Boolean(true),
-            Token::Keyword(Keyword::False) => LiteralType::Boolean(false),
-            Token::Keyword(Keyword::Null) => LiteralType::Null,
+        use crate::value::JSValue;
+
+        match self.current_token {
+            Token::Keyword(Keyword::True) => {
+                self.advance(); // Eat the literal token.
+
+                self.bytecode.emit_instruction(Instruction::True);
+            }
+            Token::Keyword(Keyword::False) => {
+                self.advance(); // Eat the literal token.
+
+                self.bytecode.emit_instruction(Instruction::False);
+            }
+            Token::Keyword(Keyword::Null) => {
+                self.advance(); // Eat the literal token.
+
+                self.bytecode.emit_instruction(Instruction::Null);
+            }
             Token::Int64(value) => {
                 let f64_value = value
                     .parse::<f64>()
                     .map_err(|_| CodeGenError::InvalidInteger64Literal)?;
 
-                LiteralType::Int64(f64_value)
+                self.advance(); // Eat the literal token.
+
+                self.bytecode.emit_constant(JSValue::from(f64_value));
             }
-            Token::String(value) => LiteralType::String(value.to_string()),
+            Token::String(value) => {
+                let string_value = value.to_string();
+
+                self.advance(); // Eat the literal token.
+
+                self.bytecode.emit_constant(JSValue::from(string_value));
+            }
             _ => self.error(CodeGenError::UnexpectedToken)?,
         };
-
-        self.advance(); // Eat the literal token.
-
-        self.bytecode.generate_literal(&literal_type)?;
 
         Ok(())
     }
@@ -131,7 +141,16 @@ impl<'a> Parser<'a> {
 
                 self.js_parse_unary_expression()?;
 
-                self.bytecode.generate_unary_exp(&operation)
+                let instruction = match operation {
+                    Token::Plus => Instruction::Plus,
+                    Token::Minus => Instruction::Minus,
+                    Token::Not => Instruction::Not,
+                    _ => return Err(CodeGenError::UnexpectedToken),
+                };
+
+                self.bytecode.emit_instruction(instruction);
+
+                Ok(())
             }
             _ => self.js_parse_update_expression(),
         }
@@ -200,7 +219,33 @@ impl<'a> Parser<'a> {
 
             self.js_parse_binary_expression(new_precedence)?;
 
-            self.bytecode.generate_binary_exp(&operator)?;
+            let instruction = match operator {
+                Token::Plus => Instruction::BinAdd,
+                Token::Minus => Instruction::BinSubtract,
+                Token::Multiply => Instruction::BinMultiply,
+                Token::Divide => Instruction::BinDivide,
+                Token::Exponent => Instruction::BinExponent,
+                Token::Modulo => Instruction::BinModulo,
+                Token::Equal => Instruction::Equal,
+                Token::NotEqual => Instruction::NotEqual,
+                Token::StrictEqual => Instruction::StrictEqual,
+                Token::StrictNotEqual => Instruction::StrictNotEqual,
+                Token::LessThan => Instruction::LessThan,
+                Token::LessThanEqual => Instruction::LessThanOrEqual,
+                Token::GreaterThan => Instruction::GreaterThan,
+                Token::GreaterThanEqual => Instruction::GreaterThanOrEqual,
+                Token::BitAnd => Instruction::BitAnd,
+                Token::BitOr => Instruction::BitOr,
+                Token::BitXor => Instruction::BitXor,
+                Token::LeftShift => Instruction::BitShiftLeft,
+                Token::RightShift => Instruction::BitShiftRight,
+                Token::UnsignedRightShift => Instruction::BitShiftRight,
+                Token::LogicalAnd => Instruction::LogicalAnd,
+                Token::LogicalOr => Instruction::LogicalOr,
+                _ => return Err(CodeGenError::UnexpectedToken),
+            };
+
+            self.bytecode.emit_instruction(instruction);
         }
 
         Ok(())

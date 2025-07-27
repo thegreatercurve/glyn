@@ -1,5 +1,6 @@
 use crate::{
     codegen::{
+        bytecode::{generator::Identifier, instruction::Instruction},
         error::CodeGenError,
         parser::{CodeGenResult, Parser},
     },
@@ -59,8 +60,16 @@ impl<'a> Parser<'a> {
             self.js_parse_assignment_expression()?;
         }
 
-        self.bytecode
-            .let_declaration(binding_identifier, has_initializer)?;
+        // 1. Let lhs be ! ResolveBinding(StringValue of BindingIdentifier).
+        let binding_id = self
+            .bytecode
+            .add_identifier(Identifier::Let(binding_identifier.0));
+        self.bytecode.emit_resolve_binding(binding_id);
+
+        // 2. Perform ! InitializeReferencedBinding(lhs, undefined).
+        self.bytecode.emit_instruction(Instruction::Undefined);
+
+        self.bytecode.emit_initialize_referenced_binding();
 
         Ok(())
     }
