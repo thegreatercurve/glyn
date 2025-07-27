@@ -13,16 +13,29 @@ use crate::{
 impl<'a> Parser<'a> {
     /// 13.1 Identifiers
     /// https://262.ecma-international.org/16.0/#prod-IdentifierReference
-    pub(crate) fn js_parse_identifier_reference(&mut self) -> CodeGenResult<JSString> {
-        let binding_identifier = self.current_token.to_string();
+    pub(crate) fn js_parse_identifier_reference(&mut self) -> CodeGenResult {
+        let identifier_reference = self.current_token.to_string();
 
         if self.current_token.is_identifier_reference() {
             self.advance(); // Eat binding identifier token.
+
+            // IdentifierReference : Identifier
+            // 1. Return ? ResolveBinding(StringValue of Identifier).
+            // IdentifierReference : yield
+            // 1. Return ? ResolveBinding("yield").
+            // IdentifierReference : await
+            // 1. Return ? ResolveBinding("await").
+            let identifier_reference_index = self
+                .bytecode
+                .add_identifier(JSString::from(identifier_reference));
+
+            self.bytecode
+                .emit_resolve_binding(identifier_reference_index);
         } else {
             return self.error(CodeGenError::UnexpectedToken);
         }
 
-        Ok(binding_identifier.into())
+        Ok(())
     }
 
     /// https://262.ecma-international.org/16.0/#prod-BindingIdentifier
@@ -66,11 +79,7 @@ impl<'a> Parser<'a> {
     /// https://262.ecma-international.org/16.0/#prod-PrimaryExpression
     fn js_parse_primary_expression(&mut self) -> CodeGenResult {
         match &self.current_token {
-            token if token.is_identifier_reference() => {
-                let _ident = self.js_parse_identifier_reference()?;
-
-                Ok(())
-            }
+            token if token.is_identifier_reference() => self.js_parse_identifier_reference(),
             _ => self.js_parse_literal(),
         }
     }

@@ -53,17 +53,17 @@ impl<'a> Parser<'a> {
         }?;
 
         // 1. Let bindingId be the StringValue of BindingIdentifier.
-        let binding_id = self.bytecode.add_identifier(binding_identifier);
+        let binding_index = self.bytecode.add_identifier(binding_identifier);
 
         // 16.1.7 GlobalDeclarationInstantiation ( script, env )
         // 1. Perform ? env.CreateMutableBinding(dn, false).
         // TODO Implement correct scope depth
-        self.bytecode.emit_create_mutable_binding(binding_id);
+        self.bytecode.emit_create_mutable_binding(binding_index);
 
         // 2. Let lhs be ! ResolveBinding(bindingId).
-        self.bytecode.emit_resolve_binding(binding_id);
+        self.bytecode.emit_resolve_binding(binding_index);
 
-        // RS: LexicalBinding : BindingIdentifier Initializer
+        // LexicalBinding : BindingIdentifier Initializer
         if self.current_token == Token::Assign {
             self.advance(); // Eat '=' token.
 
@@ -75,7 +75,7 @@ impl<'a> Parser<'a> {
             // b. Let value be ? GetValue(rhs).
             self.js_parse_assignment_expression()?;
         }
-        // RS: LexicalBinding : BindingIdentifier
+        // LexicalBinding : BindingIdentifier
         else {
             // 2. Perform ! InitializeReferencedBinding(lhs, undefined).
             self.bytecode.emit_instruction(Instruction::Undefined);
