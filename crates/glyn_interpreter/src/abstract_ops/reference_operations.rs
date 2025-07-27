@@ -35,5 +35,5 @@ pub(crate) fn initialize_referenced_binding<'a>(
     };
 
     // 4. Return ? base.InitializeBinding(V.[[ReferencedName]], W).
-    env_addr.initialize_binding(JSString::try_from(&reference.referenced_name)?, value)
+    env_addr.initialize_binding(&JSString::try_from(&reference.referenced_name)?, value)
 }

@@ -1,6 +1,6 @@
 use crate::{
     codegen::{
-        bytecode::{generator::Identifier, instruction::Instruction},
+        bytecode::instruction::Instruction,
         error::CodeGenError,
         parser::{CodeGenResult, Parser},
     },
@@ -52,23 +52,36 @@ impl<'a> Parser<'a> {
             _ => self.error(CodeGenError::UnexpectedToken),
         }?;
 
-        let has_initializer = self.current_token == Token::Assign;
+        // 1. Let bindingId be the StringValue of BindingIdentifier.
+        let binding_id = self.bytecode.add_identifier(binding_identifier);
 
-        if has_initializer {
-            self.advance(); // Eat '=' token.
+        // 16.1.7 GlobalDeclarationInstantiation ( script, env )
+        // 1. Perform ? env.CreateMutableBinding(dn, false).
+        // TODO Implement correct scope depth
+        self.bytecode.emit_create_mutable_binding(binding_id);
 
-            self.js_parse_assignment_expression()?;
-        }
-
-        // 1. Let lhs be ! ResolveBinding(StringValue of BindingIdentifier).
-        let binding_id = self
-            .bytecode
-            .add_identifier(Identifier::Let(binding_identifier.0));
+        // 2. Let lhs be ! ResolveBinding(bindingId).
         self.bytecode.emit_resolve_binding(binding_id);
 
-        // 2. Perform ! InitializeReferencedBinding(lhs, undefined).
-        self.bytecode.emit_instruction(Instruction::Undefined);
+        // RS: LexicalBinding : BindingIdentifier Initializer
+        if self.current_token == Token::Assign {
+            self.advance(); // Eat '=' token.
 
+            // 3. If IsAnonymousFunctionDefinition(Initializer) is true, then
+            // a. Let value be ? NamedEvaluation of Initializer with argument bindingId.
+            // TODO: Implement the above.
+            // 4. Else,
+            // a. Let rhs be ? Evaluation of Initializer.
+            // b. Let value be ? GetValue(rhs).
+            self.js_parse_assignment_expression()?;
+        }
+        // RS: LexicalBinding : BindingIdentifier
+        else {
+            // 2. Perform ! InitializeReferencedBinding(lhs, undefined).
+            self.bytecode.emit_instruction(Instruction::Undefined);
+        }
+
+        // 5. Perform ! InitializeReferencedBinding(lhs, value).
         self.bytecode.emit_initialize_referenced_binding();
 
         Ok(())

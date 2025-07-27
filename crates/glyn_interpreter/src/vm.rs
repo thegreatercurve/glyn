@@ -7,12 +7,9 @@ use crate::{
         },
         testing_comparison::{is_less_than, is_loosely_equal, is_strictly_equal},
     },
-    codegen::bytecode::{
-        generator::{ExecutableProgram, Identifier},
-        instruction::Instruction,
-    },
+    codegen::bytecode::{generator::ExecutableProgram, instruction::Instruction},
     lexer::Token,
-    runtime::{agent::JSAgent, reference::Reference},
+    runtime::{agent::JSAgent, environment::EnvironmentMethods, reference::Reference},
     value::{number::JSNumber, string::JSString, JSValue},
 };
 
@@ -27,6 +24,7 @@ pub(crate) struct VM<'a> {
 
 pub(crate) enum VMError {
     BinOperationError,
+    InitializeMutableBindingError,
     InitializeReferencedBindingError,
     LessThanComparisonError,
     LooselyEqualComparisonError,
@@ -74,6 +72,7 @@ impl<'a> VM<'a> {
             Instruction::BinDivide => self.exec_numeric_bin_op(Token::Divide),
             Instruction::BinModulo => self.exec_numeric_bin_op(Token::Modulo),
             Instruction::BinExponent => self.exec_numeric_bin_op(Token::Exponent),
+            Instruction::CreateMutableBinding => self.exec_create_mutable_binding(),
             Instruction::StrictEqual => self.exec_strictly_equal(true),
             Instruction::StrictNotEqual => self.exec_strictly_equal(false),
             Instruction::Equal => self.exec_loosely_equal(true),
@@ -127,7 +126,7 @@ impl<'a> VM<'a> {
         self.program.constants[index as usize].clone()
     }
 
-    fn get_identifier(&mut self, index: u8) -> &Identifier {
+    fn get_identifier(&self, index: u8) -> &JSString {
         &self.program.identifiers[index as usize]
     }
 
@@ -160,6 +159,24 @@ impl<'a> VM<'a> {
         let value = self.get_constant(index);
 
         self.push(value);
+
+        Ok(())
+    }
+
+    fn exec_create_mutable_binding(&mut self) -> VMResult {
+        let binding_index = self.read_byte();
+        // TODO Ensure that the identifier correctly gets added to the environment at the correct depth.
+        let _scope_depth = self.read_byte();
+
+        let binding_name = self.get_identifier(binding_index);
+
+        self.agent
+            .running_execution_context()
+            .lexical_environment
+            .clone()
+            .unwrap()
+            .create_mutable_binding(binding_name, true)
+            .map_err(|_| VMError::InitializeMutableBindingError)?;
 
         Ok(())
     }
@@ -301,11 +318,11 @@ impl<'a> VM<'a> {
     fn exec_resolve_binding(&mut self) -> VMResult {
         let index = self.read_byte();
 
-        let value = String::from(self.get_identifier(index));
+        let value = self.get_identifier(index);
 
         let binding = resolve_binding(
             self.agent,
-            &JSString::from(value),
+            value,
             self.agent
                 .running_execution_context()
                 .lexical_environment

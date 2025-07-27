@@ -42,11 +42,11 @@ impl DeclarativeEnvironment {
         self.bindings.contains_key(name)
     }
 
-    fn add_binding_impl(&mut self, name: JSString, mutable: bool, deletable: bool, strict: bool) {
-        debug_assert!(!self.has_binding_impl(&name));
+    fn add_binding_impl(&mut self, name: &JSString, mutable: bool, deletable: bool, strict: bool) {
+        debug_assert!(!self.has_binding_impl(name));
 
         self.bindings.insert(
-            name,
+            name.clone(),
             Binding {
                 mutable,
                 deletable,
@@ -56,8 +56,8 @@ impl DeclarativeEnvironment {
         );
     }
 
-    fn initialize_binding_impl(&mut self, name: JSString, value: JSValue) {
-        debug_assert!(self.binding(&name).value.is_none());
+    fn initialize_binding_impl(&mut self, name: &JSString, value: JSValue) {
+        debug_assert!(self.binding(name).value.is_none());
 
         self.binding_mut(&name).value = Some(value);
     }
@@ -78,7 +78,7 @@ impl EnvironmentMethods for DeclarativeEnvironment {
 
     /// 9.1.1.1.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-createmutablebinding-n-d
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord {
         // 1. Assert: envRec does not already have a binding for N.
         // 2. Create a mutable binding in envRec for N and record that it is uninitialized. If D is true, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
         self.add_binding_impl(name, true, deletable, true);
@@ -89,7 +89,7 @@ impl EnvironmentMethods for DeclarativeEnvironment {
 
     /// 9.1.1.1.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-createimmutablebinding-n-s
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord {
         // 1. Assert: envRec does not already have a binding for N.
         // Create an immutable binding in envRec for N and record that it is uninitialized. If S is true, record that the newly created binding is a strict binding.
         self.add_binding_impl(name, false, false, strict);
@@ -100,7 +100,7 @@ impl EnvironmentMethods for DeclarativeEnvironment {
 
     /// 9.1.1.1.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-initializebinding-n-v
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord {
         // 1. Assert: envRec must have an uninitialized binding for N.
         // 2. Set the bound value for N in envRec to V.
         self.initialize_binding_impl(name, value);
@@ -116,7 +116,7 @@ impl EnvironmentMethods for DeclarativeEnvironment {
     /// https://262.ecma-international.org/16.0/#sec-declarative-environment-records-setmutablebinding-n-v-s
     fn set_mutable_binding(
         &mut self,
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         mut strict: bool,
     ) -> CompletionRecord {
@@ -128,7 +128,7 @@ impl EnvironmentMethods for DeclarativeEnvironment {
             }
 
             // b. Perform ! envRec.CreateMutableBinding(N, true).
-            self.add_binding_impl(name.clone(), true, true, true);
+            self.add_binding_impl(name, true, true, true);
 
             // c. Perform ! envRec.InitializeBinding(N, V).
             self.initialize_binding_impl(name, value);

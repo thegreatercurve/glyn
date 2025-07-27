@@ -86,7 +86,7 @@ pub(crate) fn script_evaluation(
     let script = &script_record.ecmascript_code;
 
     // 12. Let result be Completion(GlobalDeclarationInstantiation(script, globalEnv)).
-    global_declaration_instantiation(script, global_env.unwrap())?;
+    // NOTE: Handled in bytecode at runtime.
 
     // 13. If result is a normal completion, then
     // a. Set result to Completion(Evaluation of script).
@@ -104,102 +104,4 @@ pub(crate) fn script_evaluation(
 
     // 17. Return ? result.
     Ok(result)
-}
-
-/// 16.1.7 GlobalDeclarationInstantiation ( script, env )
-/// https://262.ecma-international.org/16.0/#sec-globaldeclarationinstantiation
-pub(crate) fn global_declaration_instantiation(
-    script: &ExecutableProgram,
-    env_opt: EnvironmentAddr,
-) -> CompletionRecord {
-    let mut env = env_opt.borrow_mut();
-
-    // TODO: These are not correct and will require refinement.
-    // 1. Let lexNames be the LexicallyDeclaredNames of script.
-    let lex_names = script
-        .identifiers
-        .iter()
-        .filter(|ident| ident.is_lexical_declaration())
-        .collect::<Vec<_>>();
-
-    // 2. Let varNames be the VarDeclaredNames of script.
-    let _var_names = script
-        .identifiers
-        .iter()
-        .filter(|ident| ident.is_variable_declaration())
-        .collect::<Vec<_>>();
-
-    // 3. For each element name of lexNames, do
-    for name in &lex_names {
-        // a. If HasLexicalDeclaration(env, name) is true, throw a SyntaxError exception.
-        let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
-        if global_env.has_lexical_declaration(&JSString::from(name.to_owned())) {
-            syntax_error("Lexical declaration already exists on the global environment.");
-        }
-
-        // b. Let hasRestrictedGlobal be ? HasRestrictedGlobalProperty(env, name).
-        // c. NOTE: Global var and function bindings (except those that are introduced by non-strict direct eval) are non-configurable and are therefore restricted global properties.
-        // d. If hasRestrictedGlobal is true, throw a SyntaxError exception.
-    }
-
-    // 4. For each element name of varNames, do
-    // a. If HasLexicalDeclaration(env, name) is true, throw a SyntaxError exception.
-    // 5. Let varDeclarations be the VarScopedDeclarations of script.
-    // 6. Let functionsToInitialize be a new empty List.
-    // 7. Let declaredFunctionNames be a new empty List.
-    // 8. For each element d of varDeclarations, in reverse List order, do
-    // a. If d is not either a VariableDeclaration, a ForBinding, or a BindingIdentifier, then
-    // i. Assert: d is either a FunctionDeclaration, a GeneratorDeclaration, an AsyncFunctionDeclaration, or an AsyncGeneratorDeclaration.
-    // ii. NOTE: If there are multiple function declarations for the same name, the last declaration is used.
-    // iii. Let fn be the sole element of the BoundNames of d.
-    // iv. If declaredFunctionNames does not contain fn, then
-    // 1. Let fnDefinable be ? CanDeclareGlobalFunction(env, fn).
-    // 2. If fnDefinable is false, throw a TypeError exception.
-    // 3. Append fn to declaredFunctionNames.
-    // 4. Insert d as the first element of functionsToInitialize.
-    // 9. Let declaredVarNames be a new empty List.
-    // 10. For each element d of varDeclarations, do
-    // a. If d is either a VariableDeclaration, a ForBinding, or a BindingIdentifier, then
-    // i. For each String vn of the BoundNames of d, do
-    // 1. If declaredFunctionNames does not contain vn, then
-    // a. Let vnDefinable be ? CanDeclareGlobalVar(env, vn).
-    // b. If vnDefinable is false, throw a TypeError exception.
-    // c. If declaredVarNames does not contain vn, then
-    // i. Append vn to declaredVarNames.
-    // 11. NOTE: No abnormal terminations occur after this algorithm step if the global object is an ordinary object. However, if the global object is a Proxy exotic object it may exhibit behaviours that cause abnormal terminations in some of the following steps.
-    // 12. NOTE: Annex B.3.2.2 adds additional steps at this point.
-    // 13. Let lexDeclarations be the LexicallyScopedDeclarations of script.
-    // 14. Let privateEnv be null.
-    // 15. For each element d of lexDeclarations, do
-    for d in &lex_names {
-        // a. NOTE: Lexically declared names are only instantiated here but not initialized.
-        // TODO: This is incorrect and will require refinement.
-
-        // b. For each element dn of the BoundNames of d, do
-        if d.is_lexical_declaration() {
-            // i. If IsConstantDeclaration of d is true, then
-            if d.is_constant_declaration() {
-                // 1. Perform ? env.CreateImmutableBinding(dn, true).
-                // let env = &mut *env.borrow_mut();
-                let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
-                global_env.create_immutable_binding(JSString::from(d.to_owned()), true)?;
-            }
-            // ii. Else,
-            else {
-                // 1. Perform ? env.CreateMutableBinding(dn, false).
-                let global_env: &mut GlobalEnvironment = env.deref_mut().try_into()?;
-                global_env.create_mutable_binding(JSString::from(d.to_owned()), false)?;
-            }
-        }
-    }
-
-    // 16. For each Parse Node f of functionsToInitialize, do
-    // a. Let fn be the sole element of the BoundNames of f.
-    // b. Let fo be InstantiateFunctionObject of f with arguments env and privateEnv.
-    // c. Perform ? CreateGlobalFunctionBinding(env, fn, fo, false).
-    // 17. For each String vn of declaredVarNames, do
-    // a. Perform ? CreateGlobalVarBinding(env, vn, false).
-
-    // 18. Return unused.
-    Ok(())
 }

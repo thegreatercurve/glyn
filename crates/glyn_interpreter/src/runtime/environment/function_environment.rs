@@ -52,22 +52,21 @@ impl EnvironmentMethods for FunctionEnvironment {
         self.decl_env.has_binding(name)
     }
 
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord {
         self.decl_env.create_mutable_binding(name, deletable)
     }
 
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord {
         self.decl_env.create_immutable_binding(name, strict)
     }
 
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord {
         self.decl_env.initialize_binding(name, value)
     }
 
     fn set_mutable_binding(
         &mut self,
-
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {

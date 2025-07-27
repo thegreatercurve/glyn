@@ -10,3 +10,6 @@ glyn_unicode = { workspace = true }
 [[bin]]
 name = "cli"
 path = "src/bin/cli.rs"
+
+[features]
+debug = []

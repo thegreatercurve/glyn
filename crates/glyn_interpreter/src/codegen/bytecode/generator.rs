@@ -1,57 +1,21 @@
 use crate::{
-    codegen::{bytecode::instruction::Instruction, error::CodeGenResult},
+    codegen::bytecode::instruction::Instruction,
     value::{string::JSString, JSValue},
 };
-
-#[derive(Clone, Debug)]
-pub(crate) enum Identifier {
-    Var(String),
-    Let(String),
-    Const(String),
-}
-
-impl Identifier {
-    pub(crate) fn is_lexical_declaration(&self) -> bool {
-        matches!(self, Identifier::Let(_) | Identifier::Const(_))
-    }
-
-    pub(crate) fn is_constant_declaration(&self) -> bool {
-        matches!(self, Identifier::Const(_))
-    }
-
-    pub(crate) fn is_variable_declaration(&self) -> bool {
-        matches!(self, Identifier::Var(_))
-    }
-}
-
-impl From<&Identifier> for String {
-    fn from(identifier: &Identifier) -> String {
-        match identifier {
-            Identifier::Var(name) => name.clone(),
-            Identifier::Let(name) => name.clone(),
-            Identifier::Const(name) => name.clone(),
-        }
-    }
-}
-
-impl From<&Identifier> for JSString {
-    fn from(identifier: &Identifier) -> JSString {
-        JSString(String::from(identifier))
-    }
-}
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ExecutableProgram {
     pub(crate) instructions: Vec<u8>,
     pub(crate) constants: Vec<JSValue>,
-    pub(crate) identifiers: Vec<Identifier>,
+    pub(crate) identifiers: Vec<JSString>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct BytecodeGenerator {
     instructions: Vec<u8>,
     constants: Vec<JSValue>,
-    identifiers: Vec<Identifier>,
+    identifiers: Vec<JSString>,
+    scope_depth: u8,
 }
 
 impl BytecodeGenerator {
@@ -67,7 +31,7 @@ impl BytecodeGenerator {
         self.instructions.push(instruction);
     }
 
-    pub(crate) fn add_identifier(&mut self, identifier: Identifier) -> u8 {
+    pub(crate) fn add_identifier(&mut self, identifier: JSString) -> u8 {
         self.identifiers.push(identifier);
 
         (self.identifiers.len() - 1) as u8
@@ -93,6 +57,14 @@ impl BytecodeGenerator {
         self.push(Instruction::ResolveBinding as u8);
 
         self.push(identifier_index);
+    }
+
+    pub(crate) fn emit_create_mutable_binding(&mut self, binding_index: u8) {
+        self.push(Instruction::CreateMutableBinding as u8);
+
+        self.push(binding_index);
+
+        self.push(self.scope_depth);
     }
 
     pub(crate) fn emit_initialize_referenced_binding(&mut self) {

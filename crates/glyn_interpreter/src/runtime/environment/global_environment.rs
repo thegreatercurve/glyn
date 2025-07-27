@@ -56,7 +56,7 @@ impl EnvironmentMethods for GlobalEnvironment {
 
     /// 9.1.1.4.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-createmutablebinding-n-d
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, throw a TypeError exception.
         if self.declarative_record.has_binding(&name)? {
@@ -70,7 +70,7 @@ impl EnvironmentMethods for GlobalEnvironment {
 
     /// 9.1.1.4.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-createimmutablebinding-n-s
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, throw a TypeError exception.
         if self.declarative_record.has_binding(&name)? {
@@ -84,7 +84,7 @@ impl EnvironmentMethods for GlobalEnvironment {
 
     /// 9.1.1.4.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-initializebinding-n-v
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord {
         // 1. Let DclRec be envRec.[[DeclarativeRecord]].
         // 2. If ! DclRec.HasBinding(N) is true, then
         if self.declarative_record.has_binding(&name)? {
@@ -104,7 +104,7 @@ impl EnvironmentMethods for GlobalEnvironment {
     /// https://262.ecma-international.org/16.0/#sec-global-environment-records-setmutablebinding-n-v-s
     fn set_mutable_binding(
         &mut self,
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
@@ -294,7 +294,7 @@ impl GlobalEnvironment {
     /// https://262.ecma-international.org/16.0/#sec-createglobalvarbinding
     pub(crate) fn create_global_var_binding(
         &mut self,
-        name: JSString,
+        name: &JSString,
         deletable: bool,
     ) -> CompletionRecord {
         // 1. Let ObjRec be envRec.[[ObjectRecord]].
@@ -304,7 +304,7 @@ impl GlobalEnvironment {
         let global_object = obj_rec.binding_object.clone();
 
         // 3. Let hasProperty be ? HasOwnProperty(globalObject, N).
-        let has_property = has_own_property(&global_object, &JSObjectPropKey::from(&name))?;
+        let has_property = has_own_property(&global_object, &JSObjectPropKey::from(name))?;
 
         // 4. Let extensible be ? IsExtensible(globalObject).
         let extensible = is_extensible(&global_object);
@@ -312,7 +312,7 @@ impl GlobalEnvironment {
         // 5. If hasProperty is false and extensible is true, then
         if !has_property && extensible {
             // a. Perform ? ObjRec.CreateMutableBinding(N, D).
-            obj_rec.create_mutable_binding(name.clone(), deletable)?;
+            obj_rec.create_mutable_binding(name, deletable)?;
 
             // b. Perform ? ObjRec.InitializeBinding(N, undefined).
             obj_rec.initialize_binding(name, JSValue::Undefined)?;

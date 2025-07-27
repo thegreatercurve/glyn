@@ -17,6 +17,7 @@ pub(crate) enum Instruction {
     BitXor,
     Call,
     Const,
+    CreateMutableBinding,
     Decrement,
     Equal,
     False,

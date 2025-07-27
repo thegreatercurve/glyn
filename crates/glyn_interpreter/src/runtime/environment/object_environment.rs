@@ -80,7 +80,7 @@ impl EnvironmentMethods for ObjectEnvironment {
 
     /// 9.1.1.2.2 CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createmutablebinding-n-d
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord {
         // 1. Let bindingObject be envRec.[[BindingObject]].
         let binding_object = self.binding_object.clone();
 
@@ -103,14 +103,14 @@ impl EnvironmentMethods for ObjectEnvironment {
 
     /// 9.1.1.2.3 CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-createimmutablebinding-n-s
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord {
         // The CreateImmutableBinding concrete method of an Object Environment Record is never used within this specification.
         unreachable!()
     }
 
     /// 9.1.1.2.4 InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#sec-object-environment-records-initializebinding-n-v
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord {
         // 1. Perform ? envRec.SetMutableBinding(N, V, false).
         self.set_mutable_binding(name, value, false)?;
 
@@ -123,7 +123,7 @@ impl EnvironmentMethods for ObjectEnvironment {
     fn set_mutable_binding(
         &mut self,
 
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
@@ -131,7 +131,7 @@ impl EnvironmentMethods for ObjectEnvironment {
         let binding_object = self.binding_object.clone();
 
         // 2. Let stillExists be ? HasProperty(bindingObject, N).
-        let still_exists = has_property(&binding_object, &JSObjectPropKey::from(&name))?;
+        let still_exists = has_property(&binding_object, &JSObjectPropKey::from(name))?;
 
         // 3. If stillExists is false and S is true, throw a ReferenceError exception.
         if !still_exists && strict {

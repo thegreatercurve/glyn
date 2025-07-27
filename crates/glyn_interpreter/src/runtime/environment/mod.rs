@@ -25,21 +25,21 @@ pub(crate) trait EnvironmentMethods {
 
     /// CreateMutableBinding ( N, D )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord;
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord;
 
     /// CreateImmutableBinding ( N, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord;
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord;
 
     /// InitializeBinding ( N, V )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord;
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord;
 
     /// SetMutableBinding ( N, V, S )
     /// https://262.ecma-international.org/16.0/#table-abstract-methods-of-environment-records
     fn set_mutable_binding(
         &mut self,
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord;
@@ -109,7 +109,7 @@ impl EnvironmentMethods for EnvironmentAddr {
         }
     }
 
-    fn create_mutable_binding(&mut self, name: JSString, deletable: bool) -> CompletionRecord {
+    fn create_mutable_binding(&mut self, name: &JSString, deletable: bool) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
             Environment::Declarative(declarative_env) => {
                 declarative_env.create_mutable_binding(name, deletable)
@@ -122,7 +122,7 @@ impl EnvironmentMethods for EnvironmentAddr {
         }
     }
 
-    fn create_immutable_binding(&mut self, name: JSString, strict: bool) -> CompletionRecord {
+    fn create_immutable_binding(&mut self, name: &JSString, strict: bool) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
             Environment::Declarative(declarative_env) => {
                 declarative_env.create_immutable_binding(name, strict)
@@ -135,7 +135,7 @@ impl EnvironmentMethods for EnvironmentAddr {
         }
     }
 
-    fn initialize_binding(&mut self, name: JSString, value: JSValue) -> CompletionRecord {
+    fn initialize_binding(&mut self, name: &JSString, value: JSValue) -> CompletionRecord {
         match self.borrow_mut().deref_mut() {
             Environment::Declarative(declarative_env) => {
                 declarative_env.initialize_binding(name, value)
@@ -148,7 +148,7 @@ impl EnvironmentMethods for EnvironmentAddr {
 
     fn set_mutable_binding(
         &mut self,
-        name: JSString,
+        name: &JSString,
         value: JSValue,
         strict: bool,
     ) -> CompletionRecord {
