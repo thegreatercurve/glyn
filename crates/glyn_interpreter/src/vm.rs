@@ -64,35 +64,35 @@ impl<'a> VM<'a> {
         self.ip += 1;
 
         match instruction {
-            Instruction::Const => self.exec_const(),
-            Instruction::Undefined => self.exec_undefined(),
             Instruction::BinAdd => self.exec_bin_add(),
-            Instruction::BinSubtract => self.exec_numeric_bin_op(Token::Minus),
-            Instruction::BinMultiply => self.exec_numeric_bin_op(Token::Multiply),
             Instruction::BinDivide => self.exec_numeric_bin_op(Token::Divide),
-            Instruction::BinModulo => self.exec_numeric_bin_op(Token::Modulo),
             Instruction::BinExponent => self.exec_numeric_bin_op(Token::Exponent),
-            Instruction::CreateMutableBinding => self.exec_create_mutable_binding(),
-            Instruction::StrictEqual => self.exec_strictly_equal(true),
-            Instruction::StrictNotEqual => self.exec_strictly_equal(false),
-            Instruction::Equal => self.exec_loosely_equal(true),
-            Instruction::NotEqual => self.exec_loosely_equal(false),
-            Instruction::LessThan => self.exec_less_than(),
-            Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
-            Instruction::GreaterThan => self.exec_greater_than(),
-            Instruction::GreaterThanOrEqual => self.exec_greater_than_or_equal(),
-            Instruction::Plus => Ok(()), // No-op,
-            Instruction::Minus => self.exec_unary_minus(),
+            Instruction::BinModulo => self.exec_numeric_bin_op(Token::Modulo),
+            Instruction::BinMultiply => self.exec_numeric_bin_op(Token::Multiply),
+            Instruction::BinSubtract => self.exec_numeric_bin_op(Token::Minus),
             Instruction::BitAnd => self.exec_numeric_bin_op(Token::BitAnd),
             Instruction::BitOr => self.exec_numeric_bin_op(Token::BitOr),
-            Instruction::BitXor => self.exec_numeric_bin_op(Token::BitXor),
             Instruction::BitShiftLeft => self.exec_numeric_bin_op(Token::LeftShift),
             Instruction::BitShiftRight => self.exec_numeric_bin_op(Token::RightShift),
             Instruction::BitShiftRightUnsigned => {
                 self.exec_numeric_bin_op(Token::UnsignedRightShift)
             }
-            Instruction::ResolveBinding => self.exec_resolve_binding(),
+            Instruction::BitXor => self.exec_numeric_bin_op(Token::BitXor),
+            Instruction::Const => self.exec_const(),
+            Instruction::CreateMutableBinding => self.exec_create_mutable_binding(),
+            Instruction::Equal => self.exec_loosely_equal(true),
+            Instruction::GreaterThan => self.exec_greater_than(),
+            Instruction::GreaterThanOrEqual => self.exec_greater_than_or_equal(),
             Instruction::InitializeReferencedBinding => self.exec_initialize_referenced_binding(),
+            Instruction::LessThan => self.exec_less_than(),
+            Instruction::LessThanOrEqual => self.exec_less_than_or_equal(),
+            Instruction::Minus => self.exec_unary_minus(),
+            Instruction::NotEqual => self.exec_loosely_equal(false),
+            Instruction::Plus => Ok(()), // No-op,
+            Instruction::ResolveBinding => self.exec_resolve_binding(),
+            Instruction::StrictEqual => self.exec_strictly_equal(true),
+            Instruction::StrictNotEqual => self.exec_strictly_equal(false),
+            Instruction::Undefined => self.exec_undefined(),
             Instruction::Halt => {
                 self.running = false;
 
