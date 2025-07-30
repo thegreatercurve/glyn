@@ -70,4 +70,10 @@ impl BytecodeGenerator {
     pub(crate) fn emit_initialize_referenced_binding(&mut self) {
         self.push(Instruction::InitializeReferencedBinding as u8);
     }
+
+    pub(crate) fn emit_call(&mut self, args_length: u8) {
+        self.push(Instruction::Call as u8);
+
+        self.push(args_length);
+    }
 }

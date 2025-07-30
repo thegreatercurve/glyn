@@ -6,6 +6,7 @@ use crate::{
     },
     lexer::{BinOpPrecedence, Keyword, Token},
     value::string::JSString,
+    JSValue,
 };
 
 /// 13 ECMAScript Language: Expressions
@@ -56,7 +57,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn js_parse_assignment_expression(&mut self) -> CodeGenResult {
         self.js_parse_conditional_expression()?;
 
-        let operator = if self.current_token.is_assignment_operator() {
+        if self.current_token.is_assignment_operator() {
             self.advance(); // Eat the assignment operator token.
 
             self.current_token.clone()
@@ -128,9 +129,71 @@ impl<'a> Parser<'a> {
     }
 
     /// 13.3 Left-Hand-Side Expressions
+    /// https://262.ecma-international.org/16.0/#prod-MemberExpression
+    fn js_parse_member_expression(&mut self) -> CodeGenResult {
+        self.js_parse_primary_expression()
+    }
+
+    ///13.3 Left-Hand-Side Expressions
+    /// https://262.ecma-international.org/16.0/#prod-CallExpression
+    fn js_parse_call_expression(&mut self) -> CodeGenResult {
+        self.js_parse_member_expression()?;
+
+        // When processing an instance of the production
+        // CallExpression : CoverCallExpressionAndAsyncArrowHead
+        // the interpretation of CoverCallExpressionAndAsyncArrowHead is refined using the following grammar:
+        // CallMemberExpression : MemberExpression Arguments
+        if self.current_token == Token::LeftParen {
+            let args_length = self.js_parse_arguments()?;
+
+            self.bytecode.emit_call(args_length);
+        }
+
+        Ok(())
+    }
+
+    /// 13.3 Left-Hand-Side Expressions
     /// https://262.ecma-international.org/16.0/#prod-LeftHandSideExpression
     fn js_parse_left_hand_side_expression(&mut self) -> CodeGenResult {
-        self.js_parse_primary_expression()
+        let current_token = &self.current_token.clone();
+
+        let Some(peek_token) = &self.peek() else {
+            return self.js_parse_call_expression();
+        };
+
+        match (current_token, peek_token) {
+            // `super . IdentifierName`.
+            // `super [ Expression ]`.
+            (Token::Keyword(Keyword::Super), Token::LeftBracket | Token::Dot) => {
+                // self.js_parse_super_property()
+                todo!();
+            }
+            // `new.target`.
+            (Token::Keyword(Keyword::New), Token::Dot) => {
+                // self.js_parse_new_target()
+                todo!();
+            }
+            // `import.meta`.
+            (Token::Keyword(Keyword::Import), Token::Dot) => {
+                // self.js_parse_import_meta()
+                todo!();
+            }
+            // `super Arguments`.
+            (Token::Keyword(Keyword::Super), Token::LeftParen) => {
+                // self.js_parse_super_call()
+                todo!();
+            }
+            // `import ( AssignmentExpression )`.
+            (Token::Keyword(Keyword::Import), Token::LeftParen) => {
+                // self.js_parse_import_call()
+                todo!();
+            }
+            (Token::Keyword(Keyword::New), _) => {
+                // self.js_parse_new_expression()
+                todo!();
+            }
+            _ => self.js_parse_call_expression(),
+        }
     }
 
     /// 13.4 Update Expressions
@@ -163,6 +226,38 @@ impl<'a> Parser<'a> {
             }
             _ => self.js_parse_update_expression(),
         }
+    }
+
+    /// https://tc39.es/ecma262/#prod-Arguments
+    /// https://tc39.es/ecma262/#prod-ArgumentList
+    fn js_parse_arguments(&mut self) -> CodeGenResult<u8> {
+        self.expect(Token::LeftParen)?;
+
+        let mut args_length: u8 = 0;
+
+        while self.current_token != Token::RightParen {
+            if self.current_token == Token::Spread {
+                self.advance(); // Eat '...' token.
+            }
+
+            self.js_parse_assignment_expression()?;
+
+            args_length += 1;
+
+            if self.current_token != Token::Comma {
+                break;
+            }
+
+            if self.current_token == Token::RightParen {
+                break;
+            }
+
+            self.advance(); // Eat the comma token.
+        }
+
+        self.expect(Token::RightParen)?;
+
+        Ok(args_length)
     }
 
     /// 13.6 Exponentiation Operator

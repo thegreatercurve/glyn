@@ -24,7 +24,9 @@ fn main() {
                     run_file(&args[i + 1]);
                 } else {
                     eprintln!("Error: --file requires a filename argument");
+
                     print_help(&args[0]);
+
                     std::process::exit(1);
                 }
             }
@@ -33,13 +35,17 @@ fn main() {
                     run_eval(&args[i + 1]);
                 } else {
                     eprintln!("Error: --eval requires a JavaScript code string");
+
                     print_help(&args[0]);
+
                     std::process::exit(1);
                 }
             }
             _ => {
                 eprintln!("Error: Unknown argument '{}'", args[i]);
+
                 print_help(&args[0]);
+
                 std::process::exit(1);
             }
         }
@@ -136,6 +142,7 @@ fn run_eval(code: &str) {
         Ok(result) => println!("Result: {:?}", result),
         Err(err) => {
             eprintln!("Error evaluating code: {}", err);
+
             std::process::exit(1);
         }
     }

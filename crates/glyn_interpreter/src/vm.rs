@@ -13,10 +13,37 @@ use crate::{
     value::{number::JSNumber, string::JSString, JSValue},
 };
 
+#[derive(Debug)]
+pub(crate) enum StackItem {
+    JSValue(JSValue),
+    Reference(Reference),
+}
+
+impl TryFrom<StackItem> for JSValue {
+    type Error = VMError;
+
+    fn try_from(value: StackItem) -> Result<Self, Self::Error> {
+        match value {
+            StackItem::JSValue(value) => Ok(value),
+            _ => Err(VMError::UnexpectedStackItem),
+        }
+    }
+}
+
+impl TryFrom<StackItem> for Reference {
+    type Error = VMError;
+
+    fn try_from(value: StackItem) -> Result<Self, Self::Error> {
+        match value {
+            StackItem::Reference(reference) => Ok(reference),
+            _ => Err(VMError::UnexpectedStackItem),
+        }
+    }
+}
+
 pub(crate) struct VM<'a> {
     agent: &'a mut JSAgent,
-    stack: Vec<JSValue>,
-    references: Vec<Reference>,
+    stack: Vec<StackItem>,
     program: &'a ExecutableProgram,
     ip: usize,
     running: bool,
@@ -32,6 +59,7 @@ pub(crate) enum VMError {
     StackUnderflow,
     UnaryOperationError,
     UnexpectedInstruction,
+    UnexpectedStackItem,
 }
 
 type VMResult<T = ()> = Result<T, VMError>;
@@ -41,7 +69,6 @@ impl<'a> VM<'a> {
         Self {
             agent,
             stack: Vec::with_capacity(32),
-            references: Vec::with_capacity(32),
             program,
             ip: 0,
             running: false,
@@ -55,7 +82,9 @@ impl<'a> VM<'a> {
             self.instruction()?;
         }
 
-        self.pop()
+        let result = self.pop_value()?;
+
+        Ok(result)
     }
 
     fn instruction(&mut self) -> VMResult {
@@ -78,6 +107,7 @@ impl<'a> VM<'a> {
                 self.exec_numeric_bin_op(Token::UnsignedRightShift)
             }
             Instruction::BitXor => self.exec_numeric_bin_op(Token::BitXor),
+            Instruction::Call => self.exec_call(),
             Instruction::Const => self.exec_const(),
             Instruction::CreateMutableBinding => self.exec_create_mutable_binding(),
             Instruction::Equal => self.exec_loosely_equal(true),
@@ -130,27 +160,26 @@ impl<'a> VM<'a> {
         &self.program.identifiers[index as usize]
     }
 
-    fn push(&mut self, value: JSValue) {
-        self.stack.push(value);
+    fn push_value(&mut self, value: JSValue) {
+        self.stack.push(StackItem::JSValue(value));
     }
 
-    fn pop(&mut self) -> VMResult<JSValue> {
-        self.stack.pop().ok_or(VMError::StackUnderflow)
+    fn pop_value(&mut self) -> VMResult<JSValue> {
+        self.stack
+            .pop()
+            .ok_or(VMError::StackUnderflow)
+            .and_then(|item| item.try_into())
     }
 
-    fn pop_two(&mut self) -> VMResult<(JSValue, JSValue)> {
-        let b = self.pop()?;
-        let a = self.pop()?;
-
-        Ok((a, b))
-    }
-
-    fn push_reference(&mut self, binding: Reference) {
-        self.references.push(binding);
+    fn push_reference(&mut self, reference: Reference) {
+        self.stack.push(StackItem::Reference(reference));
     }
 
     fn pop_reference(&mut self) -> VMResult<Reference> {
-        self.references.pop().ok_or(VMError::ReferenceError)
+        self.stack
+            .pop()
+            .ok_or(VMError::StackUnderflow)
+            .and_then(|item| item.try_into())
     }
 
     fn exec_const(&mut self) -> VMResult {
@@ -158,7 +187,7 @@ impl<'a> VM<'a> {
 
         let value = self.get_constant(index);
 
-        self.push(value);
+        self.push_value(value);
 
         Ok(())
     }
@@ -182,23 +211,33 @@ impl<'a> VM<'a> {
     }
 
     fn exec_bin_add(&mut self) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         let result = apply_string_or_numeric_binary_operator(a, b)
             .map_err(|_| VMError::BinOperationError)?;
 
-        self.push(result);
+        self.push_value(result);
 
         Ok(())
     }
 
     fn exec_numeric_bin_op(&mut self, operator: Token) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         let result = apply_numeric_binary_operator(a, operator, b)
             .map_err(|_| VMError::BinOperationError)?;
 
-        self.push(result);
+        self.push_value(result);
+
+        Ok(())
+    }
+
+    /// 13.3.6.2 EvaluateCall ( func, ref, arguments, tailPosition )
+    /// https://262.ecma-international.org/16.0/#sec-evaluatecall
+    fn exec_call(&mut self) -> VMResult {
+        let args_length = self.read_byte();
 
         Ok(())
     }
@@ -207,13 +246,13 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/16.0/#sec-unary-minus-operator-runtime-semantics-evaluation
     /// UnaryExpression : - UnaryExpression
     fn exec_unary_minus(&mut self) -> VMResult {
-        let value = self.pop()?;
+        let value = self.pop_value()?;
 
         let number = JSNumber::try_from(value)
             .map_err(|_| VMError::UnaryOperationError)?
             .unary_minus();
 
-        self.push(JSValue::Number(number));
+        self.push_value(JSValue::Number(number));
 
         Ok(())
     }
@@ -222,7 +261,8 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression < ShiftExpression
     fn exec_less_than(&mut self) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
         let result = is_less_than(a, b, true)
@@ -230,7 +270,7 @@ impl<'a> VM<'a> {
             // 6. If r is undefined, return false. Otherwise, return r.
             .unwrap_or(false);
 
-        self.push(JSValue::from(result));
+        self.push_value(JSValue::from(result));
 
         Ok(())
     }
@@ -239,7 +279,8 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression > ShiftExpression
     fn exec_greater_than(&mut self) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
         let result = is_less_than(b, a, false)
@@ -247,7 +288,7 @@ impl<'a> VM<'a> {
             // 6. If r is undefined, return false. Otherwise, return r.
             .unwrap_or(false);
 
-        self.push(JSValue::from(result));
+        self.push_value(JSValue::from(result));
 
         Ok(())
     }
@@ -256,7 +297,8 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression <= ShiftExpression
     fn exec_less_than_or_equal(&mut self) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         // 5. Let r be ? IsLessThan(rval, lval, false).
         let result = !is_less_than(b, a, false)
@@ -264,7 +306,7 @@ impl<'a> VM<'a> {
             // 6. If r is either true or undefined, return false. Otherwise, return true.
             .unwrap_or(true);
 
-        self.push(JSValue::from(result));
+        self.push_value(JSValue::from(result));
 
         Ok(())
     }
@@ -273,7 +315,8 @@ impl<'a> VM<'a> {
     /// https://262.ecma-international.org/16.0/#sec-relational-operators-runtime-semantics-evaluation
     /// RelationalExpression : RelationalExpression >= ShiftExpression
     fn exec_greater_than_or_equal(&mut self) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         // 5. Let r be ? IsLessThan(lval, rval, true).
         let result = !is_less_than(a, b, true)
@@ -281,7 +324,7 @@ impl<'a> VM<'a> {
             // 6. If r is either true or undefined, return false. Otherwise, return true.
             .unwrap_or(true);
 
-        self.push(JSValue::from(result));
+        self.push_value(JSValue::from(result));
 
         Ok(())
     }
@@ -291,11 +334,12 @@ impl<'a> VM<'a> {
     /// EqualityExpression : EqualityExpression == RelationalExpression
     /// EqualityExpression : EqualityExpression != RelationalExpression
     fn exec_loosely_equal(&mut self, check_equal: bool) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         let result = is_loosely_equal(a, b).map_err(|_| VMError::LooselyEqualComparisonError)?;
 
-        self.push(JSValue::from(if check_equal { result } else { !result }));
+        self.push_value(JSValue::from(if check_equal { result } else { !result }));
 
         Ok(())
     }
@@ -305,12 +349,13 @@ impl<'a> VM<'a> {
     /// EqualityExpression : EqualityExpression === RelationalExpression
     /// EqualityExpression : EqualityExpression !== RelationalExpression
     fn exec_strictly_equal(&mut self, check_equal: bool) -> VMResult {
-        let (a, b) = self.pop_two()?;
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
 
         // 5. Return IsStrictlyEqual(rval, lval).
         let result = is_strictly_equal(&a, &b);
 
-        self.push(JSValue::from(if check_equal { result } else { !result }));
+        self.push_value(JSValue::from(if check_equal { result } else { !result }));
 
         Ok(())
     }
@@ -336,8 +381,8 @@ impl<'a> VM<'a> {
     }
 
     fn exec_initialize_referenced_binding(&mut self) -> VMResult {
+        let value = self.pop_value()?;
         let reference = self.pop_reference()?;
-        let value = self.pop()?;
 
         initialize_referenced_binding(reference, value)
             .map_err(|_| VMError::InitializeReferencedBindingError)?;
@@ -346,7 +391,7 @@ impl<'a> VM<'a> {
     }
 
     fn exec_undefined(&mut self) -> VMResult {
-        self.push(JSValue::Undefined);
+        self.push_value(JSValue::Undefined);
 
         Ok(())
     }
